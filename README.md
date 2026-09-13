@@ -28,6 +28,26 @@ Author: **TOOSHY2** · SOC Analysis · Detection & Investigation
 
 ---
 
+## Repository structure
+
+```
+.
+├── README.md                          ← you are here
+├── attack-navigator-layer.json        Importable ATT&CK Navigator coverage layer
+├── 01-docs/
+│   ├── 01-architecture.md             Full environment spec: zones, VMs, firewall rules
+│   ├── 02-attack-narrative.md         The breach story end-to-end, and scenario sequencing
+│   ├── 03-scenario-template.md        Field-by-field guide to the scenario format
+│   ├── 04-detection-tuning-log.md     Rule changes made in response to false positives
+│   └── templates/                     Copy-paste scenario skeletons
+└── 02-scenarios/
+    ├── 00-index.md                    All 100 scenarios: ID, category, verdict, confidence
+    ├── 01-phishing/ … 16-insider-threat/
+    │   └── AGC-XXX-<name>/
+    │       ├── README.md              The complete scenario
+    │       └── screenshots/           Evidence images, numbered in reference order
+```
+
 ## Documentation
 
 | Doc | What's in it |
@@ -193,26 +213,6 @@ Five rules govern every scenario here.
 **Correlation over single events.** The strongest calls chain evidence across sources — a host-based event that only becomes meaningful alongside a network-side observation. Where one source alone was insufficient to reach the verdict, the scenario says so explicitly.
 
 **A false positive is a finding, not a failure.** When triage proves an alert benign, the discriminating evidence is stated plainly — the specific fact that separates this from the real attack it resembles — and any resulting rule change is recorded in the [detection tuning log](01-docs/04-detection-tuning-log.md). Correctly clearing an alert and improving the rule behind it is analyst work, not wasted work.
-
-## Repository structure
-
-```
-.
-├── README.md                          ← you are here
-├── attack-navigator-layer.json        Importable ATT&CK Navigator coverage layer
-├── 01-docs/
-│   ├── 01-architecture.md             Full environment spec: zones, VMs, firewall rules
-│   ├── 02-attack-narrative.md         The breach story end-to-end, and scenario sequencing
-│   ├── 03-scenario-template.md        Field-by-field guide to the scenario format
-│   ├── 04-detection-tuning-log.md     Rule changes made in response to false positives
-│   └── templates/                     Copy-paste scenario skeletons
-└── 02-scenarios/
-    ├── 00-index.md                    All 100 scenarios: ID, category, verdict, confidence
-    ├── 01-phishing/ … 16-insider-threat/
-    │   └── AGC-XXX-<name>/
-    │       ├── README.md              The complete scenario
-    │       └── screenshots/           Evidence images, numbered in reference order
-```
 
 ## Toolchain
 
