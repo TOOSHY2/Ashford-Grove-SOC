@@ -16,7 +16,8 @@
   <a href="#anatomy-of-a-scenario">Scenario Anatomy</a> ·
   <a href="#scenario-catalog">Catalog</a> ·
   <a href="#analysis-principles">Principles</a> ·
-  <a href="#repository-structure">Structure</a>
+  <a href="#repository-structure">Structure</a> ·
+  <a href="#documentation">Docs</a>
 </p>
 
 ---
@@ -26,6 +27,17 @@
 Author: **TOOSHY2** · SOC Analysis · Detection & Investigation
 
 ---
+
+## Documentation
+
+| Doc | What's in it |
+|---|---|
+| [`01-docs/01-architecture.md`](01-docs/01-architecture.md) | Zones, IPs, VM specs, firewall rules |
+| [`01-docs/02-attack-narrative.md`](01-docs/02-attack-narrative.md) | The breach story end-to-end, and why scenarios are numbered the way they are |
+| [`01-docs/03-scenario-template.md`](01-docs/03-scenario-template.md) | Field-by-field guide to the scenario format |
+| [`01-docs/04-detection-tuning-log.md`](01-docs/04-detection-tuning-log.md) | Detection rules tuned after false positives |
+| [`02-scenarios/00-index.md`](02-scenarios/00-index.md) | Full 100-scenario index |
+| [`attack-navigator-layer.json`](attack-navigator-layer.json) | Importable MITRE ATT&CK coverage heatmap |
 
 ## The premise
 
@@ -193,8 +205,6 @@ Five rules govern every scenario here.
 │   ├── 02-attack-narrative.md         The breach story end-to-end, and scenario sequencing
 │   ├── 03-scenario-template.md        Field-by-field guide to the scenario format
 │   ├── 04-detection-tuning-log.md     Rule changes made in response to false positives
-│   ├── 05-kpi-dashboard.md            Aggregate SOC metrics: MTTD, MTTT, FP rate, coverage
-│   ├── 06-reproduce-the-lab.md        Rebuilding this environment on your own hardware
 │   └── templates/                     Copy-paste scenario skeletons
 └── 02-scenarios/
     ├── 00-index.md                    All 100 scenarios: ID, category, verdict, confidence
@@ -216,8 +226,6 @@ Entirely free and open-source — no commercial licenses, no trial keys, nothing
 | [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon) | Windows process, network, and file telemetry |
 | Windows Server 2022 / Windows 11 Pro | Active Directory domain and endpoints |
 | Ubuntu 24.04 LTS · Kali Linux | DMZ services, SOC hosts, attacker infrastructure |
-
-Rebuild instructions: [`01-docs/06-reproduce-the-lab.md`](01-docs/06-reproduce-the-lab.md)
 
 ## Scope and safety
 
