@@ -5,7 +5,7 @@ This document describes the structure every scenario `README.md` in this reposit
 - [`templates/standard-scenario-readme.md`](templates/standard-scenario-readme.md) — for the 96 regular scenarios.
 - [`templates/full-chain-scenario-readme.md`](templates/full-chain-scenario-readme.md) — for the 4 Full Attack-Chain scenarios (AGC-077 through AGC-080).
 
-The live reference implementation of the standard structure is [AGC-001](../02-scenarios/01-phishing/AGC-001-spoofed-display-name/README.md).
+The live reference implementation of the standard structure is [AGC-001](../scenarios/01-phishing/AGC-001-spoofed-display-name/README.md).
 
 ## Why two perspectives
 
@@ -122,7 +122,7 @@ Sub-techniques get their own row when they add signal (e.g. `T1566.002` under `T
 
 ## Full Attack-Chain scenarios (AGC-077…AGC-080)
 
-The four scenarios in [`13-full-attack-chain/`](../02-scenarios/13-full-attack-chain/) are each a **complete, standalone incident narrative** — starting at initial phishing access and running all the way through to an Impact-stage outcome, not a partial segment. Each of the four follows a **different technique path** through the kill chain (different execution, persistence, lateral-movement, C2, exfiltration, and impact choices), so the four read as four distinct incidents, not four copies of the same one.
+The four scenarios in [`13-full-attack-chain/`](../scenarios/13-full-attack-chain/) are each a **complete, standalone incident narrative** — starting at initial phishing access and running all the way through to an Impact-stage outcome, not a partial segment. Each of the four follows a **different technique path** through the kill chain (different execution, persistence, lateral-movement, C2, exfiltration, and impact choices), so the four read as four distinct incidents, not four copies of the same one.
 
 They use [`templates/full-chain-scenario-readme.md`](templates/full-chain-scenario-readme.md), which adds two extra top-level sections *after* MITRE Mapping:
 
@@ -169,7 +169,7 @@ Each side of the chain is a clickable relative link to the neighbour scenario's 
 
 Copy the appropriate template into the target scenario folder and rename to `README.md`:
 
-- **Regular scenarios (96 of them):** copy [`templates/standard-scenario-readme.md`](templates/standard-scenario-readme.md) to `02-scenarios/<category>/<AGC-nnn-slug>/README.md`.
-- **Full Attack-Chain scenarios (AGC-077…080):** copy [`templates/full-chain-scenario-readme.md`](templates/full-chain-scenario-readme.md) to `02-scenarios/13-full-attack-chain/<AGC-nnn-slug>/README.md`.
+- **Regular scenarios (96 of them):** copy [`templates/standard-scenario-readme.md`](templates/standard-scenario-readme.md) to `scenarios/<category>/<AGC-nnn-slug>/README.md`.
+- **Full Attack-Chain scenarios (AGC-077…080):** copy [`templates/full-chain-scenario-readme.md`](templates/full-chain-scenario-readme.md) to `scenarios/13-full-attack-chain/<AGC-nnn-slug>/README.md`.
 
 Then fill each section top-to-bottom, in the same order a real incident unfolds: understand the tradecraft, run the simulation, watch the detection fire, work the investigation, write the report, map to MITRE.

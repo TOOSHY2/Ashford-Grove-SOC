@@ -28,35 +28,15 @@ Author: **TOOSHY2** · SOC Analysis · Detection & Investigation
 
 ---
 
-## Repository structure
-
-```
-.
-├── README.md                          ← you are here
-├── attack-navigator-layer.json        Importable ATT&CK Navigator coverage layer
-├── 01-docs/
-│   ├── 01-architecture.md             Full environment spec: zones, VMs, firewall rules
-│   ├── 02-attack-narrative.md         The breach story end-to-end, and scenario sequencing
-│   ├── 03-scenario-template.md        Field-by-field guide to the scenario format
-│   ├── 04-detection-tuning-log.md     Rule changes made in response to false positives
-│   └── templates/                     Copy-paste scenario skeletons
-└── 02-scenarios/
-    ├── 00-index.md                    All 100 scenarios: ID, category, verdict, confidence
-    ├── 01-phishing/ … 16-insider-threat/
-    │   └── AGC-XXX-<name>/
-    │       ├── README.md              The complete scenario
-    │       └── screenshots/           Evidence images, numbered in reference order
-```
-
 ## Documentation
 
 | Doc | What's in it |
 |---|---|
-| [`01-docs/01-architecture.md`](01-docs/01-architecture.md) | Zones, IPs, VM specs, firewall rules |
-| [`01-docs/02-attack-narrative.md`](01-docs/02-attack-narrative.md) | The breach story end-to-end, and why scenarios are numbered the way they are |
-| [`01-docs/03-scenario-template.md`](01-docs/03-scenario-template.md) | Field-by-field guide to the scenario format |
-| [`01-docs/04-detection-tuning-log.md`](01-docs/04-detection-tuning-log.md) | Detection rules tuned after false positives |
-| [`02-scenarios/00-index.md`](02-scenarios/00-index.md) | Full 100-scenario index |
+| [`docs/01-architecture.md`](docs/01-architecture.md) | Zones, IPs, VM specs, firewall rules |
+| [`docs/02-attack-narrative.md`](docs/02-attack-narrative.md) | The breach story end-to-end, and why scenarios are numbered the way they are |
+| [`docs/03-scenario-template.md`](docs/03-scenario-template.md) | Field-by-field guide to the scenario format |
+| [`docs/04-detection-tuning-log.md`](docs/04-detection-tuning-log.md) | Detection rules tuned after false positives |
+| [`scenarios/00-index.md`](scenarios/00-index.md) | Full 100-scenario index |
 | [`attack-navigator-layer.json`](attack-navigator-layer.json) | Importable MITRE ATT&CK coverage heatmap |
 
 ## The premise
@@ -75,9 +55,9 @@ Three different readers want three different things from a portfolio. Pick the p
 
 | If you want to… | Read it as | Start at |
 |---|---|---|
-| **Understand one incident deeply** | A narrative — one continuous breach across sequential scenarios, each linking to the step before and after | [AGC-001](02-scenarios/01-phishing/AGC-001-spoofed-display-name/README.md), then follow the `Chain` field forward |
-| **Assess analytical skill quickly** | A skills sample — four complete incidents plus twenty judgment calls where the answer isn't obvious | [AGC-077](02-scenarios/13-full-attack-chain/AGC-077-full-chain-credential-to-ransomware/README.md) and [AGC-085](02-scenarios/14-false-positive/AGC-085-offhours-service-account/README.md) |
-| **Find a specific technique** | A reference — indexed by ID, category, and ATT&CK technique | [`02-scenarios/00-index.md`](02-scenarios/00-index.md) |
+| **Understand one incident deeply** | A narrative — one continuous breach across sequential scenarios, each linking to the step before and after | [AGC-001](scenarios/01-phishing/AGC-001-spoofed-display-name/README.md), then follow the `Chain` field forward |
+| **Assess analytical skill quickly** | A skills sample — four complete incidents plus twenty judgment calls where the answer isn't obvious | [AGC-077](scenarios/13-full-attack-chain/AGC-077-full-chain-credential-to-ransomware/README.md) and [AGC-085](scenarios/14-false-positive/AGC-085-offhours-service-account/README.md) |
+| **Find a specific technique** | A reference — indexed by ID, category, and ATT&CK technique | [`scenarios/00-index.md`](scenarios/00-index.md) |
 | **See coverage at a glance** | A heatmap — every technique across the full ATT&CK matrix | [`attack-navigator-layer.json`](attack-navigator-layer.json) → import into [ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) |
 
 ## What this does that comparable portfolios don't
@@ -132,7 +112,7 @@ Most public SOC labs demonstrate that a SIEM was installed and an alert fired. T
 
 Each zone sits behind its own dedicated firewall interface rather than a shared VLAN trunk. Shared trunks are common in real enterprises for cost reasons, but they open VLAN-hopping as an attack class; dedicated interfaces close it entirely. Realism here means making the call a security-conscious firm would make, not copying every real-world shortcut.
 
-Full specification — VM specs, addressing policy, complete firewall ruleset: [`01-docs/01-architecture.md`](01-docs/01-architecture.md)
+Full specification — VM specs, addressing policy, complete firewall ruleset: [`docs/01-architecture.md`](docs/01-architecture.md)
 
 ## Anatomy of a scenario
 
@@ -161,31 +141,31 @@ SOC Perspective
 
 The four full-chain incidents add two sections: an **attacker-vs-analyst timeline** showing both sides against the same clock, and a **mock escalation** — the message an analyst would actually send a manager.
 
-Field-by-field guide: [`01-docs/03-scenario-template.md`](01-docs/03-scenario-template.md)
+Field-by-field guide: [`docs/03-scenario-template.md`](docs/03-scenario-template.md)
 
 ## Scenario catalog
 
 | Category | Track | Count | Progress |
 |---|---|---:|:---|
-| [01 · Phishing & Initial Access](02-scenarios/01-phishing/) | Lifecycle | 10 | `▱▱▱▱▱▱▱▱▱▱` 0/10 |
-| [02 · Execution](02-scenarios/02-execution/) | Lifecycle | 8 | `▱▱▱▱▱▱▱▱` 0/8 |
-| [03 · Persistence](02-scenarios/03-persistence/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
-| [04 · Privilege Escalation](02-scenarios/04-privilege-escalation/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
-| [05 · Credential Access](02-scenarios/05-credential-access/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
-| [06 · Discovery](02-scenarios/06-discovery/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
-| [07 · Lateral Movement](02-scenarios/07-lateral-movement/) | Lifecycle | 8 | `▱▱▱▱▱▱▱▱` 0/8 |
-| [08 · Command & Control](02-scenarios/08-command-control/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
-| [09 · Collection](02-scenarios/09-collection/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
-| [10 · Exfiltration](02-scenarios/10-exfiltration/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
-| [11 · Defense Evasion](02-scenarios/11-defense-evasion/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
-| [12 · Impact & Recovery](02-scenarios/12-impact-recovery/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
-| [13 · Full Attack Chain](02-scenarios/13-full-attack-chain/) | Capstone | 4 | `▱▱▱▱` 0/4 |
-| [14 · False Positive Triage](02-scenarios/14-false-positive/) | Judgment | 8 | `▱▱▱▱▱▱▱▱` 0/8 |
-| [15 · Proactive Threat Hunting](02-scenarios/15-threat-hunting/) | Judgment | 6 | `▱▱▱▱▱▱` 0/6 |
-| [16 · Insider Threat](02-scenarios/16-insider-threat/) | Judgment | 6 | `▱▱▱▱▱▱` 0/6 |
+| [01 · Phishing & Initial Access](scenarios/01-phishing/) | Lifecycle | 10 | `▱▱▱▱▱▱▱▱▱▱` 0/10 |
+| [02 · Execution](scenarios/02-execution/) | Lifecycle | 8 | `▱▱▱▱▱▱▱▱` 0/8 |
+| [03 · Persistence](scenarios/03-persistence/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
+| [04 · Privilege Escalation](scenarios/04-privilege-escalation/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
+| [05 · Credential Access](scenarios/05-credential-access/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
+| [06 · Discovery](scenarios/06-discovery/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
+| [07 · Lateral Movement](scenarios/07-lateral-movement/) | Lifecycle | 8 | `▱▱▱▱▱▱▱▱` 0/8 |
+| [08 · Command & Control](scenarios/08-command-control/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
+| [09 · Collection](scenarios/09-collection/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
+| [10 · Exfiltration](scenarios/10-exfiltration/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
+| [11 · Defense Evasion](scenarios/11-defense-evasion/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
+| [12 · Impact & Recovery](scenarios/12-impact-recovery/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
+| [13 · Full Attack Chain](scenarios/13-full-attack-chain/) | Capstone | 4 | `▱▱▱▱` 0/4 |
+| [14 · False Positive Triage](scenarios/14-false-positive/) | Judgment | 8 | `▱▱▱▱▱▱▱▱` 0/8 |
+| [15 · Proactive Threat Hunting](scenarios/15-threat-hunting/) | Judgment | 6 | `▱▱▱▱▱▱` 0/6 |
+| [16 · Insider Threat](scenarios/16-insider-threat/) | Judgment | 6 | `▱▱▱▱▱▱` 0/6 |
 | **Total** | | **100** | **0 / 100** |
 
-Complete ID-by-ID index with verdicts and confidence ratings: [`02-scenarios/00-index.md`](02-scenarios/00-index.md)
+Complete ID-by-ID index with verdicts and confidence ratings: [`scenarios/00-index.md`](scenarios/00-index.md)
 
 ## Coverage milestones
 
@@ -212,7 +192,27 @@ Five rules govern every scenario here.
 
 **Correlation over single events.** The strongest calls chain evidence across sources — a host-based event that only becomes meaningful alongside a network-side observation. Where one source alone was insufficient to reach the verdict, the scenario says so explicitly.
 
-**A false positive is a finding, not a failure.** When triage proves an alert benign, the discriminating evidence is stated plainly — the specific fact that separates this from the real attack it resembles — and any resulting rule change is recorded in the [detection tuning log](01-docs/04-detection-tuning-log.md). Correctly clearing an alert and improving the rule behind it is analyst work, not wasted work.
+**A false positive is a finding, not a failure.** When triage proves an alert benign, the discriminating evidence is stated plainly — the specific fact that separates this from the real attack it resembles — and any resulting rule change is recorded in the [detection tuning log](docs/04-detection-tuning-log.md). Correctly clearing an alert and improving the rule behind it is analyst work, not wasted work.
+
+## Repository structure
+
+```
+.
+├── README.md                          ← you are here
+├── attack-navigator-layer.json        Importable ATT&CK Navigator coverage layer
+├── docs/
+│   ├── 01-architecture.md             Full environment spec: zones, VMs, firewall rules
+│   ├── 02-attack-narrative.md         The breach story end-to-end, and scenario sequencing
+│   ├── 03-scenario-template.md        Field-by-field guide to the scenario format
+│   ├── 04-detection-tuning-log.md     Rule changes made in response to false positives
+│   └── templates/                     Copy-paste scenario skeletons
+└── scenarios/
+    ├── 00-index.md                    All 100 scenarios: ID, category, verdict, confidence
+    ├── 01-phishing/ … 16-insider-threat/
+    │   └── AGC-XXX-<name>/
+    │       ├── README.md              The complete scenario
+    │       └── screenshots/           Evidence images, numbered in reference order
+```
 
 ## Toolchain
 
