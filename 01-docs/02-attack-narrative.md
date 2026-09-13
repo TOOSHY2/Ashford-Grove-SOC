@@ -1,0 +1,1 @@
+<!-- Design note: AGC scenario numbering follows the narrative kill-chain order of this lab's breach story, not the literal MITRE ATT&CK tactic sequence (MITRE tactics are goals, not an enforced order). Defense Evasion and Collection/Command-and-Control are intentionally repositioned relative to the official tactic list to match the story's chronology. -->
