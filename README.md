@@ -74,7 +74,7 @@ Most public SOC labs demonstrate that a SIEM was installed and an alert fired. T
 
 ```
 ╔════════════════════════════════════════════════════════════════════╗
-║   UNTRUSTED   ·   OUTSIDE THE PERIMETER                            ║
+║              UNTRUSTED   ·   OUTSIDE THE PERIMETER                 ║
 ║                                                                    ║
 ║   EXT-ATTACKER-SIM      10.10.40.10      Kali Linux                ║
 ║   phishing sink · credential portal · DNS · C2 sink                ║
