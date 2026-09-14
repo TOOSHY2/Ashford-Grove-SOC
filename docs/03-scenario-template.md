@@ -5,7 +5,7 @@ This document describes the structure every scenario `README.md` in this reposit
 - [`templates/standard-scenario-readme.md`](templates/standard-scenario-readme.md) — for the 96 regular scenarios.
 - [`templates/full-chain-scenario-readme.md`](templates/full-chain-scenario-readme.md) — for the 4 Full Attack-Chain scenarios (AGC-077 through AGC-080).
 
-The live reference implementation of the standard structure is [AGC-001](../scenarios/01-phishing/AGC-001-spoofed-display-name/README.md).
+[AGC-001](../scenarios/01-phishing/AGC-001-spoofed-display-name/README.md) will be the reference implementation of the standard structure once it is published; until then, the two blank skeletons above are the authoritative definition of the format.
 
 ## Why two perspectives
 

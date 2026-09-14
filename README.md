@@ -55,8 +55,8 @@ Three different readers want three different things from a portfolio. Pick the p
 
 | If you want to… | Read it as | Start at |
 |---|---|---|
-| **Understand one incident deeply** | A narrative — one continuous breach across sequential scenarios, each linking to the step before and after | [AGC-001](scenarios/01-phishing/AGC-001-spoofed-display-name/README.md), then follow the `Chain` field forward |
-| **Assess analytical skill quickly** | A skills sample — four complete incidents plus twenty judgment calls where the answer isn't obvious | [AGC-077](scenarios/13-full-attack-chain/AGC-077-full-chain-credential-to-ransomware/README.md) and [AGC-085](scenarios/14-false-positive/AGC-085-offhours-service-account/README.md) |
+| **Understand one incident deeply** | A narrative — one continuous breach across sequential scenarios, each linking to the step before and after | [`docs/02-attack-narrative.md`](docs/02-attack-narrative.md) for the end-to-end story now; [AGC-001](scenarios/01-phishing/AGC-001-spoofed-display-name/README.md) → follow the `Chain` field will anchor this path once scenarios are published |
+| **Assess analytical skill quickly** | A skills sample — four end-to-end incidents plus twenty judgment calls where the answer isn't obvious | [`docs/03-scenario-template.md`](docs/03-scenario-template.md) and the [`scenarios/00-index.md`](scenarios/00-index.md) skeleton now; [AGC-077](scenarios/13-full-attack-chain/AGC-077-full-chain-credential-to-ransomware/README.md) (full-chain) and [AGC-085](scenarios/14-false-positive/AGC-085-offhours-service-account/README.md) (false-positive) will anchor this path once published |
 | **Find a specific technique** | A reference — indexed by ID, category, and ATT&CK technique | [`scenarios/00-index.md`](scenarios/00-index.md) |
 | **See coverage at a glance** | A heatmap — every technique across the full ATT&CK matrix | [`attack-navigator-layer.json`](attack-navigator-layer.json) → import into [ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) |
 
