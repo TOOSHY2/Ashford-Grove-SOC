@@ -1,0 +1,61 @@
+{
+    "name": "AGC-044 -- SMB Admin-Share Access",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-044: SMB admin share access (C$, ADMIN$, IPC$) attempted against WIN-CLIENT-02 with raj.patel credentials. All remote failed (errors 67/3743/64). Localhost C$ succeeded with file staging. 3 of 5 Sysmon EID 1 events contain cleartext password. Verdict: True Positive, Confidence: High.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1021.002",
+            "tactic": "lateral-movement",
+            "color": "#ffe766ff",
+            "comment": "AGC-044: net use \\\\10.10.10.102\\C$, \\\\ADMIN$, \\\\IPC$ with /user:raj.patel and cleartext password. Three admin share types targeted in sequence from COMPROMISED-HOST-01. All remote connections failed (errors 67/3743/64). Localhost C$ fallback succeeded with marker file staging (57 bytes to \\\\127.0.0.1\\C$\\Windows\\Temp). 5 Sysmon EID 1 events, 3 with cleartext credentials. Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
