@@ -1,0 +1,72 @@
+{
+    "name": "AGC-026 -- UAC-Bypass Behavior (fodhelper)",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-026: UAC bypass via fodhelper.exe ms-settings registry hijack. Sysmon EID 13 (T1042 RuleName) + EID 1. Verdict: True Positive, Confidence: Critical.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1548.002",
+            "tactic": "privilege-escalation",
+            "color": "#8ec843ff",
+            "comment": "AGC-026: UAC bypass via fodhelper.exe. Registry hijack of HKCU\\Software\\Classes\\ms-settings\\Shell\\Open\\command detected by Sysmon EID 13 (RuleName: T1042). fodhelper.exe launch at High integrity captured by EID 1. Near-zero false positive rate for this registry path. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1548.002",
+            "tactic": "defense-evasion",
+            "color": "#8ec843ff",
+            "comment": "AGC-026: UAC bypass is also defense evasion -- silently elevates without UAC consent prompt. Same evidence as privilege-escalation tactic entry.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
