@@ -21,7 +21,7 @@ is reached. Nothing here is pre-judged.
 | `AGC-011` | Execution | [`AGC-011-browser-spawns-script`](02-execution/AGC-011-browser-spawns-script/README.md) | True Positive | High |
 | `AGC-012` | Execution | [`AGC-012-office-spawns-powershell`](02-execution/AGC-012-office-spawns-powershell/README.md) | True Positive | Critical |
 | `AGC-013` | Execution | [`AGC-013-encoded-powershell`](02-execution/AGC-013-encoded-powershell/README.md) | True Positive | High |
-| `AGC-014` | Execution | [`AGC-014-executable-from-temp`](02-execution/AGC-014-executable-from-temp/README.md) | — (pending) | — (pending) |
+| `AGC-014` | Execution | [`AGC-014-executable-from-temp`](02-execution/AGC-014-executable-from-temp/README.md) | True Positive | Medium |
 | `AGC-015` | Execution | [`AGC-015-signed-binary-proxy`](02-execution/AGC-015-signed-binary-proxy/README.md) | — (pending) | — (pending) |
 | `AGC-016` | Execution | [`AGC-016-wmi-process-creation`](02-execution/AGC-016-wmi-process-creation/README.md) | — (pending) | — (pending) |
 | `AGC-017` | Execution | [`AGC-017-task-triggered-execution`](02-execution/AGC-017-task-triggered-execution/README.md) | — (pending) | — (pending) |
