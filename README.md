@@ -37,7 +37,7 @@ Author: **TOOSHY2** · SOC Analysis · Detection & Investigation
 | [`docs/03-scenario-template.md`](docs/03-scenario-template.md) | Field-by-field guide to the scenario format |
 | [`docs/04-detection-tuning-log.md`](docs/04-detection-tuning-log.md) | Detection rules tuned after false positives |
 | [`scenarios/00-index.md`](scenarios/00-index.md) | Full 100-scenario index |
-| [`attack-navigator-layer.json`](attack-navigator-layer.json) | Importable MITRE ATT&CK coverage heatmap |
+| [`MITRE-Mapping/attack-navigator-layer.json`](MITRE-Mapping/attack-navigator-layer.json) | Importable MITRE ATT&CK coverage heatmap |
 
 ## The premise
 

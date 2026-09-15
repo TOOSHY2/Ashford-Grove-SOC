@@ -142,7 +142,7 @@ Every scenario folder is **markdown-only**: a single `README.md`, nothing else. 
 
 ## Project-wide MITRE view
 
-Each scenario's own `### MITRE Mapping` table covers the techniques *that scenario* exercises. The **`08-MITRE-Mapping/attack-navigator-layer.json`** aggregates all 100 scenarios' MITRE coverage into a single importable heatmap for the official [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) — a project-wide view that no single scenario's own table can provide. Import it into the Navigator to see, at a glance, which tactics and techniques the portfolio covers and which are still open.
+Each scenario's own `### MITRE Mapping` table covers the techniques *that scenario* exercises. The **`MITRE-Mapping/attack-navigator-layer.json`** aggregates all 100 scenarios' MITRE coverage into a single importable heatmap for the official [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) — a project-wide view that no single scenario's own table can provide. Import it into the Navigator to see, at a glance, which tactics and techniques the portfolio covers and which are still open.
 
 ## Chain notation
 
