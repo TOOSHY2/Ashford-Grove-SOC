@@ -1,0 +1,61 @@
+{
+    "name": "AGC-020 -- Scheduled-Task Persistence",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-020: Scheduled task persistence via schtasks /create with daily trigger. Verdict: True Positive, Confidence: High.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1053.005",
+            "tactic": "persistence",
+            "color": "#ffe766ff",
+            "comment": "AGC-020: schtasks /create /tn AGC020Test with cmd.exe action and daily 03:00 trigger. Sysmon EID 1 captured full CommandLine. Task Scheduler EID 106 confirmed registration. Security EID 4698 absent (audit policy gap). Execution companion: AGC-017. Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
