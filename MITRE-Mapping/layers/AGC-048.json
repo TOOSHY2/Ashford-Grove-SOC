@@ -1,0 +1,61 @@
+{
+    "name": "AGC-048 -- SSH Pivot LAN to DMZ",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-048: SSH pivot from LAN workstation to DMZ (10.10.20.10) and EXT (10.10.40.10). Both connections timed out (firewall blocked). 2 Sysmon EID 1 for ssh.exe with target usernames. Cross-zone SSH from workstation is extremely high-signal. Verdict: True Positive, Confidence: High.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1021.004",
+            "tactic": "lateral-movement",
+            "color": "#ffe766ff",
+            "comment": "AGC-048: ssh.exe dmzadmin@10.10.20.10 (PID 5448) and ssh.exe kaliadmin@10.10.40.10 (PID 2336) from workstation COMPROMISED-HOST-01. LAN->DMZ and LAN->EXT cross-zone SSH attempts. Both timed out (OPNsense firewall blocked). OpenSSH for Windows v9.5.6.2. StrictHostKeyChecking=no + BatchMode=yes flags. Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
