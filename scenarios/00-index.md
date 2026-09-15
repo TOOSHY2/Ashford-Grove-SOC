@@ -15,7 +15,7 @@ is reached. Nothing here is pre-judged.
 | `AGC-005` | Phishing & Initial Access | [`AGC-005-url-shortener-redirect`](01-phishing/AGC-005-url-shortener-redirect/README.md) | True Positive | High |
 | `AGC-006` | Phishing & Initial Access | [`AGC-006-html-attachment-redirect`](01-phishing/AGC-006-html-attachment-redirect/README.md) | True Positive | High |
 | `AGC-007` | Phishing & Initial Access | [`AGC-007-macro-lure-document`](01-phishing/AGC-007-macro-lure-document/README.md) | True Positive | High |
-| `AGC-008` | Phishing & Initial Access | [`AGC-008-password-reset-lure`](01-phishing/AGC-008-password-reset-lure/README.md) | — (pending) | — (pending) |
+| `AGC-008` | Phishing & Initial Access | [`AGC-008-password-reset-lure`](01-phishing/AGC-008-password-reset-lure/README.md) | True Positive | Critical |
 | `AGC-009` | Phishing & Initial Access | [`AGC-009-oauth-consent-phish`](01-phishing/AGC-009-oauth-consent-phish/README.md) | — (pending) | — (pending) |
 | `AGC-010` | Phishing & Initial Access | [`AGC-010-user-reported-triage`](01-phishing/AGC-010-user-reported-triage/README.md) | — (pending) | — (pending) |
 | `AGC-011` | Execution | [`AGC-011-browser-spawns-script`](02-execution/AGC-011-browser-spawns-script/README.md) | — (pending) | — (pending) |
