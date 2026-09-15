@@ -1,0 +1,61 @@
+{
+    "name": "AGC-054 -- Rare / First-Seen Domain",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-054: 4 first-seen domains resolving to 10.10.40.10 (C2 IP). 4 Sysmon EID 22 events. Domain rarity alone = Medium; combined with behavioral C2 = High. Verdict: True Positive (conditional), Confidence: Medium.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1071",
+            "tactic": "command-and-control",
+            "color": "#ff6666ff",
+            "comment": "AGC-054: 4 first-seen domains (agc054-c2drop.xyz, agc054-payload-drop.net, agc054-exfil-relay.org, agc054-c2-backup.io) all resolving to 10.10.40.10. Zero prior DNS history. Multi-domain convergence to single C2 IP. Domain rarity alone = Medium confidence. Combined with AGC-051/052/053 behavioral C2 indicators = High. Verdict: True Positive (conditional), Confidence: Medium.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 50
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
