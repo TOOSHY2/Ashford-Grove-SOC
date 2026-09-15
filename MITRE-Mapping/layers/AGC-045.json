@@ -1,0 +1,61 @@
+{
+    "name": "AGC-045 -- WinRM Lateral Movement",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-045: WinRM lateral movement via Invoke-Command. Remote target 10.10.10.102 unreachable (TCP 5985). Localhost execution succeeded after Enable-PSRemoting. wsmprovhost.exe spawned, 4 Type 3 logons, 50 WinRM operational events. Verdict: True Positive, Confidence: High.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1021.006",
+            "tactic": "lateral-movement",
+            "color": "#ffe766ff",
+            "comment": "AGC-045: Invoke-Command -ComputerName targeting WIN-CLIENT-02 (10.10.10.102). Remote failed (TCP 5985 unreachable). Localhost WinRM succeeded after Enable-PSRemoting. wsmprovhost.exe -Embedding spawned (PID 5680). 4 Security EID 4624 Type 3 logons from 127.0.0.1 via NTLM V2. WinRM Operational EID 91: shell creation with ResourceUri Microsoft.PowerShell. Marker file written (63 bytes). Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
