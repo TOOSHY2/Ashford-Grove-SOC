@@ -141,11 +141,6 @@ Connection from 10.10.10.103 (COMPROMISED-HOST-01) to 10.10.40.10 (EXT-ATTACKER-
 |---|---|---|---|---|
 | Initial Access (TA0001) | T1566.002 | Phishing: Spearphishing Link | .eml file with spoofed display name "IT Support" from `ashford-grove-support.local`; link to `http://10.10.40.10/portal-login` (credential harvesting page); HTTP 200 response confirmed | High |
 
-## Evidence Screenshots
+## Evidence
 
-| # | Filename | Description |
-|---|---|---|
-| 01 | `screenshots/01-baseline-desktop.png` | COMPROMISED-HOST-01 desktop state before scenario execution |
-| 02 | `screenshots/02-wazuh-dashboard-baseline.png` | MGMT-GUI-TEMP desktop (Wazuh dashboard access point) |
-| 03 | `screenshots/03-email-opened.png` | COMPROMISED-HOST-01 showing Edge browser with phishing page loaded |
-| 04 | `screenshots/04-credential-harvesting-page.png` | COMPROMISED-HOST-01 showing the credential harvesting page after link click |
+Screenshots: to be added manually by the analyst.

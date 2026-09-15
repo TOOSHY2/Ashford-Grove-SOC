@@ -136,13 +136,13 @@ A mock Slack message or ticket to a manager. Four short paragraphs — **what ha
 
 ## Scenario folder layout
 
-Every scenario folder — regular and Full Attack-Chain alike — is **markdown-only**: a `README.md` and a `screenshots/` subfolder, nothing else. Keeping every one of the 100 folders to the same two-item shape means browsing the repo is predictable — a reader always knows where to look, and the diff between "in progress" and "done" is just whether a `README.md` is empty.
+Every scenario folder is **markdown-only**: a single `README.md`, nothing else. Evidence is textual — command output, log excerpts, Sysmon Event IDs, Wazuh alert JSON — embedded directly in the report's Detection and Investigation sections. Screenshots are not part of the automated pipeline; if an analyst later adds manual screenshots, they go in a `screenshots/` subfolder.
 
 (The four Full Attack-Chain scenarios may later gain one optional raw-evidence file — a PCAP, an `.eml`, or a JSON export — added by hand when the writeup earns it. That's the single, deliberate exception; the 96 regular scenarios never take on extra file types.)
 
 ## Project-wide MITRE view
 
-Each scenario's own `### MITRE Mapping` table covers the techniques *that scenario* exercises. The **`attack-navigator-layer.json`** at the repo root aggregates all 100 scenarios' MITRE coverage into a single importable heatmap for the official [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) — a project-wide view that no single scenario's own table can provide. Import it into the Navigator to see, at a glance, which tactics and techniques the portfolio covers and which are still open.
+Each scenario's own `### MITRE Mapping` table covers the techniques *that scenario* exercises. The **`08-MITRE-Mapping/attack-navigator-layer.json`** aggregates all 100 scenarios' MITRE coverage into a single importable heatmap for the official [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) — a project-wide view that no single scenario's own table can provide. Import it into the Navigator to see, at a glance, which tactics and techniques the portfolio covers and which are still open.
 
 ## Chain notation
 
@@ -154,16 +154,17 @@ The **Chain** field on the Card uses this format:
 
 Each side of the chain is a clickable relative link to the neighbour scenario's `README.md`. The chain lets a reader walk the whole narrative kill chain end-to-end, one scenario at a time, without going back to the index.
 
-## Screenshots
+## Evidence
 
-- Live in the scenario's `screenshots/` subfolder next to `README.md`.
-- Numbered **in the order they're referenced inside the README** — `01-*.png`, `02-*.png`, `03-*.png`, … A scenario with 4 screenshots has files `01-` through `04-`.
-- The suffix after the number is a short kebab-case description (e.g. `01-wazuh-alert-detail.png`, `02-sysmon-process-tree.png`, `03-zeek-http-log.png`).
-- Each screenshot is **embedded inline** in the subsection that references it, with a one-line caption immediately underneath — never just linked with no context. The correct embed form is:
+All evidence is **textual and embedded directly** in the report sections (Detection, Investigation). This includes:
 
-  ```markdown
-  ![One-line caption describing what the screenshot shows](screenshots/01-wazuh-alert-detail.png)
-  ```
+- Command output (verbatim, timestamped)
+- Sysmon Event IDs and field values
+- Wazuh alert JSON excerpts
+- Security Onion / Zeek / Suricata log entries
+- File contents and header analysis
+
+Screenshots are not captured as part of the automated execution pipeline. If an analyst later adds manual screenshots, they follow numbered naming (`01-*.png`, `02-*.png`) in a `screenshots/` subfolder and are embedded inline in the relevant subsection.
 
 ## Starting a new scenario
 

@@ -39,3 +39,7 @@ ends, not just the successful path. -->
 | Tactic | Technique ID | Technique Name | Evidence | Confidence |
 |---|---|---|---|---|
 | | | | | |
+
+## Evidence
+
+Screenshots: to be added manually by the analyst.
