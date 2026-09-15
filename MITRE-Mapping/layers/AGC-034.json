@@ -1,0 +1,61 @@
+{
+    "name": "AGC-034 -- Kerberos Ticket Enumeration",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-034: klist ticket enumeration. Weak signal alone. Verdict: True Positive (Probable), Confidence: Medium.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1558",
+            "tactic": "credential-access",
+            "color": "#ff6666ff",
+            "comment": "AGC-034: klist and klist sessions executed by Administrator. 0 Kerberos tickets cached (domain trust broken, NTLM-only). Enumeration step -- weak signal alone, value in downstream correlation. Verdict: True Positive (Probable), Confidence: Medium.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 50
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
