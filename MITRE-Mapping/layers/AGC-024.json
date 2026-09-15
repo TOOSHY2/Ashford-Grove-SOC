@@ -1,0 +1,61 @@
+{
+    "name": "AGC-024 -- Malicious Browser-Extension Persistence",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-024: Browser extension persistence with broad permissions. Detection gap: no automated monitoring. Verdict: True Positive, Confidence: Medium.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1176",
+            "tactic": "persistence",
+            "color": "#ff6666ff",
+            "comment": "AGC-024: Simulated malicious browser extension with manifest permissions tabs, webRequest, cookies, storage, <all_urls>. DETECTION GAP: No automated Sysmon/Wazuh monitoring for browser extension installations. Manual inspection only. Verdict: True Positive, Confidence: Medium.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 50
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
