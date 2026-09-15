@@ -1,0 +1,61 @@
+{
+    "name": "AGC-049 -- One Account Multi-Host Auth",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-049: raj.patel authenticated to 4 distinct hosts using 4 protocols (SMB, RDP, SSH, WMI) within 96 seconds. 8 Sysmon EID 1 events. Velocity + mechanism diversity = active lateral movement. Verdict: True Positive, Confidence: Critical.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1021",
+            "tactic": "lateral-movement",
+            "color": "#8ec843ff",
+            "comment": "AGC-049: raj.patel credential used for SMB (10.10.10.102 + 10.10.10.10), RDP (10.10.10.101), SSH (10.10.20.10), WMI (127.0.0.1). 4 protocols, 4+ distinct targets, 96-second window. 8 Sysmon EID 1 events. 4 events contain cleartext password. Cross-zone SSH attempt (LAN->DMZ). Velocity + mechanism diversity has zero legitimate false positive for standard user. P1 active lateral movement. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
