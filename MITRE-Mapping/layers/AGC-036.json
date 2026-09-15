@@ -1,0 +1,61 @@
+{
+    "name": "AGC-036 -- NTLM Authentication Anomaly",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-036: NTLM auth anomaly -- IP-based SMB connection forces NTLM V2 fallback on domain-joined host. Benign cause (IP-based connection) confirmed. Verdict: True Positive (Probable), Confidence: Medium.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1557.001",
+            "tactic": "credential-access",
+            "color": "#ff6666ff",
+            "comment": "AGC-036: NTLM auth anomaly. EID 4624 shows NTLM V2 auth (Logon Type 3, null Logon GUID) for IP-based SMB connections. Benign root cause confirmed: IP-based connection bypasses Kerberos SPN lookup. NTLM attack surface exists but no active relay detected. Technique mapped as candidate -- T1557.001 precondition (NTLM usable) confirmed, but relay not observed. Verdict: True Positive (Probable), Confidence: Medium.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 50
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
