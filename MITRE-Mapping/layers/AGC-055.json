@@ -1,0 +1,72 @@
+{
+    "name": "AGC-055 -- PowerShell Outbound Connection",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-055: powershell.exe initiated 4 outbound TCP connections to 10.10.40.10 using 3 cmdlets (Invoke-WebRequest, Invoke-RestMethod, Net.WebClient) across ports 443/80. 4 Sysmon EID 3, 1 EID 1 with -ExecutionPolicy Bypass. Verdict: True Positive, Confidence: High.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1071.001",
+            "tactic": "command-and-control",
+            "color": "#ffe766ff",
+            "comment": "AGC-055: powershell.exe (PID 4104) initiated 4 outbound TCP connections to 10.10.40.10 on ports 443/80 using Invoke-WebRequest, Invoke-RestMethod, and Net.WebClient. 4 Sysmon EID 3 events captured. ProcessGuid correlation to EID 1 reveals -ExecutionPolicy Bypass -File C:\\Temp\\agc055-sim.ps1. Process identity (powershell.exe) is the primary detection signal. Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1059.001",
+            "tactic": "execution",
+            "color": "#ffe766ff",
+            "comment": "AGC-055: PowerShell execution with -ExecutionPolicy Bypass from C:\\Temp\\ directory. Sysmon EID 1 captured process creation. Policy override + non-standard script path + outbound network connections = malicious PowerShell execution. Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
