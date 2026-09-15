@@ -16,7 +16,7 @@ is reached. Nothing here is pre-judged.
 | `AGC-006` | Phishing & Initial Access | [`AGC-006-html-attachment-redirect`](01-phishing/AGC-006-html-attachment-redirect/README.md) | True Positive | High |
 | `AGC-007` | Phishing & Initial Access | [`AGC-007-macro-lure-document`](01-phishing/AGC-007-macro-lure-document/README.md) | True Positive | High |
 | `AGC-008` | Phishing & Initial Access | [`AGC-008-password-reset-lure`](01-phishing/AGC-008-password-reset-lure/README.md) | True Positive | Critical |
-| `AGC-009` | Phishing & Initial Access | [`AGC-009-oauth-consent-phish`](01-phishing/AGC-009-oauth-consent-phish/README.md) | — (pending) | — (pending) |
+| `AGC-009` | Phishing & Initial Access | [`AGC-009-oauth-consent-phish`](01-phishing/AGC-009-oauth-consent-phish/README.md) | True Positive (conceptual) | Medium |
 | `AGC-010` | Phishing & Initial Access | [`AGC-010-user-reported-triage`](01-phishing/AGC-010-user-reported-triage/README.md) | — (pending) | — (pending) |
 | `AGC-011` | Execution | [`AGC-011-browser-spawns-script`](02-execution/AGC-011-browser-spawns-script/README.md) | — (pending) | — (pending) |
 | `AGC-012` | Execution | [`AGC-012-office-spawns-powershell`](02-execution/AGC-012-office-spawns-powershell/README.md) | — (pending) | — (pending) |
