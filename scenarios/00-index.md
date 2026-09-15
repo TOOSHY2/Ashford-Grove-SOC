@@ -93,7 +93,7 @@ is reached. Nothing here is pre-judged.
 | `AGC-083` | False Positive Triage | [`AGC-083-lsass-av-selfscan`](14-false-positive/AGC-083-lsass-av-selfscan/README.md) | — (pending) | — (pending) |
 | `AGC-084` | False Positive Triage | [`AGC-084-dns-beacon-saas`](14-false-positive/AGC-084-dns-beacon-saas/README.md) | — (pending) | — (pending) |
 | `AGC-085` | False Positive Triage | [`AGC-085-offhours-service-account`](14-false-positive/AGC-085-offhours-service-account/README.md) | — (pending) | — (pending) |
-| `AGC-086` | False Positive Triage | [`AGC-086-large-upload-cloud-backup`](14-false-positive/AGC-086-large-upload-cloud-backup/README.md) | — (pending) | — (pending) |
+| `AGC-086` | False Positive Triage | [`AGC-086-regulatory-submission`](14-false-positive/AGC-086-regulatory-submission/README.md) | — (pending) | — (pending) |
 | `AGC-087` | False Positive Triage | [`AGC-087-portscan-vuln-scanner`](14-false-positive/AGC-087-portscan-vuln-scanner/README.md) | — (pending) | — (pending) |
 | `AGC-088` | False Positive Triage | [`AGC-088-log-clearing-retention`](14-false-positive/AGC-088-log-clearing-retention/README.md) | — (pending) | — (pending) |
 | `AGC-089` | Proactive Threat Hunting | [`AGC-089-hunt-wmi-persistence`](15-threat-hunting/AGC-089-hunt-wmi-persistence/README.md) | — (pending) | — (pending) |
