@@ -1,0 +1,72 @@
+{
+    "name": "AGC-059 -- Browser Data Staging",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-059: 4 Chrome browser files (Cookies, History, Web Data, Login Data) staged to C:\\Windows\\Temp\\agc059_staged\\. Cookies = session hijack without auth. AD reset does NOT invalidate. Verdict: True Positive, Confidence: Critical.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1074.001",
+            "tactic": "collection",
+            "color": "#8ec843ff",
+            "comment": "AGC-059: 4 Chrome browser data files staged to C:\\Windows\\Temp\\agc059_staged\\. Cookies, History, Web Data, Login Data. Dedicated staging directory. Sysmon EID 11 missed (extensionless files). Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1539",
+            "tactic": "credential-access",
+            "color": "#8ec843ff",
+            "comment": "AGC-059: Chrome Cookies file staged for exfiltration. Session cookies enable immediate account hijack bypassing password + MFA. AD password reset does NOT invalidate web session cookies. Time-critical: sessions must be individually terminated. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
