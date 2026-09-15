@@ -26,7 +26,7 @@ is reached. Nothing here is pre-judged.
 | `AGC-016` | Execution | [`AGC-016-wmi-process-creation`](02-execution/AGC-016-wmi-process-creation/README.md) | True Positive | High |
 | `AGC-017` | Execution | [`AGC-017-task-triggered-execution`](02-execution/AGC-017-task-triggered-execution/README.md) | True Positive | High |
 | `AGC-018` | Execution | [`AGC-018-eicar-detection-test`](02-execution/AGC-018-eicar-detection-test/README.md) | Pipeline Pass | High |
-| `AGC-019` | Persistence | [`AGC-019-registry-run-key`](03-persistence/AGC-019-registry-run-key/README.md) | — (pending) | — (pending) |
+| `AGC-019` | Persistence | [`AGC-019-registry-run-key`](03-persistence/AGC-019-registry-run-key/README.md) | True Positive | High |
 | `AGC-020` | Persistence | [`AGC-020-scheduled-task`](03-persistence/AGC-020-scheduled-task/README.md) | — (pending) | — (pending) |
 | `AGC-021` | Persistence | [`AGC-021-new-autostart-service`](03-persistence/AGC-021-new-autostart-service/README.md) | — (pending) | — (pending) |
 | `AGC-022` | Persistence | [`AGC-022-wmi-event-subscription`](03-persistence/AGC-022-wmi-event-subscription/README.md) | — (pending) | — (pending) |
