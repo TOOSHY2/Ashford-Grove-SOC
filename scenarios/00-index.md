@@ -30,7 +30,7 @@ is reached. Nothing here is pre-judged.
 | `AGC-020` | Persistence | [`AGC-020-scheduled-task`](03-persistence/AGC-020-scheduled-task/README.md) | True Positive | High |
 | `AGC-021` | Persistence | [`AGC-021-new-autostart-service`](03-persistence/AGC-021-new-autostart-service/README.md) | True Positive | Critical |
 | `AGC-022` | Persistence | [`AGC-022-wmi-event-subscription`](03-persistence/AGC-022-wmi-event-subscription/README.md) | True Positive | High |
-| `AGC-023` | Persistence | [`AGC-023-new-local-admin`](03-persistence/AGC-023-new-local-admin/README.md) | — (pending) | — (pending) |
+| `AGC-023` | Persistence | [`AGC-023-new-local-admin`](03-persistence/AGC-023-new-local-admin/README.md) | True Positive | High |
 | `AGC-024` | Persistence | [`AGC-024-browser-extension`](03-persistence/AGC-024-browser-extension/README.md) | — (pending) | — (pending) |
 | `AGC-025` | Privilege Escalation | [`AGC-025-privileged-group-add`](04-privilege-escalation/AGC-025-privileged-group-add/README.md) | — (pending) | — (pending) |
 | `AGC-026` | Privilege Escalation | [`AGC-026-uac-bypass-behavior`](04-privilege-escalation/AGC-026-uac-bypass-behavior/README.md) | — (pending) | — (pending) |
