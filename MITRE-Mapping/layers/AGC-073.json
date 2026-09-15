@@ -1,0 +1,61 @@
+{
+    "name": "AGC-073 -- Critical Service Disruption",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-073: sc.exe stop Spooler confirmed Running->Stopped. AGC073DemoSvc installed (EID 7045) and stopped. EID 7036 NOT observed (Win11 gap). Sysmon EID 1 captured all sc.exe commands. Verdict: True Positive, Confidence: High.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1489",
+            "tactic": "impact",
+            "color": "#ffe766ff",
+            "comment": "AGC-073: sc.exe stop Spooler (PID 2200, Sysmon EID 1) confirmed service Running->Stopped transition. AGC073DemoSvc installed via sc create (EID 7045) with svchost.exe stub running as SYSTEM (PID 3840). EID 7036 NOT observed on Windows 11 build 26100 (detection gap). Atomic technique reused by AGC-080 impact phase. Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
