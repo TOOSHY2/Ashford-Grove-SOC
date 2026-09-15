@@ -233,6 +233,24 @@ This lab is an on-premises enterprise simulation. Cloud identity, SaaS telemetry
 
 All simulation is confined to lab-owned systems. No live malware, no real phishing to real people, no external targets. Safe test artifacts (EICAR and synthetic equivalents) stand in wherever a real payload would otherwise be required. The attacker segment is isolated and reachable only through one logged firewall rule.
 
+## Development Note
+
+This project's architecture, detection scenarios, and lab implementation
+are my own work — every network zone, every detection logic, and every
+scenario's investigation and verdict was designed and validated by hand
+in a real environment I built and can reproduce end to end.
+
+AI (Claude) was used throughout as a development and documentation
+assistant — drafting scenario templates, structuring repository content,
+and helping organize the write-ups — the way any engineer today uses AI
+tooling alongside their own work. It did not design the architecture,
+choose the detection logic, or run the lab.
+
+**If asked directly:** yes, I used AI as a development and documentation
+assistant. I designed the SOC architecture, defined the detection and
+investigation scenarios, implemented and validated the lab myself, and
+I can explain and reproduce every component of this project.
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE). Use it, adapt it, build on it.
