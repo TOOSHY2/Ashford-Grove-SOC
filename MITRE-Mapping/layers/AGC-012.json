@@ -1,0 +1,72 @@
+{
+    "name": "AGC-012 — Office Spawns PowerShell",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-012: Office application (WINWORD.EXE) spawns powershell.exe. Verdict: True Positive, Confidence: Critical.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1059.001",
+            "tactic": "execution",
+            "color": "#8ec843ff",
+            "comment": "AGC-012: powershell.exe (PID 3184) spawned by WINWORD.EXE (PID 1116). Full command line captured. Marker file confirmed. Zero legitimate justification for this parent-child chain. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1204.002",
+            "tactic": "execution",
+            "color": "#8ec843ff",
+            "comment": "AGC-012: User execution via malicious Office document. Macro triggers PowerShell spawn. Complements AGC-007 (delivery side). Simulated via renamed-binary technique. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
