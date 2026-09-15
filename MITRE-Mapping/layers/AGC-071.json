@@ -1,0 +1,61 @@
+{
+    "name": "AGC-071 -- Obfuscated Command Line",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-071: 3 non-encoded obfuscation methods (string-concat, char-code, backtick). 4 EID 1 events. No -EncodedCommand. Distinct from AGC-013. Verdict: True Positive, Confidence: Medium.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1027.010",
+            "tactic": "defense-evasion",
+            "color": "#ff6666ff",
+            "comment": "AGC-071: 3 non-encoded command obfuscation methods: (1) cmd.exe set+%var% concatenation, (2) PowerShell [char] code construction, (3) PowerShell backtick insertion. 4 Sysmon EID 1 events captured obfuscated CommandLines. No -EncodedCommand (distinct from AGC-013). Heuristic/manual detection required. Verdict: True Positive, Confidence: Medium.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 50
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
