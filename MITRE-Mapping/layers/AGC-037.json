@@ -1,0 +1,83 @@
+{
+    "name": "AGC-037 -- System and User Discovery Burst",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-037: Discovery burst -- 6 distinct commands (systeminfo, whoami, hostname, ipconfig, net user) in 16 seconds. Verdict: True Positive, Confidence: Medium.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1082",
+            "tactic": "discovery",
+            "color": "#ff6666ff",
+            "comment": "AGC-037: systeminfo.exe and HOSTNAME.EXE executed by Administrator in 16-second discovery burst. OS, domain membership, hardware enumerated. Burst pattern (6 distinct commands, shared LogonGuid) is the indicator. Verdict: True Positive, Confidence: Medium.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 50
+        },
+        {
+            "techniqueID": "T1033",
+            "tactic": "discovery",
+            "color": "#ff6666ff",
+            "comment": "AGC-037: whoami.exe /all executed by Administrator. Full identity, groups, privileges enumerated. Part of 6-command discovery burst in 16 seconds. Verdict: True Positive, Confidence: Medium.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 50
+        },
+        {
+            "techniqueID": "T1016",
+            "tactic": "discovery",
+            "color": "#ff6666ff",
+            "comment": "AGC-037: ipconfig.exe /all executed by Administrator. IP, DNS, DHCP configuration enumerated. Part of 6-command discovery burst in 16 seconds. Verdict: True Positive, Confidence: Medium.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 50
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
