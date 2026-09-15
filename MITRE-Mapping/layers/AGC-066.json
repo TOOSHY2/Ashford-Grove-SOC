@@ -1,0 +1,72 @@
+{
+    "name": "AGC-066 -- Compressed Archive + Web Upload",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-066: Unified archive-to-exfil pipeline. Compress-Archive 8 finance docs (1,838 B ZIP) then WebClient.UploadFile to 10.10.40.10:443 and :80. Both HTTP 200. ProcessGuid {eb65e329-ce83-6aa9-cc04-000000001400} links all events. Confirmed data breach. Verdict: True Positive, Confidence: Critical.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1560.001",
+            "tactic": "collection",
+            "color": "#8ec843ff",
+            "comment": "AGC-066: Compress-Archive created agc066_staged.zip (1,838 bytes) from 8 confidential finance documents. EID 11 captured archive creation. Same ProcessGuid as upload events. Unified collection-exfil operation. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1041",
+            "tactic": "exfiltration",
+            "color": "#8ec843ff",
+            "comment": "AGC-066: WebClient.UploadFile POST to 10.10.40.10:443 (HTTPS) and :80 (HTTP). Both succeeded (HTTP 200). 2 EID 3 events. Same ProcessGuid as archive creation. Confirmed data breach -- server acknowledged receipt. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
