@@ -11,7 +11,7 @@ is reached. Nothing here is pre-judged.
 | `AGC-001` | Phishing & Initial Access | [`AGC-001-spoofed-display-name`](01-phishing/AGC-001-spoofed-display-name/README.md) | True Positive | High |
 | `AGC-002` | Phishing & Initial Access | [`AGC-002-lookalike-domain`](01-phishing/AGC-002-lookalike-domain/README.md) | True Positive | High |
 | `AGC-003` | Phishing & Initial Access | [`AGC-003-credential-harvest-link`](01-phishing/AGC-003-credential-harvest-link/README.md) | True Positive | Critical |
-| `AGC-004` | Phishing & Initial Access | [`AGC-004-qr-code-phish`](01-phishing/AGC-004-qr-code-phish/README.md) | — (pending) | — (pending) |
+| `AGC-004` | Phishing & Initial Access | [`AGC-004-qr-code-phish`](01-phishing/AGC-004-qr-code-phish/README.md) | True Positive | Medium |
 | `AGC-005` | Phishing & Initial Access | [`AGC-005-url-shortener-redirect`](01-phishing/AGC-005-url-shortener-redirect/README.md) | — (pending) | — (pending) |
 | `AGC-006` | Phishing & Initial Access | [`AGC-006-html-attachment-redirect`](01-phishing/AGC-006-html-attachment-redirect/README.md) | — (pending) | — (pending) |
 | `AGC-007` | Phishing & Initial Access | [`AGC-007-macro-lure-document`](01-phishing/AGC-007-macro-lure-document/README.md) | — (pending) | — (pending) |
