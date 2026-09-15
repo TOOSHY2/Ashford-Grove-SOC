@@ -1,0 +1,83 @@
+{
+    "name": "AGC-042 -- AD Object Query Burst",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-042: Comprehensive AD object dump attempted via Get-AD* -Filter *, ADSI searcher, and net.exe. All failed (RSAT missing + DC unreachable). Attempt is the indicator. Verdict: True Positive, Confidence: High.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1087.002",
+            "tactic": "discovery",
+            "color": "#ffe766ff",
+            "comment": "AGC-042: Get-ADUser -Filter * -Properties * attempted (RSAT unavailable); [adsisearcher](objectCategory=person) attempted (DC unreachable); net user /domain attempted (error 1355). Full domain user export intended. All failed. Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1018",
+            "tactic": "discovery",
+            "color": "#ffe766ff",
+            "comment": "AGC-042: Get-ADComputer -Filter * -Properties * attempted (RSAT unavailable); [adsisearcher](objectCategory=computer) attempted (DC unreachable). Full domain computer export intended. Both failed. Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1069.002",
+            "tactic": "discovery",
+            "color": "#ffe766ff",
+            "comment": "AGC-042: Get-ADGroup -Filter * -Properties * and Get-ADOrganizationalUnit -Filter * attempted (RSAT unavailable); [adsisearcher](objectCategory=group) attempted (DC unreachable). Full domain group/OU export intended. All failed. Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
