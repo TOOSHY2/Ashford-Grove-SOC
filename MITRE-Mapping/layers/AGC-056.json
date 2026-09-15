@@ -1,0 +1,83 @@
+{
+    "name": "AGC-056 -- Full C2 Process Tree",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-056: Full C2 process tree -- mshta.exe spawns powershell.exe which beacons to 10.10.40.10:443. ProcessGuid correlation proves complete chain. 2 EID 1 + 3 EID 3 events. Verdict: True Positive, Confidence: Critical.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1071.001",
+            "tactic": "command-and-control",
+            "color": "#8ec843ff",
+            "comment": "AGC-056: 3 HTTPS beacon connections from powershell.exe (PID 5740) to 10.10.40.10:443. ProcessGuid {eb65e329-c3de-6aa9-6604-000000001400} links beacon to mshta.exe parent via EID 1 ancestry. Complete attack chain proven. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1218.005",
+            "tactic": "defense-evasion",
+            "color": "#8ec843ff",
+            "comment": "AGC-056: mshta.exe (PID 5316) executed C:\\Temp\\agc056-payload.hta. Signed Microsoft binary used as proxy to execute VBScript that spawned PowerShell. ProcessGuid {eb65e329-c3dc-6aa9-6504-000000001400}. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1059.001",
+            "tactic": "execution",
+            "color": "#8ec843ff",
+            "comment": "AGC-056: powershell.exe -ExecutionPolicy Bypass spawned by mshta.exe. Full C2 beacon command in CommandLine. ParentProcessGuid matches mshta.exe. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
