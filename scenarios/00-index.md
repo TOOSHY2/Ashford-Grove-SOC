@@ -8,7 +8,7 @@ is reached. Nothing here is pre-judged.
 
 | ID | Category | Scenario | Verdict | Confidence |
 |---|---|---|---|:--:|
-| `AGC-001` | Phishing & Initial Access | [`AGC-001-spoofed-display-name`](01-phishing/AGC-001-spoofed-display-name/README.md) | — (pending) | — (pending) |
+| `AGC-001` | Phishing & Initial Access | [`AGC-001-spoofed-display-name`](01-phishing/AGC-001-spoofed-display-name/README.md) | True Positive | High |
 | `AGC-002` | Phishing & Initial Access | [`AGC-002-lookalike-domain`](01-phishing/AGC-002-lookalike-domain/README.md) | — (pending) | — (pending) |
 | `AGC-003` | Phishing & Initial Access | [`AGC-003-credential-harvest-link`](01-phishing/AGC-003-credential-harvest-link/README.md) | — (pending) | — (pending) |
 | `AGC-004` | Phishing & Initial Access | [`AGC-004-qr-code-phish`](01-phishing/AGC-004-qr-code-phish/README.md) | — (pending) | — (pending) |
