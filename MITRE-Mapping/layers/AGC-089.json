@@ -1,0 +1,54 @@
+{
+  "name": "AGC-089: WMI Persistence Hunt",
+  "versions": {
+    "attack": "16",
+    "navigator": "4.9.5",
+    "layer": "4.5"
+  },
+  "domain": "enterprise-attack",
+  "description": "AGC-089: Proactive hunt for WMI event-subscription persistence. One system subscription found (benign). No malicious persistence active.",
+  "filters": {
+    "platforms": ["Windows", "Linux"]
+  },
+  "sorting": 3,
+  "layout": {
+    "layout": "side",
+    "aggregateFunction": "average",
+    "showID": true,
+    "showName": true,
+    "showAggregateScores": true,
+    "countUnscored": false
+  },
+  "hideDisabled": false,
+  "techniques": [
+    {
+      "techniqueID": "T1546.003",
+      "tactic": "persistence",
+      "color": "#ffe766ff",
+      "comment": "AGC-089: Proactive hunt for WMI event-subscription persistence. One WMI triplet found: SCM Event Log Filter/Consumer (NTEventLogEventConsumer) -- legitimate Windows system component. No malicious CommandLine or ActiveScript consumers present. Hunt methodology validated by historical AGC-079 create/delete trail.",
+      "enabled": true,
+      "metadata": [],
+      "links": [],
+      "showSubtechniques": false,
+      "score": 75
+    }
+  ],
+  "gradient": {
+    "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"],
+    "minValue": 0,
+    "maxValue": 100
+  },
+  "legendItems": [
+    {
+      "label": "Hunted: No Malicious Finding",
+      "color": "#ffe766ff"
+    }
+  ],
+  "metadata": [],
+  "links": [],
+  "showTacticRowBackground": true,
+  "tacticRowBackground": "#dddddd",
+  "selectTechniquesAcrossTactics": true,
+  "selectSubtechniquesWithParent": false,
+  "selectVisibleTechniques": false
+}
