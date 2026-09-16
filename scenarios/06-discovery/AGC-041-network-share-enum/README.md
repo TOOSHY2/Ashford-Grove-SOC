@@ -26,9 +26,9 @@
 - **Administrative shares** — C$, ADMIN$, IPC$ that indicate admin-level access is possible
 - **Lateral movement paths** — writable shares that can be used to stage payloads
 
-The key tradecraft distinction is the **sweep pattern**: querying multiple hosts sequentially from a single source. A legitimate user typically accesses one known share path. An attacker systematically enumerates shares across all reachable hosts, often using IP addresses rather than hostnames (indicating enumeration from a list rather than from memory).
+The tradecraft tell is the **sweep**: one source querying several hosts in sequence. A legitimate user opens one known share path. An attacker walks every reachable host, usually by IP rather than hostname — a sign they are working from a list, not from memory.
 
-**Why at this lifecycle stage:** After identifying the network (AGC-037), domain (AGC-038), privileged accounts (AGC-039), and security tools (AGC-040), the attacker now maps accessible data. Network shares are the primary data stores in enterprise environments and the most common exfiltration source. This also informs lateral movement — writable shares on other hosts can be used to stage and execute payloads.
+**Why at this lifecycle stage:** With the network (AGC-037), domain (AGC-038), privileged accounts (AGC-039), and security tools (AGC-040) mapped, the attacker turns to reachable data. File shares hold most enterprise data and are the usual exfiltration source. The sweep also feeds lateral movement — a writable share on another host is a place to stage and run a payload.
 
 ### Simulation
 
@@ -52,7 +52,7 @@ Each remote `net view` timed out after ~20 seconds before returning error 53.
 - All three remote hosts returned error 53 — network connectivity issues prevent share enumeration (consistent with broken domain trust and network isolation observed in prior scenarios)
 - Self-enumeration (10.10.10.103) returned no shared folders — no custom shares configured
 - Local `net share` confirmed only default administrative shares (C$, IPC$, ADMIN$)
-- Despite failures, the **enumeration attempt** itself is the indicator — the attacker tried to map shares across 4 hosts systematically
+- The failures do not matter for detection — the **attempt** is the indicator, and the attacker tried 4 hosts in sequence
 
 **Cleanup:** No persistent artifacts. Commands are read-only.
 
@@ -73,41 +73,41 @@ Each remote `net view` timed out after ~20 seconds before returning error 53.
 
 All share `LogonGuid: {eb65e329-af42-6aa9-df20-570000000000}`, confirming single session.
 
-**Sysmon EID 3 (Network Connection):** 0 events — EID 3 is filtered for `net.exe` by the SwiftOnSecurity Sysmon configuration. SMB connection attempts were not logged at the Sysmon level. Network-level detection (Security Onion, firewall logs) would capture these connection attempts.
+**Sysmon EID 3 (Network Connection):** 0 events — the SwiftOnSecurity Sysmon configuration filters EID 3 for `net.exe`, so Sysmon never logged the SMB connection attempts. Security Onion or firewall logs would have them.
 
 ### Investigation
 
 **Step 1 — Identify the multi-host sweep pattern:**
-The critical indicator is `net view` targeting **4 distinct IP addresses** from the same source within 64 seconds. A legitimate user browses to a known share path (e.g., `\\fileserver\shared`). An attacker enumerates shares across multiple hosts by IP address, indicating systematic reconnaissance from a host list rather than routine file access.
+The indicator is `net view` against **4 distinct IP addresses** from one source within 64 seconds. A user browses to a known share path (e.g., `\\fileserver\shared`). Walking hosts by IP is reconnaissance from a host list, not file access.
 
 **Step 2 — Check for follow-on file access:**
-After share enumeration, check whether the source host subsequently accessed any discovered shares (SMB read/write operations, file copies). Share enumeration WITHOUT follow-on access is consistent with reconnaissance-only behavior. Share enumeration WITH follow-on access could indicate either legitimate use or data staging for exfiltration.
+After the sweep, check whether the source host then touched any discovered share (SMB reads, writes, file copies). Enumeration with no follow-on access reads as reconnaissance only. Enumeration with follow-on access could be legitimate use or data staging for exfiltration.
 
-In this case: all remote enumeration failed (error 53), so no follow-on access was possible. The reconnaissance intent is unambiguous.
+Here every remote query failed (error 53), so no follow-on access was possible. That leaves reconnaissance as the only reading.
 
 **Step 3 — Correlate with discovery chain:**
-This is the fifth stage of the documented discovery progression:
+This is the fifth stage of the discovery progression:
 - AGC-037: Host discovery -> AGC-038: Domain trust -> AGC-039: Privileged groups -> AGC-040: Services/processes -> AGC-041: Network shares
 
-The consistent progression from general to specific, targeting increasingly operational intelligence, confirms coordinated attack reconnaissance.
+Each step asks a narrower, more operational question than the last. That ordering is planned reconnaissance, not five unrelated commands.
 
 **Step 4 — Detection reuse:**
-Alert rule: 2+ `net view \\<IP>` commands from the same LogonGuid targeting distinct destination IPs within 5 minutes. This detects the sweep pattern while excluding single-share lookups. Combining with the AGC-037 burst detection further reduces false positives.
+Alert rule: 2+ `net view \\<IP>` commands from the same LogonGuid against distinct destination IPs within 5 minutes. That catches the sweep and skips single-share lookups. Pairing it with the AGC-037 burst rule trims false positives further.
 
 ### Report
 
-**Verdict: True Positive** — Systematic multi-host share enumeration was executed from a compromised workstation, targeting the DC and two client workstations.
+**Verdict: True Positive** — COMPROMISED-HOST-01 swept the DC, two client workstations, and itself for shares under the Administrator account.
 
 **Confidence: Medium** — Calibrated assessment:
-1. `net view` is a standard networking tool, and a single `net view \\server` is common IT troubleshooting.
-2. The multi-host sweep pattern (4 distinct IPs in 64 seconds, by IP rather than hostname) is not typical of legitimate use and distinguishes this from routine activity.
-3. All remote enumerations failed (error 53), confirming this was a blind sweep rather than targeted access to known shares.
-4. Confidence stays Medium because `net view` sweeps can be generated by legitimate network inventory tools or IT troubleshooting scripts. Elevation to High requires confirmation that no IT inventory tool or script was running.
+1. `net view` is a standard networking tool; a single `net view \\server` is routine IT troubleshooting.
+2. The sweep (4 distinct IPs in 64 seconds, by IP rather than hostname) does not look like routine use.
+3. Every remote query failed (error 53), so this was a blind sweep, not a visit to known shares.
+4. Confidence stays Medium because network inventory tools and IT scripts also produce `net view` sweeps. Raising it to High needs confirmation that no such tool or script was running.
 
 **Response recommendation:**
-1. **Monitor discovered shares** — the attacker now knows that COMPROMISED-HOST-01 has only default admin shares (C$, IPC$, ADMIN$). If network connectivity is restored, expect the attacker to target C$ on other hosts for lateral movement.
-2. **No direct remediation needed** for the enumeration itself (read-only) — but use it to anticipate the next attack stage (data collection or lateral movement via SMB).
-3. **Detection rule:** Alert on 2+ `net view` commands targeting distinct IPs from the same source within 5 minutes. Cross-correlate with prior discovery alerts from the same LogonGuid.
+1. **Monitor discovered shares** — the attacker now knows COMPROMISED-HOST-01 exposes only the default admin shares (C$, IPC$, ADMIN$). If connectivity comes back, expect them to go for C$ on other hosts.
+2. **No direct remediation needed** for the enumeration itself (read-only) — but plan for the next stage: data collection or lateral movement over SMB.
+3. **Detection rule:** Alert on 2+ `net view` commands against distinct IPs from one source within 5 minutes. Correlate with earlier discovery alerts on the same LogonGuid.
 
 ### MITRE Mapping
 

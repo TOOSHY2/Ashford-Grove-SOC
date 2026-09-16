@@ -26,9 +26,9 @@
 - **Administrative services** — remote management, backup agents — for persistence opportunities
 - **Service stop-ability** — `sc query` reveals which services are STOPPABLE vs. NOT_STOPPABLE, directly informing whether a service can be disabled
 
-The attacker is not just listing processes for awareness — they are performing security tool reconnaissance to plan their next move. The output of this discovery directly feeds the defense evasion phase (AGC-067+).
+The attacker is not listing processes for curiosity — they are scoping the security tooling before choosing a next move. This output feeds the defense evasion phase (AGC-067+).
 
-**Why at this lifecycle stage:** After mapping the host (AGC-037), domain (AGC-038), and privileged accounts (AGC-039), the attacker now needs to understand what defenses are active. This is the final discovery step before transitioning to either lateral movement or defense evasion. The key question: "What is watching me, and can I turn it off?"
+**Why at this lifecycle stage:** With the host (AGC-037), domain (AGC-038), and privileged accounts (AGC-039) mapped, the attacker needs to know which defenses are active. It is the last discovery step before lateral movement or defense evasion. The question: "What is watching me, and can I turn it off?"
 
 ### Simulation
 
@@ -71,43 +71,43 @@ The attacker is not just listing processes for awareness — they are performing
 
 All share `LogonGuid: {eb65e329-ae90-6aa9-4e8a-560000000000}`, confirming single session.
 
-Note: `Get-Process` and `Get-Service` are PowerShell cmdlets that execute in-process — they do not spawn separate executables and therefore do not generate Sysmon EID 1 events. PowerShell script-block logging (EID 4104) would capture these, but the key detection remains the external tool invocations.
+`Get-Process` and `Get-Service` are PowerShell cmdlets that run in-process — no child executable, so no Sysmon EID 1. PowerShell script-block logging (EID 4104) would capture them, but the external tool invocations remain the primary detection.
 
 ### Investigation
 
 **Step 1 — Assess the cluster pattern:**
-Three process/service enumeration commands from the same session within 2 seconds. Like AGC-037, the pattern (count + diversity + timing) is the indicator. However, `tasklist` and `sc query` are common administrative and troubleshooting tools, so this pattern overlaps significantly with legitimate IT activity.
+Three process/service enumeration commands from one session within 2 seconds. As in AGC-037, the pattern (count + diversity + timing) is the indicator. But `tasklist` and `sc query` are everyday admin tools, so the pattern overlaps heavily with legitimate IT work.
 
 **Step 2 — Forward correlation with defense evasion (critical):**
-The real value of this detection is what comes AFTER it. If process/service discovery is followed by:
+This detection earns its value from what comes after it. If the discovery is followed by:
 - `sc stop Sysmon64` or `sc stop WazuhSvc` — direct defense evasion
 - Registry modifications to disable Defender (`Set-MpPreference -DisableRealtimeMonitoring $true`)
 - Process termination of security tools (`taskkill /f /im sysmon64.exe`)
 - Sysmon driver unload (`fltmc unload SysmonDrv`)
 
-...then the discovery + evasion combination is far stronger than either alone. Check the same LogonGuid for any of these actions within the next 5-10 minutes.
+...then discovery plus evasion is a much stronger signal than either alone. Check the same LogonGuid for any of these actions within the next 5-10 minutes.
 
 **Step 3 — Account context:**
-Administrator (RID-500) on a workstation. While `tasklist` is commonly used for troubleshooting, the combination with `sc query` and `tasklist /svc` specifically maps the service-to-process relationship, which is more diagnostic of attacker tradecraft than routine troubleshooting.
+Administrator (RID-500) on a workstation. `tasklist` alone is routine, but pairing it with `sc query` and `tasklist /svc` maps service to process — the view an attacker needs to pick which service to stop, not the view a technician needs to fix a slow machine.
 
 **Step 4 — Detection reuse:**
-This reuses the AGC-037 burst detection pattern: aggregate Sysmon EID 1 by LogonGuid, count process/service enumeration tools (`tasklist`, `sc.exe`, `wmic process`) within a sliding window. The detection is low-value in isolation but becomes high-value when correlated with subsequent defense evasion activity.
+Same pattern as the AGC-037 burst rule: aggregate Sysmon EID 1 by LogonGuid, count process/service enumeration tools (`tasklist`, `sc.exe`, `wmic process`) within a sliding window. On its own the rule is low-value; correlated with later defense evasion it is high-value.
 
 ### Report
 
-**Verdict: True Positive** — Process and service enumeration was executed from a compromised workstation by the Administrator account, as part of a documented discovery chain.
+**Verdict: True Positive** — The Administrator account on COMPROMISED-HOST-01 enumerated processes and services as the fourth step of the discovery chain.
 
 **Confidence: Medium** — Calibrated assessment:
-1. `tasklist` and `sc query` are inherently dual-use — they are standard troubleshooting commands run daily by IT staff. No single command is suspicious in isolation.
-2. The burst pattern from the same session as AGC-037/038/039 provides chain context that elevates the signal.
-3. Confidence stays Medium because the same pattern is commonly generated by legitimate system administration. Elevation to High/Critical requires confirmed correlation with a subsequent defense evasion action targeting a security process discovered in this enumeration.
-4. The specific intelligence gathered (Sysmon64=STOPPABLE, WazuhSvc=STOPPABLE) is directly actionable for defense evasion — if either service is subsequently stopped, this discovery becomes a confirmed precursor.
+1. `tasklist` and `sc query` are dual-use — IT staff run them daily. No single command is suspicious on its own.
+2. The burst from the same session as AGC-037/038/039 adds chain context that lifts the signal.
+3. Confidence stays Medium because routine system administration produces the same pattern. Raising it to High/Critical needs a confirmed defense evasion action against one of the security processes found here.
+4. What the attacker learned (Sysmon64=STOPPABLE, WazuhSvc=STOPPABLE) is directly usable — if either service later stops, this discovery becomes a confirmed precursor.
 
 **Response recommendation:**
-1. **Correlate forward:** Check for any defense evasion activity (service stops, process kills, registry changes) targeting WinDefend, Sysmon64, WazuhSvc, or SecurityHealthService from the same session within 10 minutes.
-2. **If defense evasion is confirmed:** This discovery + evasion pair warrants immediate host isolation and incident escalation. The combined signal is far stronger than either alone.
-3. **If no follow-on evasion:** Log as part of the discovery chain for timeline documentation but do not escalate independently.
-4. **Detection rule:** Alert on `tasklist /svc` OR `sc query` from the same LogonGuid that also generated discovery-burst alerts (AGC-037 pattern). This cross-detection correlation dramatically reduces false positives.
+1. **Correlate forward:** Check for defense evasion (service stops, process kills, registry changes) against WinDefend, Sysmon64, WazuhSvc, or SecurityHealthService from the same session within 10 minutes.
+2. **If defense evasion is confirmed:** Isolate the host and escalate the incident. Discovery plus evasion from one session is not a troubleshooting pattern.
+3. **If no follow-on evasion:** Log it in the discovery chain timeline; do not escalate on its own.
+4. **Detection rule:** Alert on `tasklist /svc` OR `sc query` from a LogonGuid that already fired a discovery-burst alert (AGC-037 pattern). Requiring both cuts the false positives down to sessions worth looking at.
 
 ### MITRE Mapping
 

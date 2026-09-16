@@ -21,14 +21,14 @@
 
 ### Tradecraft
 
-**What:** Permission groups discovery enumerates group memberships to identify privileged accounts for targeting. This splits into two sub-techniques:
+**What:** Permission groups discovery lists group memberships to find privileged accounts worth targeting. Two sub-techniques apply:
 
-- **T1069.001 — Local Groups:** `net localgroup administrators` reveals which accounts have local admin rights on the current host. This identifies accounts worth targeting for credential harvesting and informs which accounts can be used for lateral movement.
-- **T1069.002 — Domain Groups:** `net group "Domain Admins" /domain` and `net group "Enterprise Admins" /domain` enumerate the highest-privilege domain groups. The members of these groups are the ultimate targets — their credentials unlock full domain control.
+- **T1069.001 — Local Groups:** `net localgroup administrators` shows which accounts hold local admin rights on the host. Those accounts become credential-harvesting targets and candidates for lateral movement.
+- **T1069.002 — Domain Groups:** `net group "Domain Admins" /domain` and `net group "Enterprise Admins" /domain` list the highest-privilege domain groups. Their members are the end targets — those credentials unlock the whole domain.
 
-The key tradecraft distinction is **specificity**. An attacker who queries "Domain Admins" by name has already identified their target and is collecting membership for a targeted attack. This is more advanced than broad discovery (AGC-037) or trust mapping (AGC-038).
+The tradecraft tell is **specificity**. An attacker who asks for "Domain Admins" by name has already chosen the target and is collecting membership. That is a step past the broad discovery in AGC-037 and the trust mapping in AGC-038.
 
-**Why at this lifecycle stage:** After host-level discovery (AGC-037) and domain trust discovery (AGC-038), the attacker now needs to know WHO the high-value targets are. The progression: What system am I on? -> What domain is this? -> Who are the admins? This directly feeds lateral movement (AGC-043+) and credential targeting.
+**Why at this lifecycle stage:** After host discovery (AGC-037) and trust discovery (AGC-038), the attacker needs names. The progression runs: What system am I on? -> What domain is this? -> Who are the admins? The answer feeds lateral movement (AGC-043+) and credential targeting.
 
 ### Simulation
 
@@ -76,7 +76,7 @@ All share `LogonGuid: {eb65e329-add0-6aa9-ebd7-550000000000}`, confirming single
 ### Investigation
 
 **Step 1 — Assess the specificity of group queries:**
-The critical detection signal is NOT just "someone ran `net localgroup`" — that is common IT troubleshooting. The signal is the **targeted querying of privileged groups by name**: "Domain Admins" and "Enterprise Admins". An attacker who knows to query these groups by name is not performing casual discovery — they are mapping the privilege hierarchy for a targeted attack.
+The signal is not "someone ran `net localgroup`" — IT does that all the time. The signal is **querying privileged groups by name**: "Domain Admins" and "Enterprise Admins". Whoever asks for those groups by name is mapping the privilege hierarchy, not poking around.
 
 Compare:
 - `net localgroup` (no argument) — broad, low signal
@@ -85,34 +85,34 @@ Compare:
 - `net group "Enterprise Admins" /domain` — highest signal (enterprise-level privilege targeting)
 
 **Step 2 — Account context:**
-The executing account is the built-in Administrator (RID-500) on a workstation, not a domain controller or IT management station. There is no legitimate IT workflow that requires enumerating "Enterprise Admins" from a standard workstation. The account context provides no benign explanation.
+The executing account is the built-in Administrator (RID-500) on a workstation, not a domain controller or IT management station. No IT workflow needs "Enterprise Admins" membership pulled from a standard workstation. The account context offers no benign explanation.
 
 **Step 3 — Correlate with prior discovery chain:**
-This is the third stage of a documented discovery progression from the same attack chain:
+This is the third stage of the discovery progression in this attack chain:
 - AGC-037: Host-level discovery burst (systeminfo, whoami, ipconfig) — "What system am I on?"
 - AGC-038: Domain trust discovery (nltest /domain_trusts) — "What domain is this?"
 - AGC-039: Privileged group enumeration — "Who are the admins?"
 
-The progression from general to specific, within the same attack session, eliminates isolated coincidence as an explanation.
+General to specific, within the same attack session, rules out coincidence.
 
 **Step 4 — Detection reuse:**
-This reuses the same pattern as AGC-038 (net.exe process creation captured by Sysmon EID 1). Alert rule: any `net.exe` command line containing "Domain Admins" OR "Enterprise Admins" OR "Schema Admins" from a non-DC host. This is extremely low false-positive because these specific group names have no routine use on workstations.
+Same pattern as AGC-038: net.exe process creation captured by Sysmon EID 1. Alert rule: any `net.exe` command line containing "Domain Admins" OR "Enterprise Admins" OR "Schema Admins" from a non-DC host. False positives are rare because those group names have no routine use on workstations.
 
 ### Report
 
-**Verdict: True Positive** — Targeted enumeration of privileged groups ("Domain Admins", "Enterprise Admins") was executed from a compromised workstation by the Administrator account, as the third stage of a documented discovery chain.
+**Verdict: True Positive** — The Administrator account on COMPROMISED-HOST-01 queried "Domain Admins" and "Enterprise Admins" by name as the third stage of the discovery chain.
 
 **Confidence: High** — Calibrated assessment:
-1. The specificity of querying "Domain Admins" and "Enterprise Admins" by name is the key differentiator. Unlike `net localgroup` (which IT might run routinely), these targeted queries indicate deliberate privilege mapping.
-2. Account context (Administrator on a compromised workstation) provides no benign explanation.
-3. This follows AGC-037 (host discovery) and AGC-038 (domain trust discovery) in a documented attack progression.
-4. Even the failed domain queries (error 1355) are significant — the ATTEMPT to enumerate domain admin membership is the indicator, not the success.
+1. Naming "Domain Admins" and "Enterprise Admins" is the differentiator. IT might run `net localgroup` routinely; nobody maps enterprise privilege by accident.
+2. Administrator on a compromised workstation offers no benign explanation.
+3. It follows AGC-037 (host discovery) and AGC-038 (domain trust discovery) in the expected order.
+4. The failed domain queries (error 1355) still count — the attempt to list domain admin membership is the indicator, not the result.
 
 **Response recommendation:**
-1. **The local admin enumeration revealed actionable intelligence** — the attacker now knows `Administrator` and `wadmin` are local admins. Ensure `wadmin` credentials are rotated and monitored for unauthorized use.
-2. **The domain group queries failed (broken trust)** — this is actually protective in this case. The attacker could not determine domain admin membership. If the trust were intact, this information would directly enable targeted credential harvesting.
-3. **Anticipate the next step** — after identifying local admins, expect credential harvesting attempts against these specific accounts (SAM dump, LSASS access, Kerberoasting if domain trust is restored).
-4. **Detection rule:** Alert on `net.exe` command lines containing privileged group names ("Domain Admins", "Enterprise Admins", "Schema Admins", "Account Operators", "Backup Operators") from non-DC hosts. Near-zero false positive rate.
+1. **The local admin enumeration gave the attacker something usable** — they now know `Administrator` and `wadmin` are local admins. Rotate the `wadmin` credentials and watch the account for unauthorized use.
+2. **The domain group queries failed (broken trust)** — which worked in the defenders' favor here. The attacker could not read domain admin membership. With the trust intact, that list would feed straight into targeted credential harvesting.
+3. **Anticipate the next step** — with the local admins named, expect credential harvesting against those two accounts (SAM dump, LSASS access, Kerberoasting if the trust is restored).
+4. **Detection rule:** Alert on `net.exe` command lines containing privileged group names ("Domain Admins", "Enterprise Admins", "Schema Admins", "Account Operators", "Backup Operators") from non-DC hosts. Near-zero false positives.
 
 ### MITRE Mapping
 

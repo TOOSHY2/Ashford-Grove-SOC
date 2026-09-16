@@ -21,17 +21,17 @@
 
 ### Tradecraft
 
-**What:** AD object query burst is a bulk domain enumeration technique that dumps entire object categories from Active Directory. The `-Filter *` pattern is the critical indicator — it requests EVERY object of a given type (all users, all computers, all groups, all OUs) rather than a scoped query for specific objects.
+**What:** An AD object query burst dumps whole object categories out of Active Directory. The `-Filter *` pattern is the indicator — it asks for every object of a type (all users, all computers, all groups, all OUs) instead of a scoped lookup.
 
-This technique maps to tools like BloodHound/SharpHound that perform bulk LDAP queries to build a graph of the entire domain. The information gathered enables:
+This is the same approach BloodHound/SharpHound take: bulk LDAP queries that graph the whole domain. The output gives the attacker:
 - **All domain users** — target list for password spraying, phishing, impersonation
 - **All domain computers** — target list for lateral movement, identifying servers vs. workstations
 - **All domain groups** — privilege mapping, identifying high-value groups and their members
 - **All OUs** — organizational structure, identifying which OUs contain which objects
 
-The `-Filter *` (full export) pattern is distinct from legitimate administrative queries which are typically scoped: `Get-ADUser -Identity "john.doe"` or `Get-ADUser -Filter {Department -eq "Finance"}`.
+A full export with `-Filter *` looks nothing like an admin query, which is normally scoped: `Get-ADUser -Identity "john.doe"` or `Get-ADUser -Filter {Department -eq "Finance"}`.
 
-**Why at this lifecycle stage:** This is the culmination of the discovery phase. After host-level discovery (AGC-037), domain trust mapping (AGC-038), privileged group enumeration (AGC-039), security tool discovery (AGC-040), and share enumeration (AGC-041), the attacker now attempts the broadest enumeration possible: a complete dump of all AD objects. This is typically the last discovery step before transitioning to lateral movement.
+**Why at this lifecycle stage:** This closes out the discovery phase. After host discovery (AGC-037), trust mapping (AGC-038), privileged group enumeration (AGC-039), security tool discovery (AGC-040), and share enumeration (AGC-041), the attacker goes for the widest pull available: every AD object. It is usually the last discovery step before lateral movement.
 
 ### Simulation
 
@@ -55,9 +55,9 @@ The `-Filter *` (full export) pattern is distinct from legitimate administrative
 **Key findings:**
 - RSAT AD module is not installed on the workstation — `Get-AD*` cmdlets are unavailable
 - Domain controller is unreachable (broken trust) — ADSI/LDAP queries and `net user /domain` all fail
-- All 8 enumeration attempts failed due to environmental constraints, NOT detection or blocking
-- In a healthy domain environment, these same commands would have returned the complete AD object database
-- The broken trust relationship is effectively an unintentional defense — it prevented the attacker from completing the broadest discovery step
+- All 8 attempts failed on lab constraints, not on detection or blocking
+- On a healthy domain-joined host the same commands would have returned the full AD object set
+- The broken trust acted as an accidental defense — it stopped the widest discovery step from completing
 
 **Cleanup:** No persistent artifacts. Commands are read-only. All queries failed before returning data.
 
@@ -74,45 +74,45 @@ The `-Filter *` (full export) pattern is distinct from legitimate administrative
 
 LogonGuid: `{eb65e329-b027-6aa9-da85-570000000000}`.
 
-**PowerShell script-block logging (EID 4104):** The script execution containing the Get-AD* and [adsisearcher] calls would be captured by PowerShell script-block logging. In this lab, script-block logging for non-suspicious scripts may not be configured to fire at the enhanced level. In production, all 8 enumeration commands would appear in the script-block log, providing the richest detection telemetry for this scenario.
+**PowerShell script-block logging (EID 4104):** Script-block logging is where the Get-AD* and [adsisearcher] calls would land. In the lab, script-block logging may not be set to fire at the enhanced level for scripts Windows does not flag as suspicious. In production, all 8 enumeration commands would appear in the script-block log — the richest telemetry for this scenario.
 
-**Detection gap:** Since Get-AD* cmdlets execute in-process (PowerShell cmdlets, not external executables) and [adsisearcher] is a .NET class, neither generates Sysmon EID 1 events. Only the `net user /domain` fallback appeared in Sysmon. This means **PowerShell logging (EID 4104) is the primary detection source** for AD module-based enumeration — Sysmon alone is insufficient.
+**Detection gap:** Get-AD* cmdlets run in-process and [adsisearcher] is a .NET class, so neither produces a Sysmon EID 1. Only the `net user /domain` fallback reached Sysmon. **PowerShell logging (EID 4104) is the primary detection source** for AD module enumeration — Sysmon alone misses it.
 
 ### Investigation
 
 **Step 1 — Identify the `-Filter *` pattern:**
-The defining indicator is the use of `-Filter *` across multiple AD object categories (users, computers, groups, OUs) in rapid succession. Legitimate AD administration queries are typically scoped:
+The indicator is `-Filter *` across several AD object categories (users, computers, groups, OUs) back to back. Admin queries are normally scoped:
 - `Get-ADUser -Identity "john.doe"` — single user lookup
 - `Get-ADUser -Filter {Department -eq "Finance"}` — scoped to a department
 - `Get-ADComputer -Filter {OperatingSystem -like "*Server*"}` — scoped to servers
 
-The `-Filter *` pattern requests EVERY object of the given type. Running this across 4+ categories is equivalent to a full domain export — a reconnaissance action with very limited legitimate use outside of scheduled compliance/audit jobs.
+`-Filter *` returns every object of the type. Across 4+ categories that is a full domain export, which has little legitimate use outside scheduled compliance or audit jobs.
 
 **Step 2 — Count distinct object categories queried:**
-A single broad query (e.g., `Get-ADUser -Filter *` for a user audit) might have a legitimate explanation. Four or more distinct categories (users + computers + groups + OUs) in the same session is bulk enumeration with no plausible ad-hoc administrative use case.
+One broad query (e.g., `Get-ADUser -Filter *` for a user audit) might have an explanation. Four or more categories (users + computers + groups + OUs) in one session is bulk enumeration; no ad-hoc admin task needs all of them.
 
 **Step 3 — Check for scheduled/documented jobs:**
-Before confirming as malicious, verify whether the source account is associated with a known compliance export or audit job. If the account is `svc-audit` running from a management server on a scheduled basis, this may be legitimate. In this case: the account is the built-in Administrator (RID-500) on a compromised workstation — not a service account, not a management server, not a scheduled job.
+Before calling it malicious, check whether the source account belongs to a known compliance export or audit job. `svc-audit` running on a schedule from a management server could be fine. Here the account is the built-in Administrator (RID-500) on a compromised workstation — not a service account, not a management server, not a scheduled job.
 
 **Step 4 — Correlate with discovery chain:**
-This is the sixth and final discovery stage (AGC-037 through AGC-042), culminating the attacker's reconnaissance phase. The progression from general host discovery to full domain export confirms a structured attack methodology.
+This is the sixth and last discovery stage (AGC-037 through AGC-042). Host discovery first, full domain export last — the attacker worked a plan, not a whim.
 
 ### Report
 
-**Verdict: True Positive** — Attempted full AD object dump across 4 categories using 3 different methods (Get-AD* cmdlets, ADSI/LDAP queries, net.exe), all from a compromised workstation.
+**Verdict: True Positive** — The Administrator account on COMPROMISED-HOST-01 tried to dump 4 AD object categories by 3 methods (Get-AD* cmdlets, ADSI/LDAP queries, net.exe).
 
 **Confidence: High** — Calibrated assessment:
-1. The `-Filter *` pattern across 4+ distinct object categories has no plausible ad-hoc administrative explanation outside scheduled compliance jobs.
-2. The account context (Administrator on a compromised workstation) excludes the scheduled-job explanation.
-3. The 3 fallback methods attempted (RSAT -> ADSI -> net.exe) demonstrate persistence and adaptability, consistent with an attacker working through tooling limitations rather than a legitimate admin who would stop after the first failure.
-4. All attempts failed due to environmental constraints (missing RSAT + broken trust), NOT detection — this means the detection value is in the ATTEMPT, and the failures are an unintentional defense.
-5. Confidence is High despite all failures because the attempt pattern itself is strongly indicative.
+1. `-Filter *` across 4+ object categories has no ad-hoc admin explanation outside scheduled compliance jobs.
+2. Administrator on a compromised workstation rules out the scheduled-job explanation.
+3. The 3 fallbacks (RSAT -> ADSI -> net.exe) show an attacker working around tooling limits. An admin would stop at the first failure.
+4. Every attempt failed on lab constraints (missing RSAT + broken trust), not on detection — the attempt carries the signal, and the failures were an accidental defense.
+5. Confidence is High despite the failures because the attempt pattern is the indicator.
 
 **Response recommendation:**
-1. **The broken domain trust is an unintentional defense** — it prevented the broadest discovery step from succeeding. However, if the trust is restored (e.g., through remediation), the attacker would retry these queries. Prioritize host isolation before trust restoration.
-2. **Enable PowerShell script-block logging** at the enhanced level if not already configured — this is the primary detection source for AD module-based enumeration and [adsisearcher] usage.
-3. **Detection rule:** Alert on PowerShell script-block logs containing `Get-ADUser.*-Filter \*` OR `Get-ADComputer.*-Filter \*` OR `Get-ADGroup.*-Filter \*` OR `[adsisearcher]` from non-management hosts. Near-zero false positive rate for workstation sources.
-4. **LDAP query volume monitoring** (if AD DS audit logging is enabled): Alert on LDAP queries returning >100 objects from a workstation source. This catches the same pattern even when tools other than PowerShell are used.
+1. **The broken domain trust is an accidental defense** — it stopped the widest discovery step. Restore the trust (for example during remediation) and the attacker retries these queries. Isolate the host before repairing the trust.
+2. **Enable PowerShell script-block logging** at the enhanced level if it is not already on — it is the primary detection source for AD module enumeration and [adsisearcher] use.
+3. **Detection rule:** Alert on PowerShell script-block logs containing `Get-ADUser.*-Filter \*` OR `Get-ADComputer.*-Filter \*` OR `Get-ADGroup.*-Filter \*` OR `[adsisearcher]` from non-management hosts. Near-zero false positives from workstation sources.
+4. **LDAP query volume monitoring** (if AD DS audit logging is enabled): Alert on LDAP queries returning >100 objects from a workstation source. That catches the same pattern from tools other than PowerShell.
 
 ### MITRE Mapping
 

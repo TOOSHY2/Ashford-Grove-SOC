@@ -21,7 +21,7 @@
 
 ### Tradecraft
 
-**What:** Domain trust discovery maps the Active Directory trust relationships to identify paths for lateral movement across domain boundaries. In a multi-domain or multi-forest environment, trust relationships define which domains can authenticate to each other. An attacker enumerates trusts to:
+**What:** Domain trust discovery maps Active Directory trust relationships to find lateral movement paths across domain boundaries. In a multi-domain or multi-forest environment, trusts define which domains can authenticate to each other. The attacker enumerates them to:
 - Identify other domains or forests that can be reached from the current domain
 - Find bidirectional trusts that allow lateral movement without additional credentials
 - Discover forest trusts that may lead to higher-value targets (parent domain, resource forests)
@@ -33,7 +33,7 @@ Key enumeration tools:
 - `Get-ADTrust -Filter *` — PowerShell RSAT cmdlet for detailed trust information
 - `net group "Domain Admins" /domain` — enumerates domain admin group members
 
-**Why at this lifecycle stage:** After the discovery burst (AGC-037) established basic host context, the attacker escalates to domain-level reconnaissance. Trust enumeration answers: "can I reach other domains from here?" and "who are the domain admins I need to target?" This directly informs lateral movement strategy.
+**Why at this lifecycle stage:** With host context in hand from AGC-037, the attacker moves up to domain-level reconnaissance. Trust enumeration answers two questions: "can I reach other domains from here?" and "who are the domain admins I need to target?" Both feed the lateral movement plan.
 
 ### Simulation
 
@@ -78,34 +78,34 @@ nltest.exe hash: `MD5=55F4C5F19EE3E0C5C6640D02AF0D14EE`.
 ### Investigation
 
 **Step 1 — Assess nltest usage context:**
-`nltest /domain_trusts` and `/trusted_domains` are rarely used in routine desktop activity. These are domain-administration and troubleshooting commands. A single occurrence from a non-IT-admin account or from a standard workstation warrants review. In this case: executed by Administrator (RID-500) on COMPROMISED-HOST-01, a member workstation — not a domain controller or IT management station.
+`nltest /domain_trusts` and `/trusted_domains` are domain-administration and troubleshooting commands; they rarely appear on a desktop. One occurrence from a non-admin account or a standard workstation is enough to review. Here Administrator (RID-500) ran them on COMPROMISED-HOST-01, a member workstation — not a domain controller or IT management station.
 
 **Step 2 — Account context analysis:**
-The executing account is the built-in Administrator, which gained access through the attack chain (AGC-001 phishing -> privilege escalation). This is NOT a helpdesk account performing legitimate domain diagnostics. The account context strongly supports malicious intent.
+The executing account is the built-in Administrator, reached through the attack chain (AGC-001 phishing -> privilege escalation). It is not a helpdesk account running domain diagnostics. Nothing about the account context offers a benign reading.
 
 **Step 3 — Correlate with surrounding activity:**
-This follows immediately after the AGC-037 discovery burst (systeminfo, whoami, ipconfig, net user) from the same host. The escalation from host-level discovery (AGC-037) to domain-level discovery (AGC-038) is a natural attack progression: after mapping the local host, the attacker maps the domain.
+This comes minutes after the AGC-037 burst (systeminfo, whoami, ipconfig, net user) on the same host. Host-level discovery (AGC-037) followed by domain-level discovery (AGC-038) is the expected order: map the host, then map the domain.
 
-The `net group "Domain Admins" /domain` command is particularly significant — it attempts to enumerate the domain admin group, which is the highest-value target for privilege escalation across the domain.
+The `net group "Domain Admins" /domain` command matters most — it tries to list the domain admin group, the highest-value target for domain-wide privilege escalation.
 
 **Step 4 — Detection reuse:**
-Alert rule: any `nltest.exe` execution with `/domain_trusts`, `/trusted_domains`, or `/dsgetdc:` arguments from a non-domain-controller host. This is a low-noise, high-value detection because these arguments have almost no legitimate use on workstations.
+Alert rule: any `nltest.exe` execution with `/domain_trusts`, `/trusted_domains`, or `/dsgetdc:` arguments from a non-domain-controller host. The rule stays quiet because those arguments have almost no legitimate use on workstations.
 
 ### Report
 
-**Verdict: True Positive** — Domain trust enumeration was executed from a compromised workstation by the Administrator account, following host-level discovery (AGC-037).
+**Verdict: True Positive** — The Administrator account on COMPROMISED-HOST-01 enumerated domain trusts minutes after the host-level discovery in AGC-037.
 
 **Confidence: High** — Calibrated assessment:
-1. `nltest /domain_trusts` from a workstation has almost no legitimate use case — unlike `systeminfo` or `ipconfig`, it is not a standard troubleshooting command.
-2. Account context (Administrator on a compromised workstation) provides no benign explanation.
-3. The progression from host discovery (AGC-037) to domain trust discovery (AGC-038) follows a documented attack pattern.
-4. The `net group "Domain Admins"` command explicitly targets privilege escalation intelligence.
+1. `nltest /domain_trusts` from a workstation has almost no legitimate use — unlike `systeminfo` or `ipconfig`, it is not a troubleshooting command.
+2. Administrator on a compromised workstation offers no benign explanation.
+3. Host discovery (AGC-037) followed by trust discovery (AGC-038) matches the expected attack order.
+4. The `net group "Domain Admins"` command targets privilege escalation intelligence directly.
 
 **Response recommendation:**
-1. **Investigate the account and host** for broader compromise indicators — this is not an isolated event but part of a chain.
-2. **No direct remediation needed** for the discovery itself (read-only commands) — but it confirms the attacker is actively mapping the domain for lateral movement.
-3. **Anticipate the next step** — after trust discovery, expect lateral movement attempts (RDP, PsExec, WMI to other domain hosts) or targeted attacks against the domain admin accounts identified.
-4. **Detection rule:** Alert on `nltest.exe` with trust-related arguments from non-DC hosts. Low false-positive rate, high signal value.
+1. **Investigate the account and host** for wider compromise — this event is one link in a chain, not a one-off.
+2. **No direct remediation needed** for the discovery itself (read-only commands) — but it confirms the attacker is mapping the domain ahead of lateral movement.
+3. **Anticipate the next step** — after trust discovery, expect lateral movement (RDP, PsExec, WMI to other domain hosts) or attacks on any domain admin accounts the attacker found.
+4. **Detection rule:** Alert on `nltest.exe` with trust-related arguments from non-DC hosts. Few false positives, strong signal.
 
 ### MITRE Mapping
 

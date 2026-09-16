@@ -21,7 +21,7 @@
 
 ### Tradecraft
 
-**What:** After gaining access to a host, an attacker runs a burst of system enumeration commands to map the environment. This is the standard "situational awareness" phase that precedes more targeted actions (persistence, lateral movement, exfiltration). The commands individually are benign — every one is a built-in Windows tool used daily by IT support. The indicator is the **pattern**: multiple distinct discovery commands from the same session in a short window.
+**What:** Once on a host, the attacker runs a burst of enumeration commands to learn where they have landed. This "situational awareness" step comes before persistence, lateral movement, or exfiltration. Each command on its own is benign — every one is a built-in Windows tool that IT support runs daily. The indicator is the **pattern**: several distinct discovery commands from one session in a short window.
 
 Common discovery burst commands:
 - `systeminfo` — OS version, patch level, domain membership, hardware (T1082)
@@ -31,7 +31,7 @@ Common discovery burst commands:
 - `net user` — local account enumeration (T1087.001)
 - `echo %USERDOMAIN%` — domain vs. workgroup determination (T1082)
 
-**Why at this lifecycle stage:** This is the opening move on a newly compromised host. Before the attacker can decide what to steal, where to move, or how to persist, they need basic answers: what OS am I on, who am I running as, what network am I in, what domain is this host joined to, and what other accounts exist locally.
+**Why at this lifecycle stage:** This is the opening move on a newly compromised host. Before the attacker can choose what to steal, where to move, or how to persist, they need answers: which OS, which account, which network, which domain, and which other local accounts exist.
 
 ### Simulation
 
@@ -73,7 +73,7 @@ All 6 events share: `LogonGuid: {eb65e329-ab55-6aa9-6b7c-530000000000}`, `LogonI
 ### Investigation
 
 **Step 1 — Identify the burst pattern:**
-6 distinct discovery commands from the same host, same session (shared LogonGuid), within a 16-second window. The commands cover system information (T1082), user identity (T1033), network configuration (T1016), and local account enumeration (T1087.001). This is a textbook discovery burst.
+6 distinct discovery commands from the same host and session (shared LogonGuid) inside a 16-second window. They cover system information (T1082), user identity (T1033), network configuration (T1016), and local account enumeration (T1087.001). Five of the six landed in the same second, which points to a script rather than a person typing.
 
 **Step 2 — Exclude legitimate IT/helpdesk context:**
 Before classifying as malicious, check:
@@ -81,33 +81,33 @@ Before classifying as malicious, check:
 - Is the executing account a known helpdesk account with a documented pattern of running these commands?
 - Is the parent process a known IT management tool (SCCM, remote desktop agent, etc.)?
 
-In this scenario: the executing account is the built-in Administrator (RID-500), which is NOT a standard helpdesk account. No support ticket context exists. The parent process is a PowerShell script, not a management tool. **No benign explanation found.**
+Here the executing account is the built-in Administrator (RID-500), not a helpdesk account. No support ticket exists for the host. The parent is a PowerShell script, not a management tool. **No benign explanation found.**
 
 **Step 3 — Forward correlation (what happened next):**
-A discovery burst in isolation is low-value. Its significance depends on what follows. Check the same session (LogonGuid) for subsequent activity:
+A discovery burst on its own is low-value; what follows it decides the severity. Check the same LogonGuid for later activity:
 - Persistence mechanisms (scheduled tasks, services, registry run keys) — see AGC-019 through AGC-024
 - Credential harvesting (LSASS, SAM, browser stores) — see AGC-031 through AGC-036
 - Lateral movement (RDP, PsExec, WMI) — see AGC-043 through AGC-050
 
-In this engagement, the discovery burst is positioned within a confirmed attack chain (AGC-001 phishing -> compromise -> privilege escalation -> credential access -> AGC-037 discovery). The chain context elevates the signal.
+In this engagement the burst sits inside a confirmed attack chain (AGC-001 phishing -> compromise -> privilege escalation -> credential access -> AGC-037 discovery). That chain context is what lifts the signal above helpdesk noise.
 
 **Step 4 — Detection reuse note:**
-The detection pattern (aggregate Sysmon EID 1 by LogonGuid, count distinct discovery-category executables within a sliding time window) is reusable. Alert rule: 3+ distinct discovery binaries (`systeminfo`, `whoami`, `hostname`, `ipconfig`, `net.exe`, `nltest`, `dsquery`, `nslookup`) from the same LogonGuid within 5 minutes.
+The pattern (aggregate Sysmon EID 1 by LogonGuid, count distinct discovery executables in a sliding window) carries over to other hosts unchanged. Alert rule: 3+ distinct discovery binaries (`systeminfo`, `whoami`, `hostname`, `ipconfig`, `net.exe`, `nltest`, `dsquery`, `nslookup`) from the same LogonGuid within 5 minutes.
 
 ### Report
 
-**Verdict: True Positive** — A burst of 6 distinct system and user discovery commands was executed from an Administrator session on a compromised host within 16 seconds.
+**Verdict: True Positive** — An Administrator session on COMPROMISED-HOST-01 ran 6 distinct system and user discovery commands within 16 seconds.
 
 **Confidence: Medium** — Calibrated assessment:
-1. All 6 commands are legitimate built-in tools. No single command is inherently malicious.
-2. The burst pattern (number, diversity, and timing) is the indicator.
-3. No legitimate IT context was found to explain the activity.
-4. Confidence stays Medium because the same pattern is commonly generated by IT helpdesk troubleshooting. Escalation to High requires either: (a) confirmed exclusion of legitimate IT activity, or (b) corroborating subsequent malicious activity.
+1. All 6 commands are built-in tools. None is malicious by itself.
+2. The burst (count, diversity, timing) is the indicator.
+3. No IT context explains the activity.
+4. Confidence stays Medium because helpdesk troubleshooting produces the same pattern. Escalation to High needs either (a) confirmed exclusion of IT activity or (b) corroborating malicious activity afterward.
 
 **Response recommendation:**
-1. **Correlate first, escalate second** — check for open support tickets or scheduled IT maintenance before treating this as an incident.
-2. **If no legitimate context exists** — treat this as the opening stage of a confirmed attack chain and investigate forward: what did this session do AFTER the discovery burst?
-3. **If subsequent malicious activity is confirmed** — the discovery burst becomes a confirmed attack-chain marker. Document it as the reconnaissance phase.
+1. **Correlate first, escalate second** — check for open support tickets or scheduled IT maintenance before opening an incident.
+2. **If no legitimate context exists** — treat the burst as the opening stage of an attack chain and investigate forward: what did this LogonGuid do after the burst?
+3. **If later malicious activity is confirmed** — the burst becomes an attack-chain marker. Document it as the reconnaissance phase.
 4. **Detection rule recommendation:** Alert on 3+ distinct discovery binaries from the same LogonGuid within 5 minutes. Suppress for known helpdesk accounts and management tool parent processes.
 
 ### MITRE Mapping
