@@ -1,0 +1,54 @@
+{
+  "name": "AGC-088: Log Clearing Retention Policy (FP)",
+  "versions": {
+    "attack": "16",
+    "navigator": "4.9.5",
+    "layer": "4.5"
+  },
+  "domain": "enterprise-attack",
+  "description": "AGC-088: Security log cleared via scheduled task per retention policy LRP-2026-003. VERDICT: BENIGN (False Positive). Twin: AGC-067.",
+  "filters": {
+    "platforms": ["Windows", "Linux"]
+  },
+  "sorting": 3,
+  "layout": {
+    "layout": "side",
+    "aggregateFunction": "average",
+    "showID": true,
+    "showName": true,
+    "showAggregateScores": true,
+    "countUnscored": false
+  },
+  "hideDisabled": false,
+  "techniques": [
+    {
+      "techniqueID": "T1070.001",
+      "tactic": "defense-evasion",
+      "color": "#ffe766ff",
+      "comment": "AGC-088: Security log cleared via scheduled task AGC088LogRotation per retention policy LRP-2026-003. Monthly rotation approved by Security Team Lead. Wazuh central copy intact. VERDICT: BENIGN. Twin: AGC-067.",
+      "enabled": true,
+      "metadata": [],
+      "links": [],
+      "showSubtechniques": false,
+      "score": 75
+    }
+  ],
+  "gradient": {
+    "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"],
+    "minValue": 0,
+    "maxValue": 100
+  },
+  "legendItems": [
+    {
+      "label": "Observed: Benign (FP)",
+      "color": "#ffe766ff"
+    }
+  ],
+  "metadata": [],
+  "links": [],
+  "showTacticRowBackground": true,
+  "tacticRowBackground": "#dddddd",
+  "selectTechniquesAcrossTactics": true,
+  "selectSubtechniquesWithParent": false,
+  "selectVisibleTechniques": false
+}
