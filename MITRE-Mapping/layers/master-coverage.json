@@ -1,0 +1,1352 @@
+{
+    "versions":  {
+                     "attack":  "16",
+                     "layer":  "4.5",
+                     "navigator":  "4.9.5"
+                 },
+    "selectSubtechniquesWithParent":  false,
+    "tacticRowBackground":  "#dddddd",
+    "metadata":  [
+                     {
+                         "value":  "Ashford Grove Capital SOC L1 Detection \u0026 Investigation",
+                         "name":  "engagement"
+                     },
+                     {
+                         "value":  "100 (AGC-001 through AGC-100)",
+                         "name":  "scenarios"
+                     },
+                     {
+                         "value":  "16 (12 lifecycle + 4 judgment)",
+                         "name":  "categories"
+                     },
+                     {
+                         "value":  "2026-09-16",
+                         "name":  "generated"
+                     }
+                 ],
+    "sorting":  3,
+    "description":  "Merged MITRE ATT\u0026CK coverage from all 100 AGC scenarios. 85 unique technique-tactic pairs across 12 tactics. Scores: Critical (100/green) = conclusive evidence, High (75/yellow) = strong evidence, Medium (50/red) = correlated lead.",
+    "showTacticRowBackground":  true,
+    "links":  [
+
+              ],
+    "selectVisibleTechniques":  false,
+    "gradient":  {
+                     "maxValue":  100,
+                     "minValue":  0,
+                     "colors":  [
+                                    "#ff6666ff",
+                                    "#ffe766ff",
+                                    "#8ec843ff"
+                                ]
+                 },
+    "domain":  "enterprise-attack",
+    "selectTechniquesAcrossTactics":  true,
+    "layout":  {
+                   "showAggregateScores":  true,
+                   "layout":  "side",
+                   "aggregateFunction":  "average",
+                   "countUnscored":  false,
+                   "showID":  true,
+                   "showName":  true
+               },
+    "techniques":  [
+                       {
+                           "comment":  "Scenarios: AGC-031, 077, 083. Merged from individual layers.",
+                           "techniqueID":  "T1003.001",
+                           "score":  75,
+                           "tactic":  "credential-access",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-032, 080. Merged from individual layers.",
+                           "techniqueID":  "T1003.002",
+                           "score":  100,
+                           "tactic":  "credential-access",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-079. Merged from individual layers.",
+                           "techniqueID":  "T1005",
+                           "score":  75,
+                           "tactic":  "collection",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-040. Merged from individual layers.",
+                           "techniqueID":  "T1007",
+                           "score":  50,
+                           "tactic":  "discovery",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-037. Merged from individual layers.",
+                           "techniqueID":  "T1016",
+                           "score":  50,
+                           "tactic":  "discovery",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-042. Merged from individual layers.",
+                           "techniqueID":  "T1018",
+                           "score":  75,
+                           "tactic":  "discovery",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-049, 077. Merged from individual layers.",
+                           "techniqueID":  "T1021",
+                           "score":  100,
+                           "tactic":  "lateral-movement",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-043. Merged from individual layers.",
+                           "techniqueID":  "T1021.001",
+                           "score":  75,
+                           "tactic":  "lateral-movement",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-044, 078. Merged from individual layers.",
+                           "techniqueID":  "T1021.002",
+                           "score":  75,
+                           "tactic":  "lateral-movement",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-048, 079. Merged from individual layers.",
+                           "techniqueID":  "T1021.004",
+                           "score":  75,
+                           "tactic":  "lateral-movement",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-045. Merged from individual layers.",
+                           "techniqueID":  "T1021.006",
+                           "score":  75,
+                           "tactic":  "lateral-movement",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-013, 077, 081. Merged from individual layers.",
+                           "techniqueID":  "T1027",
+                           "score":  100,
+                           "tactic":  "defense-evasion",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-071. Merged from individual layers.",
+                           "techniqueID":  "T1027.010",
+                           "score":  50,
+                           "tactic":  "defense-evasion",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-037. Merged from individual layers.",
+                           "techniqueID":  "T1033",
+                           "score":  50,
+                           "tactic":  "discovery",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-060, 080. Merged from individual layers.",
+                           "techniqueID":  "T1039",
+                           "score":  75,
+                           "tactic":  "collection",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-062, 066, 077, 086. Merged from individual layers.",
+                           "techniqueID":  "T1041",
+                           "score":  100,
+                           "tactic":  "exfiltration",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-050, 087. Merged from individual layers.",
+                           "techniqueID":  "T1046",
+                           "score":  75,
+                           "tactic":  "discovery",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-016, 046, 078. Merged from individual layers.",
+                           "techniqueID":  "T1047",
+                           "score":  100,
+                           "tactic":  "execution",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-063, 078, 093. Merged from individual layers.",
+                           "techniqueID":  "T1048.003",
+                           "score":  100,
+                           "tactic":  "exfiltration",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-064. Merged from individual layers.",
+                           "techniqueID":  "T1052.001",
+                           "score":  75,
+                           "tactic":  "exfiltration",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-017. Merged from individual layers.",
+                           "techniqueID":  "T1053.005",
+                           "score":  75,
+                           "tactic":  "execution",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-020, 094. Merged from individual layers.",
+                           "techniqueID":  "T1053.005",
+                           "score":  75,
+                           "tactic":  "persistence",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-040. Merged from individual layers.",
+                           "techniqueID":  "T1057",
+                           "score":  50,
+                           "tactic":  "discovery",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-012, 013, 055, 056, 077, 081. Merged from individual layers.",
+                           "techniqueID":  "T1059.001",
+                           "score":  100,
+                           "tactic":  "execution",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-011. Merged from individual layers.",
+                           "techniqueID":  "T1059.003",
+                           "score":  75,
+                           "tactic":  "execution",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-039. Merged from individual layers.",
+                           "techniqueID":  "T1069.001",
+                           "score":  75,
+                           "tactic":  "discovery",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-039, 042. Merged from individual layers.",
+                           "techniqueID":  "T1069.002",
+                           "score":  75,
+                           "tactic":  "discovery",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-067, 077, 088. Merged from individual layers.",
+                           "techniqueID":  "T1070.001",
+                           "score":  100,
+                           "tactic":  "defense-evasion",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-079. Merged from individual layers.",
+                           "techniqueID":  "T1070.002",
+                           "score":  100,
+                           "tactic":  "defense-evasion",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-070. Merged from individual layers.",
+                           "techniqueID":  "T1070.004",
+                           "score":  75,
+                           "tactic":  "defense-evasion",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-054, 091. Merged from individual layers.",
+                           "techniqueID":  "T1071",
+                           "score":  75,
+                           "tactic":  "command-and-control",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-051, 055, 056, 077. Merged from individual layers.",
+                           "techniqueID":  "T1071.001",
+                           "score":  100,
+                           "tactic":  "command-and-control",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-052, 078, 084, 093. Merged from individual layers.",
+                           "techniqueID":  "T1071.004",
+                           "score":  100,
+                           "tactic":  "command-and-control",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-059, 061, 065. Merged from individual layers.",
+                           "techniqueID":  "T1074.001",
+                           "score":  100,
+                           "tactic":  "collection",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-085, 092. Merged from individual layers.",
+                           "techniqueID":  "T1078",
+                           "score":  75,
+                           "tactic":  "persistence",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-030. Merged from individual layers.",
+                           "techniqueID":  "T1078.002",
+                           "score":  100,
+                           "tactic":  "privilege-escalation",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-030. Merged from individual layers.",
+                           "techniqueID":  "T1078.002",
+                           "score":  100,
+                           "tactic":  "defense-evasion",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-037. Merged from individual layers.",
+                           "techniqueID":  "T1082",
+                           "score":  50,
+                           "tactic":  "discovery",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-042, 061. Merged from individual layers.",
+                           "techniqueID":  "T1087.002",
+                           "score":  75,
+                           "tactic":  "discovery",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-025. Merged from individual layers.",
+                           "techniqueID":  "T1098",
+                           "score":  75,
+                           "tactic":  "privilege-escalation",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-023. Merged from individual layers.",
+                           "techniqueID":  "T1098",
+                           "score":  75,
+                           "tactic":  "persistence",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-080. Merged from individual layers.",
+                           "techniqueID":  "T1102.002",
+                           "score":  100,
+                           "tactic":  "command-and-control",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-035. Merged from individual layers.",
+                           "techniqueID":  "T1110.003",
+                           "score":  75,
+                           "tactic":  "credential-access",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-058. Merged from individual layers.",
+                           "techniqueID":  "T1113",
+                           "score":  75,
+                           "tactic":  "collection",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-078. Merged from individual layers.",
+                           "techniqueID":  "T1119",
+                           "score":  75,
+                           "tactic":  "collection",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-041. Merged from individual layers.",
+                           "techniqueID":  "T1135",
+                           "score":  50,
+                           "tactic":  "discovery",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-023, 078, 082. Merged from individual layers.",
+                           "techniqueID":  "T1136.001",
+                           "score":  100,
+                           "tactic":  "persistence",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-024. Merged from individual layers.",
+                           "techniqueID":  "T1176",
+                           "score":  50,
+                           "tactic":  "persistence",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-012, 014. Merged from individual layers.",
+                           "techniqueID":  "T1204.002",
+                           "score":  100,
+                           "tactic":  "execution",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-090. Merged from individual layers.",
+                           "techniqueID":  "T1218",
+                           "score":  75,
+                           "tactic":  "defense-evasion",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-011, 056, 080. Merged from individual layers.",
+                           "techniqueID":  "T1218.005",
+                           "score":  100,
+                           "tactic":  "defense-evasion",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-079. Merged from individual layers.",
+                           "techniqueID":  "T1218.010",
+                           "score":  50,
+                           "tactic":  "defense-evasion",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-015. Merged from individual layers.",
+                           "techniqueID":  "T1218.011",
+                           "score":  75,
+                           "tactic":  "defense-evasion",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-038, 080. Merged from individual layers.",
+                           "techniqueID":  "T1482",
+                           "score":  75,
+                           "tactic":  "discovery",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-075, 078. Merged from individual layers.",
+                           "techniqueID":  "T1484.001",
+                           "score":  100,
+                           "tactic":  "defense-evasion",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-072, 077. Merged from individual layers.",
+                           "techniqueID":  "T1486",
+                           "score":  100,
+                           "tactic":  "impact",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-073, 080. Merged from individual layers.",
+                           "techniqueID":  "T1489",
+                           "score":  100,
+                           "tactic":  "impact",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-074, 079. Merged from individual layers.",
+                           "techniqueID":  "T1491.002",
+                           "score":  100,
+                           "tactic":  "impact",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-009. Merged from individual layers.",
+                           "techniqueID":  "T1528",
+                           "score":  50,
+                           "tactic":  "credential-access",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-059. Merged from individual layers.",
+                           "techniqueID":  "T1539",
+                           "score":  100,
+                           "tactic":  "credential-access",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-021. Merged from individual layers.",
+                           "techniqueID":  "T1543.003",
+                           "score":  100,
+                           "tactic":  "persistence",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-022, 079, 089. Merged from individual layers.",
+                           "techniqueID":  "T1546.003",
+                           "score":  100,
+                           "tactic":  "persistence",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-019, 077. Merged from individual layers.",
+                           "techniqueID":  "T1547.001",
+                           "score":  100,
+                           "tactic":  "persistence",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-026. Merged from individual layers.",
+                           "techniqueID":  "T1548.002",
+                           "score":  100,
+                           "tactic":  "privilege-escalation",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-026. Merged from individual layers.",
+                           "techniqueID":  "T1548.002",
+                           "score":  100,
+                           "tactic":  "defense-evasion",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-029, 079. Merged from individual layers.",
+                           "techniqueID":  "T1548.003",
+                           "score":  100,
+                           "tactic":  "privilege-escalation",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-047, 080. Merged from individual layers.",
+                           "techniqueID":  "T1550.002",
+                           "score":  75,
+                           "tactic":  "lateral-movement",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-079. Merged from individual layers.",
+                           "techniqueID":  "T1552.001",
+                           "score":  75,
+                           "tactic":  "credential-access",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-033. Merged from individual layers.",
+                           "techniqueID":  "T1555.003",
+                           "score":  75,
+                           "tactic":  "credential-access",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-036. Merged from individual layers.",
+                           "techniqueID":  "T1557.001",
+                           "score":  50,
+                           "tactic":  "credential-access",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-034. Merged from individual layers.",
+                           "techniqueID":  "T1558",
+                           "score":  50,
+                           "tactic":  "credential-access",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-078. Merged from individual layers.",
+                           "techniqueID":  "T1558.003",
+                           "score":  50,
+                           "tactic":  "credential-access",
+                           "color":  "#ff6666ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-077. Merged from individual layers.",
+                           "techniqueID":  "T1560",
+                           "score":  75,
+                           "tactic":  "collection",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-057, 066. Merged from individual layers.",
+                           "techniqueID":  "T1560.001",
+                           "score":  100,
+                           "tactic":  "collection",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-068, 069, 078, 080. Merged from individual layers.",
+                           "techniqueID":  "T1562.001",
+                           "score":  100,
+                           "tactic":  "defense-evasion",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-006, 007, 010. Merged from individual layers.",
+                           "techniqueID":  "T1566.001",
+                           "score":  75,
+                           "tactic":  "initial-access",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-003, 004, 005, 008, 010, 077, 078, 079, 080. Merged from individual layers.",
+                           "techniqueID":  "T1566.002",
+                           "score":  100,
+                           "tactic":  "initial-access",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-080, 097. Merged from individual layers.",
+                           "techniqueID":  "T1567.002",
+                           "score":  100,
+                           "tactic":  "exfiltration",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-053, 079. Merged from individual layers.",
+                           "techniqueID":  "T1571",
+                           "score":  75,
+                           "tactic":  "command-and-control",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-077. Merged from individual layers.",
+                           "techniqueID":  "T1573",
+                           "score":  100,
+                           "tactic":  "command-and-control",
+                           "color":  "#8ec843ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-028. Merged from individual layers.",
+                           "techniqueID":  "T1574.001",
+                           "score":  75,
+                           "tactic":  "defense-evasion",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-028, 080. Merged from individual layers.",
+                           "techniqueID":  "T1574.001",
+                           "score":  75,
+                           "tactic":  "privilege-escalation",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-028. Merged from individual layers.",
+                           "techniqueID":  "T1574.001",
+                           "score":  75,
+                           "tactic":  "persistence",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-027. Merged from individual layers.",
+                           "techniqueID":  "T1574.009",
+                           "score":  75,
+                           "tactic":  "persistence",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       },
+                       {
+                           "comment":  "Scenarios: AGC-027. Merged from individual layers.",
+                           "techniqueID":  "T1574.009",
+                           "score":  75,
+                           "tactic":  "privilege-escalation",
+                           "color":  "#ffe766ff",
+                           "metadata":  [
+
+                                        ],
+                           "links":  [
+
+                                     ],
+                           "showSubtechniques":  false,
+                           "enabled":  true
+                       }
+                   ],
+    "hideDisabled":  false,
+    "name":  "Ashford Grove Capital -- Master Coverage (100 Scenarios)",
+    "legendItems":  [
+                        {
+                            "color":  "#8ec843ff",
+                            "label":  "Critical (score 100) -- Conclusive evidence"
+                        },
+                        {
+                            "color":  "#ffe766ff",
+                            "label":  "High (score 75) -- Strong evidence"
+                        },
+                        {
+                            "color":  "#ff6666ff",
+                            "label":  "Medium (score 50) -- Correlated lead"
+                        }
+                    ],
+    "filters":  {
+                    "platforms":  [
+                                      "Windows",
+                                      "Linux"
+                                  ]
+                }
+}

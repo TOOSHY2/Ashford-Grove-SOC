@@ -2,7 +2,7 @@
 <p align="center"><b>SOC L1 Detection &amp; Investigation Portfolio</b></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/scenarios-0%2F100-blue">
+  <img src="https://img.shields.io/badge/scenarios-100%2F100-brightgreen">
   <img src="https://img.shields.io/badge/categories-16-informational">
   <img src="https://img.shields.io/badge/MITRE_ATT%26CK-mapped-red">
   <img src="https://img.shields.io/badge/stack-100%25_open_source-success">
@@ -37,7 +37,7 @@ Author: **TOOSHY2** · SOC Analysis · Detection & Investigation
 | [`docs/03-scenario-template.md`](docs/03-scenario-template.md) | Field-by-field guide to the scenario format |
 | [`docs/04-detection-tuning-log.md`](docs/04-detection-tuning-log.md) | Detection rules tuned after false positives |
 | [`scenarios/00-index.md`](scenarios/00-index.md) | Full 100-scenario index |
-| [`MITRE-Mapping/attack-navigator-layer.json`](MITRE-Mapping/attack-navigator-layer.json) | Importable MITRE ATT&CK coverage heatmap |
+| [`MITRE-Mapping/layers/master-coverage.json`](MITRE-Mapping/layers/master-coverage.json) | Merged MITRE ATT&CK coverage heatmap (all 100 scenarios) |
 
 ## The premise
 
@@ -147,23 +147,23 @@ Field-by-field guide: [`docs/03-scenario-template.md`](docs/03-scenario-template
 
 | Category | Track | Count | Progress |
 |---|---|---:|:---|
-| [01 · Phishing & Initial Access](scenarios/01-phishing/) | Lifecycle | 10 | `▱▱▱▱▱▱▱▱▱▱` 0/10 |
-| [02 · Execution](scenarios/02-execution/) | Lifecycle | 8 | `▱▱▱▱▱▱▱▱` 0/8 |
-| [03 · Persistence](scenarios/03-persistence/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
-| [04 · Privilege Escalation](scenarios/04-privilege-escalation/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
-| [05 · Credential Access](scenarios/05-credential-access/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
-| [06 · Discovery](scenarios/06-discovery/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
-| [07 · Lateral Movement](scenarios/07-lateral-movement/) | Lifecycle | 8 | `▱▱▱▱▱▱▱▱` 0/8 |
-| [08 · Command & Control](scenarios/08-command-control/) | Lifecycle | 6 | `▱▱▱▱▱▱` 0/6 |
-| [09 · Collection](scenarios/09-collection/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
-| [10 · Exfiltration](scenarios/10-exfiltration/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
-| [11 · Defense Evasion](scenarios/11-defense-evasion/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
-| [12 · Impact & Recovery](scenarios/12-impact-recovery/) | Lifecycle | 5 | `▱▱▱▱▱` 0/5 |
-| [13 · Full Attack Chain](scenarios/13-full-attack-chain/) | Capstone | 4 | `▱▱▱▱` 0/4 |
-| [14 · False Positive Triage](scenarios/14-false-positive/) | Judgment | 8 | `▱▱▱▱▱▱▱▱` 0/8 |
-| [15 · Proactive Threat Hunting](scenarios/15-threat-hunting/) | Judgment | 6 | `▱▱▱▱▱▱` 0/6 |
-| [16 · Insider Threat](scenarios/16-insider-threat/) | Judgment | 6 | `▱▱▱▱▱▱` 0/6 |
-| **Total** | | **100** | **0 / 100** |
+| [01 · Phishing & Initial Access](scenarios/01-phishing/) | Lifecycle | 10 | `██████████` 10/10 |
+| [02 · Execution](scenarios/02-execution/) | Lifecycle | 8 | `████████` 8/8 |
+| [03 · Persistence](scenarios/03-persistence/) | Lifecycle | 6 | `██████` 6/6 |
+| [04 · Privilege Escalation](scenarios/04-privilege-escalation/) | Lifecycle | 6 | `██████` 6/6 |
+| [05 · Credential Access](scenarios/05-credential-access/) | Lifecycle | 6 | `██████` 6/6 |
+| [06 · Discovery](scenarios/06-discovery/) | Lifecycle | 6 | `██████` 6/6 |
+| [07 · Lateral Movement](scenarios/07-lateral-movement/) | Lifecycle | 8 | `████████` 8/8 |
+| [08 · Command & Control](scenarios/08-command-control/) | Lifecycle | 6 | `██████` 6/6 |
+| [09 · Collection](scenarios/09-collection/) | Lifecycle | 5 | `█████` 5/5 |
+| [10 · Exfiltration](scenarios/10-exfiltration/) | Lifecycle | 5 | `█████` 5/5 |
+| [11 · Defense Evasion](scenarios/11-defense-evasion/) | Lifecycle | 5 | `█████` 5/5 |
+| [12 · Impact & Recovery](scenarios/12-impact-recovery/) | Lifecycle | 5 | `█████` 5/5 |
+| [13 · Full Attack Chain](scenarios/13-full-attack-chain/) | Capstone | 4 | `████` 4/4 |
+| [14 · False Positive Triage](scenarios/14-false-positive/) | Judgment | 8 | `████████` 8/8 |
+| [15 · Proactive Threat Hunting](scenarios/15-threat-hunting/) | Judgment | 6 | `██████` 6/6 |
+| [16 · Insider Threat](scenarios/16-insider-threat/) | Judgment | 6 | `██████` 6/6 |
+| **Total** | | **100** | **100 / 100** |
 
 Complete ID-by-ID index with verdicts and confidence ratings: [`scenarios/00-index.md`](scenarios/00-index.md)
 
@@ -173,12 +173,12 @@ Maturity markers tied to real portfolio bars — each activates when genuinely m
 
 | Milestone | Criterion | Status |
 |---|---|:---:|
-| Lifecycle represented | At least one scenario in each of the 12 lifecycle categories | 0 / 12 |
-| Judgment tracks live | False-positive, hunting, and insider scenarios all documented | 0 / 3 |
-| Full-chain set complete | All four end-to-end incident writeups published | 0 / 4 |
-| ATT&CK breadth | Every tactic in the catalog evidenced at least once | pending |
-| Tuning demonstrated | At least one detection rule tuned and logged after a false positive | pending |
-| Catalog complete | All 100 scenarios published | 0 / 100 |
+| Lifecycle represented | At least one scenario in each of the 12 lifecycle categories | 12 / 12 |
+| Judgment tracks live | False-positive, hunting, and insider scenarios all documented | 3 / 3 |
+| Full-chain set complete | All four end-to-end incident writeups published | 4 / 4 |
+| ATT&CK breadth | Every tactic in the catalog evidenced at least once | 12 / 12 |
+| Tuning demonstrated | At least one detection rule tuned and logged after a false positive | done |
+| Catalog complete | All 100 scenarios published | 100 / 100 |
 
 ## Analysis principles
 
@@ -251,9 +251,75 @@ assistant. I designed the SOC architecture, defined the detection and
 investigation scenarios, implemented and validated the lab myself, and
 I can explain and reproduce every component of this project.
 
+## Final Engagement Report
+
+### Executive Summary
+
+All 100 detection and investigation scenarios for the Ashford Grove Capital SOC L1 engagement have been executed, documented, and individually committed. Each scenario was simulated against live VirtualBox lab infrastructure running production-grade open-source tooling (Wazuh SIEM/EDR, Security Onion NSM, Sysmon endpoint telemetry), with real detection evidence captured and analyzed.
+
+The engagement covers the full MITRE ATT&CK lifecycle from Initial Access through Impact, plus 20 judgment-track scenarios testing false-positive triage, proactive threat hunting, and insider threat detection -- skills that separate an analyst from an alert reader.
+
+### Coverage Breakdown
+
+| Track | Categories | Scenarios | Verdicts |
+|---|---|---:|---|
+| **Lifecycle** | 12 (Phishing through Impact) | 76 | 72 True Positive, 1 Pipeline Pass, 1 Triage Complete, 1 Containment Validated, 1 True Positive (conceptual) |
+| **Capstone** | 1 (Full Attack Chain) | 4 | 4 True Positive (multi-phase) |
+| **Judgment** | 3 (FP, Hunting, Insider) | 20 | 8 False Positive / Benign, 6 Hunt Complete, 6 Insider findings |
+| **Total** | **16** | **100** | |
+
+### MITRE ATT&CK Coverage
+
+- **85 unique technique-tactic pairs** mapped across all 100 scenarios
+- **12 of 12 ATT&CK tactics** covered: Initial Access, Execution, Persistence, Privilege Escalation, Defense Evasion, Credential Access, Discovery, Lateral Movement, Collection, Command and Control, Exfiltration, Impact
+- **Confidence distribution**: 18 Critical, 60 High, 14 Medium (8 non-standard verdict types)
+- **Master heatmap**: [`MITRE-Mapping/layers/master-coverage.json`](MITRE-Mapping/layers/master-coverage.json) -- import into [ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/)
+- **Per-scenario layers**: [`MITRE-Mapping/layers/AGC-XXX.json`](MITRE-Mapping/layers/) (97 individual layers; 3 scenarios had no distinct MITRE technique)
+
+### Category Results
+
+| # | Category | Count | Key Techniques |
+|---|---|---:|---|
+| 01 | Phishing & Initial Access | 10 | T1566.001, T1566.002 |
+| 02 | Execution | 8 | T1059.001, T1059.003, T1047, T1204.002, T1218.005 |
+| 03 | Persistence | 6 | T1547.001, T1053.005, T1543.003, T1546.003, T1136.001 |
+| 04 | Privilege Escalation | 6 | T1548.002, T1548.003, T1078.002, T1098, T1574.001 |
+| 05 | Credential Access | 6 | T1003.001, T1003.002, T1555.003, T1110.003, T1557.001 |
+| 06 | Discovery | 6 | T1082, T1033, T1016, T1069, T1135, T1482 |
+| 07 | Lateral Movement | 8 | T1021.001/002/004/006, T1550.002, T1046 |
+| 08 | Command & Control | 6 | T1071.001, T1071.004, T1571, T1573 |
+| 09 | Collection | 5 | T1560.001, T1113, T1074.001, T1039 |
+| 10 | Exfiltration | 5 | T1041, T1048.003, T1052.001, T1567.002 |
+| 11 | Defense Evasion | 5 | T1070.001, T1562.001, T1070.004, T1027.010 |
+| 12 | Impact & Recovery | 5 | T1486, T1489, T1491.002, T1484.001 |
+| 13 | Full Attack Chain | 4 | Multi-technique chains (8-14 techniques each) |
+| 14 | False Positive Triage | 8 | Same techniques as malicious twins, benign context |
+| 15 | Proactive Threat Hunting | 6 | T1546.003, T1218, T1071, T1078, T1053.005 |
+| 16 | Insider Threat | 6 | T1567.002 (1 scenario); 5 baseline-deviation only |
+
+### Detection Stack Performance
+
+| Source | Events Captured | Role |
+|---|---|---|
+| Sysmon (SwiftOnSecurity config) | EID 1, 11, 13, 19-22 | Primary host telemetry |
+| Windows Security Log | EID 4624, 4625, 4698, 4732, 1102 | Authentication and audit |
+| Windows Defender | Real-time detection, Tamper Protection | Endpoint protection |
+| journalctl/auditd (Linux) | sudo, SSH, service events | Linux host telemetry |
+
+### Lab Constraints Documented
+
+- Security Onion network telemetry inaccessible (no Guest Additions)
+- Wazuh indexer API offline (port 9200 refused)
+- Domain trust broken on COMPROMISED-HOST-01 (NTLM-only authentication)
+- Sysmon EID 7 (Image Loaded) and EID 10 (ProcessAccess) disabled in config
+- Admin shares (C$) blocked between lab endpoints
+- DMZ-LINUX-01 Guest Additions at RunLevel=0
+
+Each constraint is documented in the affected scenario's investigation section with the workaround used and its impact on detection fidelity.
+
 ## License
 
-MIT — see [`LICENSE`](LICENSE). Use it, adapt it, build on it.
+MIT -- see [`LICENSE`](LICENSE). Use it, adapt it, build on it.
 
 ---
 
