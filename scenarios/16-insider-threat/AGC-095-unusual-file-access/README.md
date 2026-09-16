@@ -29,7 +29,7 @@
 
 ### Simulation
 
-Attempted remote share access to `\\10.10.10.100\Finance` (failed — network unavailable in lab). Simulated local equivalent by creating a Finance folder structure and accessing files as the sarah.jenkins persona.
+The remote share access to `\\10.10.10.100\Finance` failed because the lab has no reachable share host. The simulation fell back to a local Finance folder structure and opened its files as the sarah.jenkins persona.
 
 **Execution window**: 01:19:17 - 01:19:59 UTC on COMPROMISED-HOST-01
 
@@ -37,7 +37,7 @@ Attempted remote share access to `\\10.10.10.100\Finance` (failed — network un
 
 ### Detection
 
-File access alert: sarah.jenkins (Operations role) browsed and opened files in the Finance share, including payroll data (payroll-sept.csv) and budget documents (Q3-budget-2026.xlsx). This access is outside her role authorization per the access matrix.
+File access alert: sarah.jenkins (Operations role) browsed the Finance share and opened payroll data (payroll-sept.csv) and budget documents (Q3-budget-2026.xlsx). The access matrix does not authorize her role for that share.
 
 ### Investigation
 
@@ -73,7 +73,7 @@ Vendor-Payment-Schedule-Q4.xlsx   (2,161 bytes)
 
 #### Step 2: Verify Role Authorization
 
-sarah.jenkins holds the **Operations** role. Per the access matrix, she is authorized for Operations and General shares only. The Finance share is explicitly NOT authorized for her role.
+sarah.jenkins holds the **Operations** role. The access matrix authorizes her for the Operations and General shares only and lists Finance as NOT authorized for her role.
 
 #### Step 3: Assess Sensitivity of Accessed Data
 
@@ -94,15 +94,15 @@ sarah.jenkins holds the **Operations** role. Per the access matrix, she is autho
 
 ### Report
 
-**Verdict: Confirmed Policy Violation** — sarah.jenkins (Operations role) accessed the Finance share containing highly sensitive data (payroll, banking credentials, M&A documents) without authorization. The access was not accidental (multiple files browsed) and no business justification or temporary authorization exists.
+**Verdict: Confirmed Policy Violation** — sarah.jenkins (Operations role) accessed the Finance share, which holds payroll, banking credentials, and M&A documents, without authorization. She browsed multiple files, so this was not an accidental open, and no business justification or temporary authorization exists.
 
 **Severity: Medium** — Escalates to High if a pattern of repeated access is identified or if the accessed data was copied/forwarded.
 
-**Recommendation**: Escalate to sarah.jenkins' manager and HR for a role-appropriate conversation. Do not confront the employee directly. Review access logs for any prior Finance share access by this account. Verify that role-based access controls (RBAC) are enforced at the share level to prevent unauthorized browsing. Consider implementing file access auditing (EID 4663) for sensitive shares.
+**Recommendation**: Escalate to sarah.jenkins' manager and HR for a role-appropriate conversation. Do not confront the employee directly. Review access logs for any prior Finance share access by this account. Verify that role-based access controls (RBAC) are enforced at the share level so an Operations account cannot browse Finance at all. Enable file access auditing (Windows Security EID 4663) on sensitive shares.
 
 ### MITRE Mapping
 
-No MITRE ATT&CK technique applies. This is a **baseline-deviation** detection based on role-based access policy, not a technical attack indicator. The access mechanisms (SMB, file browsing) are legitimate; the finding is the mismatch between the employee's role and the resources accessed.
+No MITRE ATT&CK technique applies. This is a **baseline-deviation** detection against role-based access policy, not a technical attack indicator. SMB and file browsing are legitimate mechanisms; the finding is the mismatch between sarah.jenkins' role and the share she opened.
 
 ## Evidence
 

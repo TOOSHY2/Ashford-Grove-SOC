@@ -27,7 +27,7 @@
 
 ### Simulation
 
-Verified that `svc_reporting` no longer exists on the local system (cleaned up after AGC-085). Used `cmdkey /add` to simulate credential staging for the service account, demonstrating the pattern of a human operator attempting to use a service account interactively. The credential was immediately cleaned up via `cmdkey /delete`.
+The simulation first confirmed that `svc_reporting` no longer exists locally (cleaned up after AGC-085). It then ran `cmdkey /add` to stage credentials for the account, the same move a human operator makes before logging on with a service account interactively, and removed them two seconds later with `cmdkey /delete`.
 
 **Execution window**: 01:20:00 - 01:20:31 UTC on COMPROMISED-HOST-01
 
@@ -35,7 +35,7 @@ Verified that `svc_reporting` no longer exists on the local system (cleaned up a
 
 ### Detection
 
-Credential staging detected for service account `svc_reporting` on COMPROMISED-HOST-01. The `cmdkey` command was used to store credentials for this account, indicating an attempt to use the service account interactively. Service accounts are designated for automated tasks only and should never be used for interactive logon.
+Sysmon captured `cmdkey` storing credentials for the service account `svc_reporting` on COMPROMISED-HOST-01. Staging a saved credential is the setup for interactive use, and the registry above restricts this account to batch and service logons only.
 
 ### Investigation
 
@@ -59,7 +59,7 @@ Image: C:\Windows\System32\cmdkey.exe
 CommandLine: "C:\WINDOWS\system32\cmdkey.exe" /delete:COMPROMISED-01
 ```
 
-**Critical finding**: The `cmdkey /add` command exposes the service account password (`[REDACTED]`) in cleartext in the Sysmon EID 1 command line field.
+**Critical finding**: `cmdkey /add` writes the service account password (`[REDACTED]`) in cleartext into the Sysmon EID 1 command line field.
 
 #### Step 2: Verify Account Designation
 
@@ -67,7 +67,7 @@ CommandLine: "C:\WINDOWS\system32\cmdkey.exe" /delete:COMPROMISED-01
 net user svc_reporting: The user name could not be found.
 ```
 
-The `svc_reporting` account was cleaned up after AGC-085 and no longer exists locally. However, the credential staging attempt demonstrates the attack pattern: a human operator with knowledge of the service account password attempted to store credentials for interactive use.
+The `svc_reporting` account was cleaned up after AGC-085 and no longer exists locally. The staging attempt still shows the pattern that matters: someone who knew the service account password stored it for interactive use.
 
 #### Step 3: Identify the Human Behind the Keyboard
 
@@ -78,7 +78,7 @@ The `svc_reporting` account was cleaned up after AGC-085 and no longer exists lo
 | **Parent process** | PowerShell (simulation script) |
 | **Credential staging time** | 01:20:29 UTC |
 
-In a production investigation, the source workstation and executing user context would identify which human operator was at the keyboard when the service account credentials were staged.
+In production, the source workstation plus the executing user context would name the person at the keyboard when the credentials were staged. In the lab that context resolves only to the shared Administrator account and the simulation script.
 
 #### Step 4: Assess Risk
 
@@ -88,7 +88,7 @@ In a production investigation, the source workstation and executing user context
 
 ### Report
 
-**Verdict: Confirmed Policy Violation** — A human operator staged credentials for the `svc_reporting` service account using `cmdkey`, indicating an intent to use the account interactively. Service accounts are designated for automated batch tasks only, and interactive use violates the service account policy and breaks individual accountability.
+**Verdict: Confirmed Policy Violation** — A human operator staged credentials for the `svc_reporting` service account with `cmdkey`, which signals intent to use the account interactively. The service account policy limits `svc_reporting` to automated batch tasks; interactive use breaks that policy and removes individual accountability.
 
 **Recommendation**:
 1. Identify the human operator via source workstation and session context
@@ -99,9 +99,9 @@ In a production investigation, the source workstation and executing user context
 
 ### MITRE Mapping
 
-No MITRE ATT&CK technique applies. The service account credentials are legitimately known to authorized personnel; the finding is the **unauthorized manner of use** (interactive instead of batch/service), not credential theft or privilege escalation.
+No MITRE ATT&CK technique applies. Authorized personnel legitimately know the service account credentials; the finding is the **unauthorized manner of use** (interactive instead of batch/service), not credential theft or privilege escalation.
 
-**Cross-reference**: This scenario is the insider-threat companion to **AGC-085** (False Positive), where the same service account was used within its authorized parameters (scheduled task execution). The distinction is the logon type: Type 4/5 (batch/service) is authorized; Type 2 (interactive) is not.
+**Cross-reference**: This scenario is the insider-threat companion to **AGC-085** (False Positive), where the same service account ran a scheduled task inside its authorized parameters. The only thing that separates the two is the logon type: Type 4/5 (batch/service) is authorized; Type 2 (interactive) is not.
 
 ## Evidence
 

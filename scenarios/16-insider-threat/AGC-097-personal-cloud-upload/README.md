@@ -28,7 +28,7 @@
 
 ### Simulation
 
-sarah.jenkins created a client list file containing sensitive client data (client IDs, names, AUM, contact information) and uploaded it via `Invoke-WebRequest POST` to an external endpoint simulated on EXT-ATTACKER-SIM (10.10.40.10/personal-cloud-upload). The upload returned HTTP 200 OK.
+sarah.jenkins built a client list (client IDs, names, AUM, contact details) and pushed it with `Invoke-WebRequest POST` to a personal-cloud endpoint that EXT-ATTACKER-SIM stood in for (10.10.40.10/personal-cloud-upload). The upload returned HTTP 200 OK.
 
 **Execution window**: 01:19:59 - 01:20:00 UTC on COMPROMISED-HOST-01
 
@@ -36,7 +36,7 @@ sarah.jenkins created a client list file containing sensitive client data (clien
 
 ### Detection
 
-Outbound HTTPS POST detected from COMPROMISED-HOST-01 to 10.10.40.10 (unsanctioned external endpoint), uploading a file named `client-list.xlsx` (198 bytes) containing client PII (names, AUM values, contact emails). The destination is NOT on the sanctioned cloud services allow-list.
+Outbound HTTPS POST from COMPROMISED-HOST-01 to 10.10.40.10, an unsanctioned external endpoint, carrying `client-list.xlsx` (198 bytes) with client names, AUM values, and contact emails. The destination is NOT on the sanctioned cloud services allow-list.
 
 ### Investigation
 
@@ -94,14 +94,14 @@ CL-003,Summit Capital,120000000,david.ahmed@sc.example
 
 ### Report
 
-**Verdict: Confirmed Policy Violation** — sarah.jenkins uploaded a sensitive client list containing PII and financial data to an unsanctioned external endpoint, violating the Acceptable Use Policy. No prior technical IOCs (malware, C2, credential theft) are present, indicating this is an insider policy violation rather than an external compromise.
+**Verdict: Confirmed Policy Violation** — sarah.jenkins uploaded a client list holding PII and AUM figures to an unsanctioned external endpoint, in breach of the Acceptable Use Policy. No prior technical IOCs (malware, C2, credential theft) exist on COMPROMISED-HOST-01, so this is an insider policy violation, not an external compromise.
 
 **Recommendation**:
 1. Block the destination category (consumer cloud uploads) at the firewall/proxy
 2. Handle the employee per the Acceptable Use Policy disciplinary process — not as a confirmed attacker
 3. Assess whether the uploaded data constitutes a reportable data breach under applicable regulations
-4. Review DLP controls for outbound file transfers to unsanctioned destinations
-5. Cross-reference with AGC-062 (attacker exfiltration) to ensure investigation playbooks distinguish insider vs. external scenarios
+4. Review why DLP did not stop a client list leaving for an unsanctioned destination
+5. Cross-reference with AGC-062 (attacker exfiltration) so the playbook separates insider uploads from external exfil on the prior-IOC test above
 
 ### MITRE Mapping
 

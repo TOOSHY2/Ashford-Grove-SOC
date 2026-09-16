@@ -31,7 +31,7 @@
 
 ### Simulation
 
-Created 50 IT documentation files in the IT-Support share. Executed a bulk `Copy-Item` operation to `C:\Users\raj.patel\Downloads\bulk-copy\`, simulating a departing employee collecting work product.
+The simulation created 50 IT documentation files in the IT-Support share, then ran a single bulk `Copy-Item` to `C:\Users\raj.patel\Downloads\bulk-copy\` to mimic a departing employee collecting work product.
 
 **Execution window**: 01:19:59 UTC on COMPROMISED-HOST-01
 
@@ -39,7 +39,7 @@ Created 50 IT documentation files in the IT-Support share. Executed a bulk `Copy
 
 ### Detection
 
-Anomalous file access volume: raj.patel copied 50 files from the IT-Support share to a personal Downloads folder in a single operation, representing a 5x deviation above the documented daily baseline of 5-15 files. This spike coincides with the employee's resignation notice period (submitted 2026-09-10, last day 2026-09-24).
+Anomalous file access volume: raj.patel copied 50 files from the IT-Support share to his Downloads folder in one operation, 5x the documented daily baseline of 5-15 files. The spike falls inside his resignation notice period (submitted 2026-09-10, last day 2026-09-24).
 
 ### Investigation
 
@@ -60,11 +60,11 @@ File types: IT documentation (network diagrams, .vsdx format)
 | **Bulk copy detected** | **2026-09-16** | **8 days** |
 | Last day | 2026-09-24 | 0 days |
 
-The bulk copy occurs in the middle of the notice period — a high-risk window for data hoarding by departing employees.
+The bulk copy lands in the middle of raj.patel's notice period — the window in which a departing employee is most likely to hoard data.
 
 #### Step 3: Assess Material Value
 
-The copied files are IT documentation (network diagrams). While these are within raj.patel's authorized access scope (IT-Support role), the bulk collection raises concerns about:
+The copied files are IT documentation (network diagrams). raj.patel's IT-Support role authorizes him to read them, but collecting all 50 at once raises three concerns:
 - Intellectual property being taken to a competitor
 - Network architecture documentation being used for unauthorized access after departure
 - Contractual obligations regarding work product ownership
@@ -78,18 +78,18 @@ The copied files are IT documentation (network diagrams). While these are within
 
 ### Report
 
-**Verdict: Confirmed Anomaly** — raj.patel's file access volume (50 files, 5x above baseline) during the resignation notice period represents a significant behavioral anomaly that warrants coordinated investigation.
+**Verdict: Confirmed Anomaly** — raj.patel copied 50 files, 5x his baseline, midway through his notice period. That combination of volume and HR timing warrants a coordinated investigation.
 
 **Recommendation**: Coordinate a joint Security-HR-Legal response:
 1. **Do NOT confront the employee directly** or revoke access without coordination
 2. HR to verify whether a handover task was assigned that would explain the volume
 3. Legal to assess contractual obligations regarding work product
 4. Security to monitor for subsequent outbound transfer (USB, email, cloud upload)
-5. Implement a standing HR-to-Security notification process for all resignations and terminations, enabling proactive monitoring during notice periods
+5. Set up a standing HR-to-Security notification for every resignation and termination so the SOC can watch the notice period from day one
 
 ### MITRE Mapping
 
-No MITRE ATT&CK technique applies. The detection is based on **behavioral deviation** (volume spike) correlated with **HR context** (resignation timing), not technical attack indicators. The access mechanisms are legitimate and within the employee's authorized scope.
+No MITRE ATT&CK technique applies. The detection rests on a **behavioral deviation** (the volume spike) correlated with **HR context** (resignation timing), not on technical attack indicators. The copy itself used a legitimate mechanism against a share raj.patel is authorized to read.
 
 ## Evidence
 

@@ -32,7 +32,7 @@
 
 ### Simulation
 
-Simulated raj.patel accessing `C:\Shares\Finance\Q3-budget-2026.xlsx` at 01:20 UTC (7 hours outside the end of the normal working window). Conducted an exhaustive search for authorization records (on-call roster, change tickets, manager approval) and documented the empty result.
+The simulation had raj.patel open `C:\Shares\Finance\Q3-budget-2026.xlsx` at 01:20 UTC, 7 hours after the normal working window closes. It then searched every authorization source (on-call roster, change tickets, manager approval) and recorded the empty result.
 
 **Execution window**: 01:20:31 UTC on COMPROMISED-HOST-01
 
@@ -40,7 +40,7 @@ Simulated raj.patel accessing `C:\Shares\Finance\Q3-budget-2026.xlsx` at 01:20 U
 
 ### Detection
 
-After-hours access detected: raj.patel accessed a sensitive resource (Finance budget file) at 01:20 UTC on a weekday, well outside the documented working hours (08:00-18:00 UTC). No on-call record, emergency change ticket, or manager approval was found to justify the off-hours access.
+After-hours access: raj.patel opened the Finance budget file at 01:20 UTC on a weekday, outside his documented working hours (08:00-18:00 UTC). No on-call record, emergency change ticket, or manager approval justifies the access.
 
 ### Investigation
 
@@ -63,7 +63,7 @@ Access result: Successful
 | **Manager pre-approval** | NOT FOUND in approval records |
 | **Emergency change record** | NONE on file |
 
-The **absence of any authorization record** is the primary finding. In a production environment, this search must be exhaustive and the empty result thoroughly documented.
+The **absence of any authorization record** is the primary finding. In production, the analyst must check every one of these sources and write down the empty result, because that record is what the escalation rests on.
 
 #### Step 3: Context Assessment
 
@@ -74,31 +74,31 @@ The **absence of any authorization record** is the primary finding. In a product
 | **Access pattern** | Single access at 01:20 UTC — not a sustained session |
 | **HR context** | Resignation submitted 2026-09-10 (cross-reference AGC-096) |
 
-**Compounding factors**: This after-hours access occurs during raj.patel's resignation notice period (AGC-096) and targets a Finance resource outside his role authorization (AGC-095 pattern). These compounding factors elevate concern.
+**Compounding factors**: This after-hours access falls inside raj.patel's resignation notice period (AGC-096) and targets a Finance resource outside his role authorization (AGC-095 pattern). Either fact alone would prompt a question; together they push the severity to High.
 
 #### Step 4: Assessment of Intent
 
-The investigation establishes facts without presuming malice:
-- **Possible benign explanation**: Forgot to submit a change ticket for legitimate maintenance work
-- **Possible concern**: Accessing sensitive data during notice period without authorization
-- **Resolution**: Contact the employee and manager to establish the actual reason before escalating
+The investigation records facts without presuming malice:
+- **Possible benign explanation**: raj.patel did legitimate maintenance work and forgot to raise a change ticket
+- **Possible concern**: An employee in his notice period read Finance data he is not authorized for
+- **Resolution**: Ask the employee and his manager for the actual reason before escalating
 
 ### Report
 
-**Verdict: Confirmed Anomaly — Requires Further Investigation** — raj.patel accessed a sensitive Finance resource at 01:20 UTC (7 hours outside normal working hours) with no on-call record, change ticket, or manager approval on file. The access is compounded by the employee's active resignation notice period and the Finance data being outside his role authorization.
+**Verdict: Confirmed Anomaly — Requires Further Investigation** — raj.patel accessed a sensitive Finance resource at 01:20 UTC (7 hours outside normal working hours) with no on-call record, change ticket, or manager approval on file. His active resignation notice period and the fact that Finance data sits outside his role authorization both make the access harder to explain away.
 
 **Recommendation**:
 1. Contact raj.patel and his manager to establish the reason for the off-hours access
 2. If a legitimate reason exists (forgotten ticket), document it and close as procedural gap
 3. If no legitimate reason, escalate per the insider threat process (coordinate with HR/Legal)
-4. Document the resolution to build institutional precedent for handling similar cases
-5. Review whether time-based access controls (logon hour restrictions) should be implemented for sensitive resources
+4. Record the resolution so the next off-hours case has a precedent to follow
+5. Review whether logon hour restrictions should apply to sensitive resources such as the Finance share
 
 ### MITRE Mapping
 
-No MITRE ATT&CK technique applies. This is an entirely **procedural finding** (missing approval for off-hours access), not a technical IOC. The detection is based on time-of-day deviation from the documented working pattern combined with the absence of authorization records.
+No MITRE ATT&CK technique applies. This is a **procedural finding** (missing approval for off-hours access), not a technical IOC. The detection combines a time-of-day deviation from the documented working pattern with the absence of any authorization record.
 
-**Cross-reference**: This scenario is the mirror-inverse of **AGC-085** (False Positive), where the same search process for authorization records yielded a positive result (documented service account schedule), leading to a benign conclusion. Here, the empty result drives the investigation forward.
+**Cross-reference**: This scenario is the mirror image of **AGC-085** (False Positive), where the same authorization search returned a documented service account schedule and closed the case as benign. Here the empty result is what keeps the case open.
 
 ## Evidence
 
