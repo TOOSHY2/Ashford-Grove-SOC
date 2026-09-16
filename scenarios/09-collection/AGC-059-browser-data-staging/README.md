@@ -22,17 +22,17 @@
 ### Tradecraft
 
 **What:** Browser data files contain the most immediately actionable credentials on a compromised host:
-1. **Cookies** (SQLite DB) — contains active session tokens for every authenticated web service. A stolen session cookie bypasses all authentication (password + MFA) because the session is already authenticated
-2. **Login Data** (SQLite DB) — contains saved passwords encrypted with DPAPI. With the user's context or the DPAPI master key, these decrypt to plaintext credentials
-3. **History** (SQLite DB) — reveals which services the user accesses (internal portals, banking, SaaS), enabling targeted session hijack
-4. **Web Data** (SQLite DB) — contains autofill data including potentially credit card numbers, addresses, and form data
+1. **Cookies** (SQLite DB) — holds the live session tokens for every web service the user is signed into. A stolen cookie walks past password and MFA because the session already passed both
+2. **Login Data** (SQLite DB) — holds saved passwords encrypted with DPAPI. In the user's context, or with the DPAPI master key, they decrypt to plaintext
+3. **History** (SQLite DB) — shows which services the user visits (internal portals, banking, SaaS), so the attacker knows which sessions to hijack
+4. **Web Data** (SQLite DB) — holds autofill entries, which can include card numbers, addresses, and form data
 
 **Why Cookies are Critical severity:**
 - A password can be changed (remediation: AD password reset)
 - An MFA token can be revoked (remediation: MFA re-enrollment)
-- A session cookie gives immediate access that persists until the cookie expires or the session is explicitly invalidated
-- **AD password reset does NOT invalidate web session cookies** — the attacker retains access to SaaS, email, banking, etc. until each service's session is individually terminated
-- Session cookies for services like Office 365, Gmail, Slack, banking portals etc. often have multi-day expiry
+- A session cookie grants access right now and keeps working until it expires or the service kills the session
+- **AD password reset does NOT invalidate web session cookies** — the attacker keeps SaaS, email, banking, and the rest until each service's session is terminated on its own
+- Office 365, Gmail, Slack, and banking portals commonly issue cookies that live for days
 
 ### Simulation
 
@@ -64,7 +64,7 @@ Copy-Item "...\Login Data" "C:\Windows\Temp\agc059_staged\"
 
 **Sysmon EID 11 — File Create: 0 events (DETECTION GAP)**
 
-Same pattern as AGC-057 and AGC-058: SwiftOnSecurity Sysmon config does not capture file creation events for files without EXE/DLL extensions. Browser data files (Cookies, History, Web Data, Login Data) have no extension at all, making them invisible to default EID 11 filtering.
+Same gap as AGC-057 and AGC-058: the SwiftOnSecurity config only logs EID 11 for EXE/DLL extensions. Chrome's Cookies, History, Web Data, and Login Data files have no extension at all, so the default EID 11 filter never sees them.
 
 **Sysmon EID 1 — Process Create (primary detection):**
 ```
@@ -90,9 +90,9 @@ User: COMPROMISED-01\Administrator
 ### Investigation
 
 **Step 1 — File breadth assessment:**
-4 distinct browser data files staged in one operation. This breadth across multiple data types (cookies + passwords + history + form data) distinguishes targeted collection from incidental file access:
-- A legitimate backup tool would backup the entire profile directory, not cherry-pick specific data files
-- An attacker selects the high-value files: Cookies (sessions), Login Data (passwords), History (targets), Web Data (autofill)
+4 distinct browser data files staged in one operation. Cookies + passwords + history + form data together is targeted collection, not incidental file access:
+- A backup tool copies the whole profile directory; it does not cherry-pick four files
+- The attacker took exactly the high-value set: Cookies (sessions), Login Data (passwords), History (targets), Web Data (autofill)
 
 **Step 2 — Staging location analysis:**
 `C:\Windows\Temp\agc059_staged\` — dedicated staging subdirectory in system temp:
@@ -101,9 +101,9 @@ User: COMPROMISED-01\Administrator
 - Temp directory with a specific staging folder name = exfiltration preparation
 
 **Step 3 — Cookie urgency assessment:**
-The presence of `Cookies` among the staged files triggers Critical urgency:
-- Active session cookies can be imported into an attacker-controlled browser immediately
-- The attacker gains the user's authenticated sessions without needing passwords or MFA
+`Cookies` in the staged set is what makes this Critical:
+- Live session cookies drop straight into an attacker-controlled browser
+- The attacker inherits the user's authenticated sessions with no password and no MFA prompt
 - **Time-critical:** session cookies have an expiry window (often 7-30 days for SaaS services)
 - **AD password reset is NOT sufficient remediation** — web session cookies are managed by each individual service, not Active Directory
 
@@ -117,18 +117,18 @@ AGC-033 focused on individual credential access (narrower scope). AGC-059 escala
 
 **Verdict: True Positive** — Browser data staged for exfiltration including session cookies.
 
-**Confidence: Critical** — The highest severity, specifically because:
-1. **Cookies file staged** — active session tokens for immediate account hijack without any authentication step.
-2. 4 browser data files copied in a single operation — full credential-store harvesting, not a single-file grab.
+**Confidence: Critical** — rated at the top because:
+1. **Cookies file staged** — live session tokens, so account hijack needs no authentication step at all.
+2. 4 browser data files copied in a single operation — the whole credential store, not a single-file grab.
 3. Dedicated staging directory in system temp — exfiltration preparation pattern.
-4. **AD password reset does NOT remediate cookie theft** — each web service must have its sessions individually terminated.
-5. Time-critical: session cookies have limited validity windows — faster response = fewer compromised sessions.
+4. **AD password reset does NOT remediate cookie theft** — each web service has to terminate its own sessions.
+5. Time-critical: every hour the cookies stay valid is another hour of live sessions for the attacker.
 
 **Response recommendation:**
-1. **IMMEDIATELY invalidate all web sessions** for michael.chen across ALL services (Office 365, email, SaaS, banking, internal portals). This is the single most time-critical action — NOT password reset.
+1. **IMMEDIATELY invalidate all web sessions** for michael.chen across ALL services (Office 365, email, SaaS, banking, internal portals). This is the single most time-critical action, and it is not the password reset.
 2. **Then reset the AD password** and re-enroll MFA — after session invalidation, not instead of it.
 3. **Audit session logs** on each service the user accesses (from browser History) for unauthorized access from unfamiliar IPs during the exposure window.
-4. **Enable file access auditing** (SACL) on browser profile directories for all endpoints — this is the only reliable detection method since Sysmon EID 11 misses these files.
+4. **Enable file access auditing** (SACL) on browser profile directories for all endpoints — with Sysmon EID 11 blind to these files, the SACL is the only reliable detection.
 5. **Alert on access to browser data paths** — `*\Chrome\User Data\Default\Cookies`, `*\Edge\User Data\Default\Cookies`, etc. from any process other than the browser itself.
 
 ### MITRE Mapping

@@ -21,7 +21,7 @@
 
 ### Tradecraft
 
-**What:** Automated screen capture at regular intervals collects visual intelligence from the compromised host — whatever the user sees on screen becomes available to the attacker. This technique captures:
+**What:** The attacker captures the screen on a timer, so whatever the user sees becomes theirs. That picks up:
 1. **Open documents and emails** — content that may not be saved to files the attacker can access
 2. **Application credentials** — login forms, password managers with visible entries
 3. **Business context** — which applications are in use, what projects are active
@@ -30,12 +30,12 @@
 **Why regular intervals matter:**
 - A user occasionally pressing PrintScreen creates 1-2 screenshots with irregular timing
 - Automated capture creates many screenshots with machine-precise intervals (10s, 30s, 60s)
-- The regularity pattern is the primary detection signal — it cannot be explained by human behavior
+- The regularity is the primary detection signal — no human produces that timing
 
 **Why System.Drawing:**
 - `System.Drawing.Bitmap` and `Graphics.CopyFromScreen()` are built-in .NET APIs
-- No external tools needed — PowerShell loads the assembly natively
-- The resulting PNG files are standard image files, indistinguishable from legitimate screenshots
+- Nothing to drop on disk — PowerShell loads the assembly natively
+- The PNGs that come out are ordinary image files; nothing on disk marks them as attacker output
 
 ### Simulation
 
@@ -43,7 +43,7 @@
 - `COMPROMISED-HOST-01` running, Administrator context (headless).
 - System.Drawing assembly available (built into .NET Framework).
 
-**Note:** VM runs headless — `CopyFromScreen` requires an active GUI session. Simulation creates PNG files via `System.Drawing.Bitmap` with rendered text content to produce identical file-creation artifacts. In a real attack, the PNG content would be actual screen captures.
+**Note:** The VM runs headless and `CopyFromScreen` needs an active GUI session. The simulation instead renders text into PNGs via `System.Drawing.Bitmap`, which produces the same file-creation artifacts. In a real attack the PNG content would be the actual screen.
 
 **Capture timeline (all timestamps UTC):**
 
@@ -67,7 +67,7 @@
 
 **Sysmon EID 11 — File Create: 0 events (DETECTION GAP)**
 
-Same detection gap as AGC-057: SwiftOnSecurity Sysmon config filters EID 11 to EXE/DLL file creations. PNG files are not captured.
+Same detection gap as AGC-057: the SwiftOnSecurity config limits EID 11 to EXE/DLL creations, so the PNG writes never reached the log.
 
 **Sysmon EID 1 — Process Create (primary detection):**
 ```
@@ -98,7 +98,7 @@ User: COMPROMISED-01\Administrator
 ### Investigation
 
 **Step 1 — Interval regularity analysis:**
-5 PNG files created at exactly 10-second intervals. This machine-precise timing eliminates human-initiated screenshot activity:
+5 PNG files landed at exact 10-second intervals. That timing rules out a person at the keyboard:
 - Human screenshots: irregular, event-driven (user presses PrtSc when they see something)
 - Automated capture: regular, timer-driven (script sleeps between captures)
 
@@ -112,32 +112,32 @@ The creating process is powershell.exe (PID 5380) running a script from `C:\Temp
 `C:\Windows\Temp\` is a staging directory:
 - Legitimate screenshots go to `Desktop`, `Pictures\Screenshots`, or clipboard
 - Writing to system Temp suggests staging for later exfiltration (correlate with AGC-057 archive pattern)
-- Sequential naming (`agc058_0.png` through `agc058_4.png`) indicates automated enumeration
+- Sequential naming (`agc058_0.png` through `agc058_4.png`) is a loop counter, not a person naming files
 
 **Step 4 — Combined collection assessment:**
 Correlate with AGC-057 (bulk archive creation):
 - AGC-057: Files archived to `C:\Windows\Temp\staged.zip`
 - AGC-058: Screenshots written to `C:\Windows\Temp\agc058_*.png`
-- Same staging directory, same compromised host — suggests a single collection operation gathering both files and screen content
+- Same staging directory, same host — one collection operation gathering both files and screen content
 
 ### Report
 
 **Verdict: True Positive** — Automated screen capture at regular intervals for data collection.
 
 **Confidence: High** — Calibrated assessment:
-1. Machine-precise 10-second interval between captures — inconsistent with human behavior.
-2. PowerShell process loading System.Drawing assembly to create PNG files — not normal user activity.
+1. Machine-precise 10-second interval between captures — not something a person produces.
+2. PowerShell loading the System.Drawing assembly to write PNG files — no user workflow does this.
 3. Files staged to `C:\Windows\Temp\` — not a user screenshot directory.
-4. Sequential file naming (`agc058_0` through `agc058_4`) — automated enumeration pattern.
-5. Same staging directory as AGC-057 bulk archive — coordinated collection operation.
-6. Sysmon EID 11 detection gap for .png files — critical finding.
+4. Sequential file naming (`agc058_0` through `agc058_4`) — loop-counter pattern.
+5. Same staging directory as the AGC-057 bulk archive — one coordinated collection operation.
+6. Sysmon EID 11 detection gap for .png files — the same gap AGC-057 exposed.
 
 **Response recommendation:**
-1. **Isolate the host** — active screen capture means the attacker is collecting real-time visual intelligence.
-2. **Assess captured content** — review what was on-screen during the capture period to determine sensitive data exposure.
-3. **Enable Sysmon EID 7 (Image Loaded)** to detect System.Drawing.dll loading by unexpected processes.
-4. **Add .png/.jpg/.bmp to Sysmon EID 11** filter to capture image file creation in temp/staging directories.
-5. **Monitor for file system bulk-creation patterns** — multiple sequential files from the same process in a short window is an automation signal.
+1. **Isolate the host** — while the capture loop runs, the attacker sees the screen in near real time.
+2. **Assess captured content** — establish what was on screen during the capture window to scope the exposure.
+3. **Enable Sysmon EID 7 (Image Loaded)** to catch System.Drawing.dll loading into processes that have no business rendering images.
+4. **Add .png/.jpg/.bmp to Sysmon EID 11** so image writes into temp/staging directories get logged.
+5. **Monitor for file system bulk-creation patterns** — several sequentially named files from one process inside a minute is an automation signal.
 
 ### MITRE Mapping
 
