@@ -29,14 +29,14 @@
 - Cleartext passwords (if WDigest is enabled or credentials were recently entered)
 - Cached domain credentials
 
-The classic technique uses `rundll32.exe` to call `comsvcs.dll`'s `MiniDump` export function:
+The technique calls `comsvcs.dll`'s `MiniDump` export through `rundll32.exe`:
 ```
 rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump <lsass_PID> <output.dmp> full
 ```
 
-This creates a full memory dump of LSASS that can be exfiltrated and parsed offline with tools like Mimikatz (`sekurlsa::minidump`). The technique uses only built-in Windows binaries (Living off the Land), avoiding the need to drop a custom tool on disk.
+The full LSASS dump can be exfiltrated and parsed offline with Mimikatz (`sekurlsa::minidump`). Because it uses only built-in Windows binaries, nothing custom lands on disk.
 
-**Why at this lifecycle stage:** After gaining local administrator access (via the privilege escalation techniques in AGC-025 through AGC-030), credential harvesting from LSASS is the standard next step. The extracted credentials enable lateral movement (AGC-043+) by providing valid authentication material for other hosts in the domain.
+**Why at this lifecycle stage:** After gaining local administrator access (via the privilege escalation techniques in AGC-025 through AGC-030), the attacker turns to LSASS to harvest credentials. Those credentials become the authentication material for lateral movement (AGC-043+) to other hosts in the domain.
 
 ### Simulation
 
@@ -85,7 +85,7 @@ Zero EID 10 events found in the last 300 Sysmon entries. The SwiftOnSecurity Sys
 ### Investigation
 
 **Step 1 — Assess the detection source:**
-Windows Defender EID 1116 identified `HackTool:Win32/DumpLsass.H` targeting LSASS via the `comsvcs.dll MiniDump` technique. The detection was signature-based (command-line pattern matching), which is effective against known tools but can be evaded by obfuscation, renamed binaries, or custom dump utilities.
+Windows Defender EID 1116 identified `HackTool:Win32/DumpLsass.H` targeting LSASS via the `comsvcs.dll MiniDump` technique. The detection was signature-based, matching the command-line pattern. That catches known tools but is evaded by obfuscation, renamed binaries, or custom dump utilities.
 
 **Step 2 — Confirm LSASS was the target:**
 The Defender alert path shows `MiniDump 816` where PID 816 is `lsass.exe` (confirmed via `tasklist`). The intent is unambiguous: extracting LSASS process memory for offline credential parsing.
@@ -98,7 +98,7 @@ The Defender alerts show two user contexts:
 - `COMPROMISED-01\Administrator` (for the AMSI/PowerShell detection) — the attacker has local admin access
 - `NT AUTHORITY\SYSTEM` (for the command-line detections) — the rundll32 process ran with SYSTEM privileges
 
-An attacker with Administrator/SYSTEM access who is attempting LSASS dumping has already achieved significant compromise. The investigation should shift from "was the dump successful?" to "how did the attacker get admin access, and what else have they done?"
+An attacker running LSASS dumps under Administrator/SYSTEM has already deeply compromised the host. The investigation should shift from "was the dump successful?" to "how did the attacker get admin access, and what else have they done?"
 
 **Step 5 — Distinguish from False Positive (cross-reference AGC-083):**
 The key differentiator for this True Positive vs. the FP twin (AGC-083):

@@ -67,7 +67,7 @@ The full attack chain (not simulated in this isolated scenario):
 ### Investigation
 
 **Step 1 — Assess the signal strength honestly:**
-`klist` is a standard Windows diagnostic tool. Administrators use it routinely to troubleshoot Kerberos authentication, check ticket expiration, and verify service principal names. **Running klist alone is NOT a strong indicator of compromise.** This must be stated explicitly to avoid alert fatigue from overreacting to benign activity.
+`klist` is a standard Windows diagnostic tool that admins run to check ticket expiration and troubleshoot Kerberos authentication. **Running klist alone is NOT a strong indicator of compromise.**
 
 **Step 2 — Correlation is where the value lies:**
 The investigative value of `klist` execution is in what happens NEXT:
@@ -87,7 +87,7 @@ This scenario follows credential harvesting (AGC-031 LSASS, AGC-032 SAM, AGC-033
 
 **Verdict: True Positive (Probable)** — `klist` was executed as part of a credential access reconnaissance sequence. The tool itself is benign, but its use in the context of prior credential harvesting (AGC-031/032/033) makes it a probable attack indicator.
 
-**Confidence: Medium** — This is an honest assessment:
+**Confidence: Medium** — the Medium rating rests on:
 1. `klist` alone is weak evidence — it is a legitimate diagnostic tool.
 2. Sysmon EID 1 confirmed execution by Administrator from PowerShell.
 3. No Kerberos tickets were found (domain trust broken), meaning no tickets are available for theft on this host.

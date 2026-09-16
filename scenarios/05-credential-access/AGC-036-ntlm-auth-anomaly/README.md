@@ -90,7 +90,7 @@ Additional contributing factor: the domain trust relationship is broken on COMPR
 **Benign explanation confirmed:** IP-based connection + broken domain trust. This is NOT an active NTLM relay attack. The NTLM fallback is expected behavior given the network conditions.
 
 **Step 3 — Why confidence remains Medium (not escalated):**
-Per the investigation methodology: NTLM authentication anomalies have a substantial benign interpretation space. This scenario demonstrates a clear benign cause (IP-based connection). Escalating to High/Critical without first excluding benign explanations is exactly the kind of over-classification that leads to alert fatigue.
+NTLM anomalies carry a wide benign interpretation space, and this one resolved to an IP-based connection rather than an active relay. Escalating past Medium before ruling out that cause would have been premature.
 
 However, the Medium confidence is warranted because:
 - NTLM V2 IS vulnerable to offline cracking and relay attacks, regardless of why it was used

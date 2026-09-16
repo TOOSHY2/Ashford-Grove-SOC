@@ -62,7 +62,7 @@ This technique targets a different credential set than SAM/LSASS — browser cre
 | 2026-09-15 20:05:12 | 1 (Sysmon) | Process Create | **Image:** `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe` (PID 2692). **CommandLine:** `powershell.exe -ExecutionPolicy Bypass -File C:\Temp\agc033-sim.ps1`. **User:** `COMPROMISED-01\Administrator`. **IntegrityLevel:** High. Non-browser process accessing browser credential directories. |
 
 **Detection gap — EID 11 (File Create):**
-Sysmon EID 11 did not fire for the `login_data_copy` file because the SwiftOnSecurity configuration monitors file creation based on extension rules (EXE, DLL, BAT, etc.). The destination file `login_data_copy` has no extension, and `Login Data` (the source) also has no extension. This means the file copy operation was invisible to Sysmon's file monitoring.
+Sysmon EID 11 did not fire for the `login_data_copy` file because the SwiftOnSecurity configuration monitors file creation based on extension rules (EXE, DLL, BAT, etc.). The destination file `login_data_copy` has no extension, and `Login Data` (the source) also has no extension, so the copy never registered with Sysmon's file monitoring.
 
 **Enhanced detection recommendations:**
 ```xml

@@ -28,7 +28,7 @@
 
 An attacker extracts all three hives together because SAM hashes are encrypted with the SYSKEY stored in SYSTEM. With all three files, offline tools like `secretsdump.py` (Impacket) or `mimikatz lsadump::sam` can extract every local account password hash.
 
-This is a Living-off-the-Land technique: `reg.exe` is a legitimate Windows utility, and `reg save` is its intended function. The malicious indicator is the context: saving SAM/SECURITY/SYSTEM to a temp directory rather than through an authorized backup tool.
+`reg.exe` is a legitimate Windows utility and `reg save` is its intended function, so nothing custom touches disk. The malicious tell is the context: SAM/SECURITY/SYSTEM saved to a temp directory instead of through an authorized backup tool.
 
 **Why at this lifecycle stage:** After gaining local admin access, the attacker needs credentials for lateral movement. If LSASS dumping fails (as in AGC-031, where Defender and PPL blocked it), SAM extraction is the fallback. SAM hive extraction is an offline technique — it does not require opening a handle to LSASS, bypassing PPL, or evading AMSI.
 
@@ -66,7 +66,7 @@ Sysmon EID 1
   AND CommandLine matches ANY ("SAM", "SECURITY", "SYSTEM")
 ```
 
-The detection fires on the `reg save` command itself — even when the operation fails (as with SECURITY/SYSTEM), Sysmon EID 1 captures the process creation and full command line. Failed attempts are equally valuable as detection evidence because they reveal attacker intent.
+The rule fires on the `reg save` command itself. Even when the operation fails, as with SECURITY/SYSTEM, Sysmon EID 1 captures the process create and full command line — the failed attempts still expose the attacker's intent.
 
 ### Investigation
 
@@ -77,7 +77,7 @@ Sysmon EID 1 shows `reg.exe save HKLM\SAM C:\Windows\Temp\sam.save /y`. The SAM 
 All three hives being saved together (SAM + SECURITY + SYSTEM) is the strongest indicator of malicious intent. SAM alone has narrow legitimate uses (system backup utilities), but the trio together is exclusively an attack pattern — the attacker needs SYSTEM for the boot key to decrypt SAM offline. In this simulation, the combination intent was present even though only SAM succeeded.
 
 **Step 3 — Examine the destination path:**
-The hive files were saved to `C:\Windows\Temp\` — a world-writable directory commonly used by attackers for staging. Legitimate backup tools (Windows Server Backup, ntdsutil) save to dedicated backup locations, not temp directories.
+The hive files were saved to `C:\Windows\Temp\`, a world-writable directory attackers favor for staging. Legitimate backup tools (Windows Server Backup, ntdsutil) write to dedicated backup locations, not temp.
 
 **Step 4 — Check for exfiltration indicators:**
 After hive extraction, the attacker typically exfiltrates the files. Look for:
@@ -87,7 +87,7 @@ After hive extraction, the attacker typically exfiltrates the files. Look for:
 - SMB file copy to attacker-controlled hosts
 
 **Step 5 — Cross-reference with AGC-031:**
-The LSASS dump attempt (AGC-031) was blocked by Windows Defender and PPL. SAM extraction is the natural fallback — it achieves the same credential harvesting goal through a different vector. This progression (LSASS blocked -> SAM extraction) is a common attack pattern and increases confidence that this is a real attack, not a coincidence.
+The LSASS dump attempt (AGC-031) was blocked by Windows Defender and PPL. SAM extraction is the natural fallback — it achieves the same credential harvesting goal through a different vector. The progression from a blocked LSASS dump to SAM extraction is deliberate fallback, not coincidence, and raises confidence that this is a real attack.
 
 ### Report
 

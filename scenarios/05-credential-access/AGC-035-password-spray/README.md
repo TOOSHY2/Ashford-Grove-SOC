@@ -50,7 +50,7 @@ This breadth-over-depth pattern is what analysts must look for: aggregate EID 46
 **DC-targeted spray (Step 1) — network failure:**
 The initial spray against the DC failed at the network level (System error 64: "specified network name is no longer available" / error 67: "network name cannot be found"). Ping, SMB (445), and LDAP (389) all fail from COMPROMISED-HOST-01 to AD-DC-01. This is consistent with the broken domain trust relationship discovered in AGC-025. The DC never received the authentication attempts, so no EID 4625 events were generated on the DC.
 
-This is a significant detection gap: if the spray fails at the network level, DC-side monitoring sees nothing. Only source-side detection (Sysmon EID 1) captures the attempt.
+This is a detection gap: if the spray fails at the network level, DC-side monitoring sees nothing. Only source-side detection (Sysmon EID 1) captures the attempt.
 
 **Local auth spray (Step 2) — authentication failure:**
 To generate complete detection evidence, a secondary spray was executed against localhost (127.0.0.1) using the same account list. This produced both Security EID 4625 and Sysmon EID 1 events.
@@ -93,7 +93,7 @@ All Sysmon events share: `ParentImage: powershell.exe`, `ParentCommandLine: powe
 ### Investigation
 
 **Step 1 — Identify the spray pattern (breadth-over-depth):**
-Aggregate EID 4625 by source IP: all 5 failures originate from `127.0.0.1` (COMPROMISED-01). Count distinct target accounts: **5 distinct accounts** (michael.chen, sarah.jenkins, raj.patel, james.wilson, admin.backup) with only **1 failure per account**. This is the classic spray fingerprint: high account breadth, low per-account attempt count. A legitimate user mistyping their password would produce multiple 4625 events for the SAME account, not different accounts.
+Aggregate EID 4625 by source IP: all 5 failures originate from `127.0.0.1` (COMPROMISED-01). Count distinct target accounts: **5 distinct accounts** (michael.chen, sarah.jenkins, raj.patel, james.wilson, admin.backup) with only **1 failure per account**. That pattern is the spray fingerprint: high account breadth, low per-account attempt count. A legitimate user mistyping their password would produce multiple 4625 events for the SAME account, not different accounts.
 
 **Step 2 — Confirm coordinated campaign (same failure reason):**
 All 5 EID 4625 events share the same Status (`0xC000006D` — bad password) and Sub Status (`0xC0000064` — user does not exist). The consistent failure reason across distinct accounts confirms a coordinated campaign with a single password being tested, not unrelated coincidental failures.
@@ -105,7 +105,7 @@ Search for EID 4624 (successful logon) for any of the 5 target accounts in the m
 Sysmon EID 1 on the source host provides additional detection value that DC-side 4625 monitoring cannot:
 - **Command-line credential exposure:** The full `net use` command line includes the attempted password in cleartext. This is visible in Sysmon EID 1 but NOT in EID 4625.
 - **Parent process context:** All `net.exe` invocations share the same parent process (powershell.exe executing a script file), confirming scripted/automated spray rather than manual attempts.
-- **Network-layer spray detection:** The DC-targeted spray (10.10.10.10) failed at the network level and generated ZERO EID 4625 events on the DC. Only Sysmon EID 1 on the source host detected these attempts. This is a critical detection gap: if you only monitor DC-side 4625 events, network-layer spray failures are invisible.
+- **Network-layer spray detection:** The DC-targeted spray (10.10.10.10) failed at the network level and generated ZERO EID 4625 events on the DC. Only Sysmon EID 1 on the source host detected these attempts. Relying only on DC-side 4625 monitoring misses this: network-layer spray failures are invisible without it.
 
 **Step 5 — Detection reuse note:**
 The Sysmon EID 1 detection pattern (aggregating `net.exe` / `net1.exe` process creation by parent process, grouping by distinct `/user:` arguments) was first established here and can be reused for future brute-force variants. See also AGC-031 (LSASS) and AGC-032 (SAM) for the same `net.exe` process creation capture pattern.
