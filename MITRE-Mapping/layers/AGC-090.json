@@ -1,0 +1,24 @@
+{
+  "name": "AGC-090: LOLBin Parent-Child Hunt",
+  "versions": { "attack": "16", "navigator": "4.9.5", "layer": "4.5" },
+  "domain": "enterprise-attack",
+  "description": "AGC-090: Rare parent-child process pair hunt. Residual LOLBin chains from prior scenarios surfaced. No active malicious chains.",
+  "filters": { "platforms": ["Windows", "Linux"] },
+  "sorting": 3,
+  "layout": { "layout": "side", "aggregateFunction": "average", "showID": true, "showName": true, "showAggregateScores": true, "countUnscored": false },
+  "hideDisabled": false,
+  "techniques": [
+    {
+      "techniqueID": "T1218",
+      "tactic": "defense-evasion",
+      "color": "#ffe766ff",
+      "comment": "AGC-090: Rare parent-child analysis surfaced mshta->cmd, mshta->powershell, spoolsv->regsvr32, WmiPrvSE->powershell chains from prior scenarios. Hunt methodology validated.",
+      "enabled": true, "metadata": [], "links": [], "showSubtechniques": false, "score": 75
+    }
+  ],
+  "gradient": { "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"], "minValue": 0, "maxValue": 100 },
+  "legendItems": [{ "label": "Hunted: Residual Artifacts", "color": "#ffe766ff" }],
+  "metadata": [], "links": [],
+  "showTacticRowBackground": true, "tacticRowBackground": "#dddddd",
+  "selectTechniquesAcrossTactics": true, "selectSubtechniquesWithParent": false, "selectVisibleTechniques": false
+}
