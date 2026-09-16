@@ -21,15 +21,15 @@
 
 ### Tradecraft
 
-**What:** The attacker uses a highly-privileged administrative account (Domain Admin or local RID-500 Administrator) to log on interactively to a standard workstation. This is a behavioral indicator rather than a technical exploit — the technique itself (logging in) is legitimate, but the context (privileged account on a non-DC endpoint) violates security best practices and indicates either:
+**What:** The attacker logs a highly-privileged account (Domain Admin or local RID-500 Administrator) on interactively to a standard workstation. This is a behavioral indicator, not an exploit — logging in is legitimate, but a privileged account on a non-DC endpoint breaks security best practice and points to one of:
 
-1. **Credential theft/reuse:** An attacker who has obtained Domain Admin credentials uses them on any available workstation to establish a foothold with maximum privileges.
-2. **Lateral movement:** After compromising one host, the attacker moves laterally using stolen DA credentials, leaving authentication artifacts (cached credentials, Kerberos tickets) on every workstation they touch.
-3. **Policy violation:** Even if the login is by a legitimate administrator, interactive DA logon on a workstation exposes those credentials to credential-harvesting tools (Mimikatz, procdump of LSASS) that may already be present on a compromised host.
+1. **Credential theft/reuse:** an attacker with Domain Admin credentials uses them on any available workstation to plant a foothold at maximum privilege.
+2. **Lateral movement:** after compromising one host, the attacker moves on with stolen DA credentials, leaving cached credentials and Kerberos tickets on every workstation they touch.
+3. **Policy violation:** even a legitimate admin logon exposes those credentials to harvesting tools — Mimikatz, procdump of LSASS — that a compromised host may already carry.
 
-The risk is the same regardless of intent: DA credentials on a non-DC host can be harvested by an attacker who already has local admin access on that workstation.
+The risk holds either way: DA credentials on a non-DC host can be harvested by anyone who already has local admin on that workstation.
 
-**Why at this lifecycle stage:** After obtaining administrative credentials (via credential access techniques like AGC-031+), the attacker uses them broadly across the network. Each interactive logon caches credentials on the target host, expanding the attack surface. Detecting this pattern early — before the credentials are harvested and reused — is the last opportunity to contain the breach at a single host.
+**Why at this lifecycle stage:** With administrative credentials in hand from credential-access work (AGC-031+), the attacker spreads them across the network. Each interactive logon caches credentials on the target and widens the attack surface. Catching the pattern before those credentials are harvested and reused is the last chance to hold the breach at one host.
 
 ### Simulation
 
@@ -47,7 +47,7 @@ The risk is the same regardless of intent: DA credentials on a non-DC host can b
 | 3 | 2026-09-15 19:54:03 | Post-logon recon | COMPROMISED-HOST-01 | `whoami` = `compromised-01\administrator`, `whoami /groups` confirms BUILTIN\Administrators membership, High Mandatory Level |
 | 4 | 2026-09-15 19:54:03 | Host context verified | COMPROMISED-HOST-01 | DomainRole=1 (Member Workstation), Domain=ashfordgrove.local. NOT a DC (DomainRole < 4), NOT a PAW |
 
-**Note on domain trust:** COMPROMISED-HOST-01's trust relationship with the ASHFORDGROVE domain is broken (error 1789, discovered during AGC-025). The local Administrator (RID-500) was used as the privileged account. In a production environment with intact domain trust, this scenario would use ASHFORDGROVE\Administrator (the Domain Admin). The detection and investigation patterns are identical — the key indicator is a highly-privileged admin account authenticating interactively on a non-DC/non-PAW endpoint.
+**Note on domain trust:** COMPROMISED-HOST-01's trust with the ASHFORDGROVE domain is broken (error 1789, found during AGC-025), so the local Administrator (RID-500) stood in as the privileged account. With intact domain trust, this scenario would use ASHFORDGROVE\Administrator, the Domain Admin. The detection and investigation patterns match either way: the indicator is a highly-privileged admin account authenticating interactively on a non-DC, non-PAW endpoint.
 
 **Cleanup:** No persistent artifacts created. This scenario is purely behavioral (authentication event).
 
@@ -80,19 +80,19 @@ Domain Admin accounts should only authenticate interactively on:
 COMPROMISED-HOST-01 is a standard member workstation (DomainRole=1). It is NOT in any of these categories.
 
 **Step 2 — Confirm the logon is anomalous:**
-Security EID 4624 shows `Administrator` (RID-500) with Logon Type 2 (Interactive) on `COMPROMISED-01`. The host is a domain member workstation assigned to user `michael.chen`. A built-in Administrator logon on an end-user workstation is outside the expected baseline.
+Security EID 4624 shows `Administrator` (RID-500) with Logon Type 2 (Interactive) on `COMPROMISED-01`, a domain member workstation assigned to user `michael.chen`. A built-in Administrator logon on an end-user workstation falls outside the expected baseline.
 
 **Step 3 — Assess the EID 4672 privilege set:**
-The special privileges assigned include `SeDebugPrivilege` (allows reading/writing any process memory, including LSASS for credential harvesting) and `SeImpersonatePrivilege` (allows token impersonation). These privileges are standard for RID-500 but represent maximum exposure if the host is compromised.
+The assigned privileges include `SeDebugPrivilege`, which reads and writes any process memory including LSASS for credential harvesting, and `SeImpersonatePrivilege` for token impersonation. Standard for RID-500, but maximum exposure once the host is compromised.
 
 **Step 4 — Examine post-logon activity:**
-Sysmon EID 1 shows `whoami.exe /groups` executed at 19:54:03 under the Administrator session. In an attack scenario, `whoami /groups` is a standard post-exploitation reconnaissance command (Discovery, T1033). The presence of this command shortly after a DA logon increases suspicion.
+Sysmon EID 1 shows `whoami.exe /groups` at 19:54:03 under the Administrator session. `whoami /groups` is a standard post-exploitation reconnaissance command (Discovery, T1033), and running it right after a DA logon raises suspicion.
 
 **Step 5 — Credential exposure assessment:**
-An interactive logon (Type 2) caches credentials in LSASS memory. If this workstation is already compromised (as its name suggests), an attacker with local admin could use Mimikatz or procdump to harvest the cached Administrator credentials. This is the primary risk of DA logon on non-DC hosts.
+A Type 2 interactive logon caches credentials in LSASS memory. If this workstation is already compromised, as its name implies, an attacker with local admin could run Mimikatz or procdump to harvest the cached Administrator credentials. That is the main risk of DA logon on non-DC hosts.
 
 **Step 6 — Response is the same regardless of intent:**
-Whether this logon is malicious (attacker using stolen DA credentials) or accidental (legitimate admin logging into the wrong host), the response begins the same way:
+Whether the logon is malicious — an attacker on stolen DA credentials — or an admin who reached the wrong host, the response opens the same way:
 1. Force logoff the DA session immediately.
 2. Reset the DA account password from a known-clean DC console.
 3. Audit what the DA session did during its lifetime.
@@ -102,7 +102,7 @@ Whether this logon is malicious (attacker using stolen DA credentials) or accide
 
 **Verdict: True Positive** — A highly-privileged Administrator account (RID-500) logged interactively onto a standard domain-joined workstation that is neither a domain controller nor a privileged access workstation.
 
-**Confidence: Critical** — The severity is inherently Critical regardless of intent:
+**Confidence: Critical** — The severity stays Critical regardless of intent:
 1. Security EID 4624 confirms Interactive (Type 2) logon of Administrator on a member workstation.
 2. EID 4672 confirms full special privileges including SeDebugPrivilege (enables credential harvesting from LSASS).
 3. The workstation (COMPROMISED-HOST-01) is outside the expected-hosts baseline for administrative accounts.
@@ -111,8 +111,8 @@ Whether this logon is malicious (attacker using stolen DA credentials) or accide
 **Response recommendation:**
 1. **Immediately force logoff** the Administrator session on the workstation.
 2. **Reset the Administrator password** from a known-clean domain controller console session.
-3. **Audit the session** — review all process creation (Sysmon EID 1), network connections (EID 3), and file access events during the Administrator session's lifetime (LogonId 0x3D945D).
-4. **Scan the workstation** for credential-harvesting tools (Mimikatz, procdump, nanodump, etc.) and any artifacts left during the session.
+3. **Audit the session** — review process creation (Sysmon EID 1), network connections (EID 3), and file access during the Administrator session's lifetime (LogonId 0x3D945D).
+4. **Scan the workstation** for credential-harvesting tools (Mimikatz, procdump, nanodump) and any artifacts left during the session.
 5. **Implement Tier-0 isolation:** Deploy a Privileged Access Workstation (PAW) policy. DA accounts should ONLY authenticate on Tier-0 systems (DCs, PAWs). Use Group Policy to restrict DA logon to specific hosts:
    ```
    Computer Configuration > Policies > Windows Settings > Security Settings > Local Policies > User Rights Assignment

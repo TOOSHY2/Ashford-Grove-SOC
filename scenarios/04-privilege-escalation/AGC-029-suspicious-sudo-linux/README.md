@@ -21,17 +21,17 @@
 
 ### Tradecraft
 
-**What:** The attacker exploits an overly-permissive sudoers entry that grants NOPASSWD access to a binary with known shell-escape capabilities. GTFOBins (https://gtfobins.github.io/) catalogs Unix binaries that can be abused to break out of restricted environments, escalate privileges, or transfer files.
+**What:** The attacker abuses an overly-permissive sudoers entry granting NOPASSWD access to a binary that can spawn a shell. GTFOBins (https://gtfobins.github.io/) catalogs Unix binaries that break out of restricted environments, escalate privileges, or move files.
 
 The attack pattern:
 1. **Identify sudo permissions:** `sudo -l` reveals what the compromised user can run as root.
-2. **Cross-reference with GTFOBins:** The attacker checks whether any permitted binary has a known shell escape.
-3. **Execute the escape:** For `vim`, the escape is `sudo vim -c ':!/bin/bash'` — vim's `:!` command spawns a shell, and since vim runs as root via sudo, the spawned shell inherits root privileges.
+2. **Cross-reference with GTFOBins:** the attacker checks whether any permitted binary has a known shell escape.
+3. **Execute the escape:** for `vim`, it is `sudo vim -c ':!/bin/bash'` — vim's `:!` spawns a shell, and because vim runs as root via sudo, that shell inherits root.
 4. **Alternative escapes:** `find -exec`, `awk 'BEGIN {system("/bin/bash")}'`, `less` (then `!bash`), `nmap --interactive`, and dozens more.
 
-The result is an interactive root shell — full privilege escalation from a standard user account.
+The result is an interactive root shell: full escalation from a standard user account.
 
-**Why at this lifecycle stage:** After gaining access to a user account (via phishing, credential theft, or lateral movement), the attacker surveys the local sudo configuration. Overly-permissive sudoers entries are common in environments where administrators grant broad access for convenience rather than following least-privilege principles. A single NOPASSWD entry for a GTFOBins-capable binary converts any user-level compromise into full root access.
+**Why at this lifecycle stage:** Holding a user account from phishing, credential theft, or lateral movement, the attacker reviews the local sudo configuration. Broad NOPASSWD grants get handed out for convenience over least privilege, and one such entry for a GTFOBins-capable binary turns any user-level compromise into root.
 
 ### Simulation
 
@@ -58,7 +58,7 @@ The result is an interactive root shell — full privilege escalation from a sta
 
 **Primary detection source:** System journal (journalctl) capturing sudo invocations.
 
-auditd was not running on this system (inactive/not installed), which is itself a finding — auditd is the primary Linux security auditing framework and should be running on all production Linux hosts. In its absence, sudo logging falls back to syslog/journal entries from the sudo PAM module.
+auditd was not running here (inactive, not installed), a finding in itself — auditd is the primary Linux auditing framework and belongs on every production Linux host. Without it, sudo logging falls back to syslog/journal entries from the sudo PAM module.
 
 | Timestamp (UTC) | Source | Event | Detail |
 |---|---|---|---|
@@ -77,26 +77,26 @@ auditd was not running on this system (inactive/not installed), which is itself 
 ### Investigation
 
 **Step 1 — Identify suspicious sudo COMMAND patterns:**
-The journalctl entry for PID 983 shows `COMMAND=/usr/bin/vim.tiny -es -c ':!/bin/bash ...'`. The `:!` syntax within a vim command argument is a shell-escape — it tells vim to execute a shell command. This is a textbook GTFOBins pattern: the user is not editing a file, they are using vim's shell-escape to spawn a root shell via sudo.
+The journalctl entry for PID 983 shows `COMMAND=/usr/bin/vim.tiny -es -c ':!/bin/bash ...'`. The `:!` inside a vim command argument is a shell-escape: it tells vim to run a shell command. The user is not editing a file; they are using vim's shell-escape to spawn a root shell via sudo.
 
 **Step 2 — Confirm UID transition:**
-The PAM log confirms `session opened for user root(uid=0) by (uid=1000)`. UID 1000 (kaliadmin) transitioned to UID 0 (root) through the sudo invocation. The spawned bash process inherits the root UID.
+The PAM log records `session opened for user root(uid=0) by (uid=1000)`. UID 1000 (kaliadmin) became UID 0 (root) through the sudo call, and the spawned bash inherits the root UID.
 
 **Step 3 — Identify secondary escape technique:**
-PID 990 shows `COMMAND=/usr/bin/find /tmp -maxdepth 0 -exec whoami ;`. The `-exec` flag in find is another GTFOBins escape — any command after `-exec` runs with find's privileges. Since find runs as root via sudo, the exec'd command also runs as root.
+PID 990 shows `COMMAND=/usr/bin/find /tmp -maxdepth 0 -exec whoami ;`. find's `-exec` is another GTFOBins escape — whatever follows `-exec` runs with find's privileges, and find is root via sudo, so the exec'd command runs as root.
 
 **Step 4 — Audit sudoers modification:**
-PID 973 shows `COMMAND=/usr/bin/tee /etc/sudoers.d/agc029-vuln` — the attacker used their existing sudo access to create a NEW sudoers entry granting themselves NOPASSWD access to vim.tiny. This is a privilege persistence technique: even if the original overly-permissive entry is fixed, the attacker's custom sudoers file remains.
+PID 973 shows `COMMAND=/usr/bin/tee /etc/sudoers.d/agc029-vuln` — the attacker used existing sudo access to write a NEW sudoers entry granting themselves NOPASSWD on vim.tiny. That is privilege persistence: fix the original overly-permissive entry and the attacker's own sudoers file survives.
 
 **Step 5 — Cross-reference with account baseline:**
-In a production environment, check whether `kaliadmin` (or the equivalent service/maintenance account) has a documented business need for sudo access to vim. Maintenance accounts commonly receive broad sudo grants for convenience, but NOPASSWD access to editors or file utilities is almost never required for their actual tasks.
+Check whether `kaliadmin`, or the equivalent service or maintenance account, has a documented need for sudo access to vim. Maintenance accounts often carry broad sudo grants for convenience, but NOPASSWD on an editor or file utility is almost never required for their work.
 
 **Step 6 — Pattern reuse note:**
-This GTFOBins escape pattern is a well-documented privilege escalation technique. The investigation approach (filtering sudo logs for GTFOBins-capable binaries with shell-escape arguments) should be applied to any Linux host where sudo abuse is suspected. A Wazuh detection rule matching sudo COMMAND fields against known GTFOBins patterns would automate this detection.
+Apply the same approach — filter sudo logs for GTFOBins-capable binaries carrying shell-escape arguments — on any Linux host where sudo abuse is suspected. A Wazuh rule matching the sudo COMMAND field against known GTFOBins patterns automates it.
 
 ### Report
 
-**Verdict: True Positive** — A GTFOBins shell-escape was used to obtain root access through an overly-permissive sudoers entry. Two distinct escape techniques were confirmed (vim `:!` shell escape and find `-exec`), both yielding `uid=0(root)`.
+**Verdict: True Positive** — The attacker used a GTFOBins shell-escape to gain root through an overly-permissive sudoers entry. Two escapes were confirmed, vim `:!` and find `-exec`, both yielding `uid=0(root)`.
 
 **Confidence: High** — journalctl sudo logs explicitly show:
 1. The full COMMAND string including the `:!/bin/bash` shell-escape syntax.
@@ -109,8 +109,8 @@ This GTFOBins escape pattern is a well-documented privilege escalation technique
 2. **Audit and harden sudoers** across all Linux hosts:
    - Remove NOPASSWD entries unless operationally critical.
    - Never grant sudo access to GTFOBins-capable binaries (vim, less, find, awk, nmap, python, perl, etc.) without explicit `NOEXEC` tag: `user ALL=(ALL) NOPASSWD: NOEXEC: /usr/bin/vim`.
-   - Use `sudoedit` instead of `sudo vim` for file editing — sudoedit does not allow shell escapes.
-3. **Check `/etc/sudoers.d/`** for unauthorized entries — the attacker demonstrated the ability to write custom sudoers files.
+   - Use `sudoedit` instead of `sudo vim` for file editing — sudoedit blocks shell escapes.
+3. **Check `/etc/sudoers.d/`** for unauthorized entries — the attacker showed they can write custom sudoers files.
 4. **Enable auditd** on all Linux hosts with rules for:
    - `sudo` invocations (already covered by default audit rules)
    - File writes to `/etc/sudoers` and `/etc/sudoers.d/`
@@ -133,4 +133,4 @@ This GTFOBins escape pattern is a well-documented privilege escalation technique
 
 Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
-**Note on host substitution:** This scenario was executed on EXT-ATTACKER-SIM (Kali Linux) instead of the designated DMZ-LINUX-01 because DMZ-LINUX-01 Guest Additions are at RunLevel=0 (guestcontrol unavailable) and SSH from other lab VMs times out due to OPNsense firewall rules blocking inter-zone traffic on port 22. The technique and detection patterns are identical regardless of the Linux distribution used.
+**Note on host substitution:** This scenario ran on EXT-ATTACKER-SIM (Kali Linux) rather than the designated DMZ-LINUX-01, whose Guest Additions are at RunLevel=0 (guestcontrol unavailable) and where SSH from other lab VMs times out because OPNsense firewall rules block inter-zone traffic on port 22. The technique and detection patterns hold across Linux distributions.

@@ -21,20 +21,20 @@
 
 ### Tradecraft
 
-**What:** The attacker exploits a Windows service whose `binPath` contains spaces but is not enclosed in quotes. When the Service Control Manager (SCM) starts such a service, Windows path-resolution logic interprets the unquoted path ambiguously. For a path like `C:\Program Files\AGC027 Test\service.exe`, Windows tries these paths in order:
+**What:** The attacker targets a Windows service whose `binPath` contains a space and is not wrapped in quotes. When the Service Control Manager starts such a service, Windows resolves the unquoted path ambiguously. For `C:\Program Files\AGC027 Test\service.exe`, Windows tries in order:
 1. `C:\Program.exe`
 2. `C:\Program Files\AGC027.exe` (the hijack point)
 3. `C:\Program Files\AGC027 Test\service.exe` (the intended binary)
 
-By placing a malicious binary at an earlier resolution point (step 2), the attacker's code runs instead of the legitimate service binary — and it runs with the service's configured account, typically `LocalSystem`.
+Drop a binary at the earlier resolution point (step 2) and the attacker's code runs in place of the real service binary, under the service's configured account, usually `LocalSystem`.
 
 This provides:
-1. **SYSTEM-level execution** — services configured with LocalSystem run at the highest Windows privilege level, above any administrator account.
-2. **Persistence through service restarts** — the hijack binary runs every time the service starts (boot, manual restart, crash recovery).
-3. **Stealth** — the service still appears configured normally in `sc qc` output. Only comparing the actual execution Image path against the configured binPath reveals the hijack.
-4. **Common vulnerability** — unquoted service paths are one of the most frequently found Windows privilege escalation vectors in penetration testing.
+1. **SYSTEM-level execution** — a LocalSystem service runs at the highest Windows privilege level, above any administrator account.
+2. **Persistence through restarts** — the hijack binary runs on every service start: boot, manual restart, crash recovery.
+3. **Stealth** — `sc qc` still shows the service configured normally. Only comparing the running Image path against the configured binPath exposes the hijack.
+4. **Common vulnerability** — unquoted service paths are among the most frequently found Windows privilege-escalation vectors in penetration testing.
 
-**Why at this lifecycle stage:** After gaining write access to `C:\Program Files\` (which requires admin or specific ACL misconfiguration), the attacker plants a hijack binary to ensure SYSTEM-level execution on every service start. This is both privilege escalation (to SYSTEM) and persistence (survives reboots).
+**Why at this lifecycle stage:** Once the attacker can write to `C:\Program Files\` — which needs admin rights or an ACL misconfiguration — planting the hijack binary buys SYSTEM execution on every service start. It is privilege escalation to SYSTEM and persistence across reboots at once.
 
 ### Simulation
 
@@ -80,29 +80,29 @@ This provides:
 ### Investigation
 
 **Step 1 — Identify the Image/binPath mismatch:**
-Sysmon EID 1 shows `C:\Program Files\AGC027.exe` executing as `NT AUTHORITY\SYSTEM` with `services.exe` as the parent. The `sc qc AGC027VulnSvc` output shows the configured binPath as `C:\Program Files\AGC027 Test\service.exe`. The Image path does NOT match the binPath — this is the definitive hijack indicator.
+Sysmon EID 1 shows `C:\Program Files\AGC027.exe` executing as `NT AUTHORITY\SYSTEM` with `services.exe` as the parent. `sc qc AGC027VulnSvc` lists the configured binPath as `C:\Program Files\AGC027 Test\service.exe`. The Image path does NOT match the binPath — the definitive hijack indicator.
 
 **Step 2 — Confirm unquoted path as root cause:**
-The configured binPath `C:\Program Files\AGC027 Test\service.exe` contains a space (between "AGC027" and "Test") and is NOT enclosed in quotes. Windows path-resolution logic tried `C:\Program Files\AGC027.exe` before the intended path and found the hijack binary.
+The binPath `C:\Program Files\AGC027 Test\service.exe` holds a space between "AGC027" and "Test" and carries no quotes. Windows tried `C:\Program Files\AGC027.exe` before the intended path and hit the hijack binary.
 
 **Step 3 — Trace the hijack binary placement:**
-Sysmon EID 11 (File Create, RuleName: EXE) at 19:34:38 UTC shows `C:\Program Files\AGC027.exe` was created by `powershell.exe` (PID 5860) running as Administrator. The OriginalFileName field in the EID 1 for the hijacked process reveals it is actually `Cmd.Exe` — a renamed copy of the Windows command processor, confirming the binary is not a legitimate service executable.
+Sysmon EID 11 (File Create, RuleName: EXE) at 19:34:38 UTC shows `C:\Program Files\AGC027.exe` written by `powershell.exe` (PID 5860) as Administrator. The OriginalFileName in the hijacked process's EID 1 reads `Cmd.Exe`: a renamed copy of the command processor, not a service executable.
 
 **Step 4 — Assess the execution context:**
-The hijacked process ran as `NT AUTHORITY\SYSTEM` with IntegrityLevel: System. This is the highest privilege level on a Windows system — above Administrator. Any code in the hijack binary has unrestricted access to the system.
+The hijacked process ran as `NT AUTHORITY\SYSTEM` at IntegrityLevel System, the highest level on the host, above Administrator. Whatever the hijack binary carries has unrestricted access.
 
 **Step 5 — Fleet-wide audit:**
-This class of vulnerability can be detected proactively by auditing all services for unquoted paths with spaces:
+Hunt this class proactively by auditing every service for unquoted paths with spaces:
 ```cmd
 wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v """
 ```
-Any service with spaces in the path and no surrounding quotes is potentially vulnerable.
+Any service with a space in the path and no surrounding quotes is a candidate.
 
 ### Report
 
-**Verdict: True Positive** — An unquoted service path was exploited to execute a hijack binary as NT AUTHORITY\SYSTEM. The Image path in Sysmon EID 1 does not match the configured binPath, confirming path interception.
+**Verdict: True Positive** — The attacker exploited an unquoted service path to run a hijack binary as NT AUTHORITY\SYSTEM. The Sysmon EID 1 Image path does not match the configured binPath, confirming path interception.
 
-**Confidence: High** — The evidence requires cross-referencing two independent sources (Sysmon EID 1 Image vs `sc qc` binPath), but once correlated, the mismatch is conclusive:
+**Confidence: High** — Confirming it takes two independent sources — Sysmon EID 1 Image and `sc qc` binPath — but once correlated the mismatch is conclusive:
 - Sysmon EID 1: Image `C:\Program Files\AGC027.exe`, OriginalFileName `Cmd.Exe`, Parent `services.exe`, User `NT AUTHORITY\SYSTEM`.
 - Service config: binPath `C:\Program Files\AGC027 Test\service.exe` (unquoted, with space).
 - Sysmon EID 11: .exe file creation at the hijack path flagged by SwiftOnSecurity config (RuleName: EXE).
@@ -111,10 +111,10 @@ Any service with spaces in the path and no surrounding quotes is potentially vul
 **Response recommendation:**
 1. **Stop the service** immediately and delete the hijack binary.
 2. **Fix the binPath** — re-register the service with properly quoted path: `sc config AGC027VulnSvc binPath= "\"C:\Program Files\AGC027 Test\service.exe\""`.
-3. **Audit all services** fleet-wide for unquoted paths with spaces. This is a class of vulnerability, not a single instance.
-4. **Detection rule:** Alert when Sysmon EID 1 shows a process with ParentImage `services.exe` where the Image path does not match any registered service's binPath. This catches all service hijack variants.
-5. **Sysmon EID 11 rule:** Alert on .exe file creation in `C:\Program Files\` or `C:\Program Files (x86)\` where the OriginalFileName does not match the filename on disk.
-6. **Investigate how the attacker gained write access** to `C:\Program Files\` — this requires admin or misconfigured directory ACLs.
+3. **Audit all services** fleet-wide for unquoted paths with spaces — this is a class of vulnerability, not one instance.
+4. **Detection rule:** Alert when Sysmon EID 1 shows a process with ParentImage `services.exe` whose Image path matches no registered service's binPath. This catches every service-hijack variant.
+5. **Sysmon EID 11 rule:** Alert on .exe creation in `C:\Program Files\` or `C:\Program Files (x86)\` where OriginalFileName does not match the filename on disk.
+6. **Investigate how the attacker gained write access** to `C:\Program Files\` — that needs admin rights or misconfigured directory ACLs.
 
 ### MITRE Mapping
 

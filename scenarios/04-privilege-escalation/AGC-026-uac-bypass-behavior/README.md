@@ -21,15 +21,15 @@
 
 ### Tradecraft
 
-**What:** The attacker exploits Windows auto-elevation behavior via `fodhelper.exe` (Features On Demand Helper). This binary is marked as auto-elevate in its manifest, meaning Windows will run it at High integrity without showing a UAC prompt. Before launching it, the attacker writes a malicious command to `HKCU\Software\Classes\ms-settings\Shell\Open\command` and sets the `DelegateExecute` value. When fodhelper.exe runs and attempts to open the `ms-settings:` URI handler, it finds the hijacked registry key and executes the attacker's command at High integrity.
+**What:** The attacker abuses Windows auto-elevation through `fodhelper.exe` (Features On Demand Helper). Its manifest marks it auto-elevate, so Windows runs it at High integrity with no UAC prompt. First the attacker writes a command to `HKCU\Software\Classes\ms-settings\Shell\Open\command` and sets `DelegateExecute`. When fodhelper.exe opens the `ms-settings:` URI handler, it reads the hijacked key and runs the attacker's command at High integrity.
 
 This provides:
-1. **Silent elevation** — no UAC prompt is shown to the user. The absence of a consent dialog is the core of the technique.
-2. **HKCU-based** — the hijack is in the current user's registry hive (HKCU), not HKLM. This means no admin rights are needed to set up the bypass — any standard user can write to their own HKCU.
-3. **Trusted binary** — fodhelper.exe is a Microsoft-signed system binary, so application whitelisting does not block it.
-4. **Minimal footprint** — the registry write is small and transient; the attacker cleans up immediately after the elevated command executes.
+1. **Silent elevation** — the user sees no UAC prompt. That missing consent dialog is the core of the technique.
+2. **HKCU-based** — the hijack sits in the current user's hive (HKCU), not HKLM, so no admin rights are needed to set it up. Any standard user can write their own HKCU.
+3. **Trusted binary** — fodhelper.exe is Microsoft-signed, so application allowlisting does not block it.
+4. **Minimal footprint** — the registry write is small and short-lived; the attacker removes it the moment the elevated command runs.
 
-**Why at this lifecycle stage:** After gaining initial access to a standard user's session, the attacker needs to escalate to High integrity (admin) to disable security tools, install persistence mechanisms, or access protected resources. This bypass bridges the gap between standard-user access and admin-level execution without triggering any user-visible prompt.
+**Why at this lifecycle stage:** Holding a standard user's session, the attacker needs High integrity to disable security tools, plant persistence, or reach protected resources. This bypass carries them from standard-user access to admin execution with no prompt the user could see.
 
 ### Simulation
 
@@ -46,7 +46,7 @@ This provides:
 | 4 | 2026-09-15 19:31:55 | Verify marker | COMPROMISED-HOST-01 | Marker file not created (session 0 limitation — see below) |
 | 5 | 2026-09-15 19:32:21 | Cleanup | COMPROMISED-HOST-01 | Registry key tree and marker file removed |
 
-**Lab limitation:** The guestcontrol session runs in session 0 (non-interactive). fodhelper.exe launched successfully and Sysmon captured it, but the COM-based shell handler invocation that reads the hijacked registry key requires an interactive desktop session to fully execute the elevated child process. In a real attack targeting an interactive user session, `cmd.exe` would spawn at High integrity and create the marker file. The detection evidence (registry writes + fodhelper.exe launch) is complete regardless.
+**Lab limitation:** The guestcontrol session runs in session 0 (non-interactive). fodhelper.exe launched and Sysmon captured it, but the COM shell-handler call that reads the hijacked key needs an interactive desktop to spawn the elevated child. Against an interactive user session, `cmd.exe` would spawn at High integrity and write the marker file. The detection evidence — registry writes plus fodhelper.exe launch — is complete either way.
 
 **Cleanup:** Registry key tree deleted and marker file removed.
 
@@ -68,53 +68,53 @@ This provides:
 | 2026-09-15 19:31:47 | 1 | Process Create | **Image:** `C:\Windows\System32\fodhelper.exe` (PID 3200). **IntegrityLevel:** High. **ParentImage:** `powershell.exe` (PID 5228). **User:** `COMPROMISED-01\Administrator`. |
 
 **Key detection signals:**
-1. **Sysmon EID 13 RuleName: T1042** — SwiftOnSecurity config specifically tags writes to `ms-settings\Shell\Open\command` as a known technique indicator.
-2. **Registry path is near-conclusive** — `HKCU\Software\Classes\ms-settings\Shell\Open\command` has essentially no legitimate use. No standard application writes here. The presence of ANY value under this key is suspicious.
-3. **Temporal correlation** — registry writes at 19:31:45 immediately followed by fodhelper.exe launch at 19:31:47 (2-second gap). This tight sequence is the attack pattern.
-4. **DelegateExecute value** — the empty DelegateExecute value is specifically needed to redirect the shell handler. Its presence alongside a command in the Default value is the complete bypass signature.
+1. **Sysmon EID 13 RuleName: T1042** — the SwiftOnSecurity config tags writes to `ms-settings\Shell\Open\command` as a known technique indicator.
+2. **Registry path is near-conclusive** — no standard application writes to `HKCU\Software\Classes\ms-settings\Shell\Open\command`. Any value under this key is suspicious.
+3. **Temporal correlation** — registry writes at 19:31:45, fodhelper.exe launch at 19:31:47, a 2-second gap. That tight sequence is the attack.
+4. **DelegateExecute value** — the empty DelegateExecute value redirects the shell handler. Paired with a command in the Default value, it is the full bypass signature.
 
 ### Investigation
 
 **Step 1 — Identify the registry hijack:**
-Sysmon EID 13 with RuleName T1042 flagged writes to `ms-settings\Shell\Open\command`. The Default value contains `cmd.exe /c echo AGC026-UAC-BYPASS > C:\Windows\Temp\agc026.txt` — a command designed to execute at elevated integrity. The companion `DelegateExecute` empty value completes the bypass setup.
+Sysmon EID 13 with RuleName T1042 flagged writes to `ms-settings\Shell\Open\command`. The Default value holds `cmd.exe /c echo AGC026-UAC-BYPASS > C:\Windows\Temp\agc026.txt`, set to run at elevated integrity. The companion empty `DelegateExecute` value completes the setup.
 
 **Step 2 — Correlate with auto-elevating binary:**
-Two seconds after the registry writes, Sysmon EID 1 shows `fodhelper.exe` launching at High integrity. fodhelper.exe is a known auto-elevating binary that opens the `ms-settings:` URI handler — exactly what the registry hijack targets.
+Two seconds after the writes, Sysmon EID 1 shows `fodhelper.exe` launching at High integrity. fodhelper.exe auto-elevates and opens the `ms-settings:` URI handler, exactly the handler the hijack targets.
 
 **Step 3 — Confirm no UAC prompt (the silence is the evidence):**
-In a UAC bypass, the absence of a UAC consent event is itself evidence. There is no Security EID 4688 with TokenElevationType showing a consent prompt, no `consent.exe` process creation. The elevation happened silently via the auto-elevate manifest — this is the core of the technique.
+In a UAC bypass the missing consent event is the evidence. No Security EID 4688 with a consent-prompt TokenElevationType, no `consent.exe` process. The auto-elevate manifest elevated the binary silently, which is the technique.
 
 **Step 4 — Assess the attack chain:**
-This bypass is commonly used as a stepping stone:
-- **Before:** Attacker has standard-user shell (e.g., from phishing via AGC-001).
-- **During:** fodhelper bypass grants High integrity without user interaction.
-- **After:** Attacker can disable Defender, install services (AGC-021), create admin accounts (AGC-023/025), or deploy persistence mechanisms.
+The bypass serves as a stepping stone:
+- **Before:** Attacker holds a standard-user shell, e.g. from phishing in AGC-001.
+- **During:** fodhelper grants High integrity with no user interaction.
+- **After:** Attacker can disable Defender, install services (AGC-021), create admin accounts (AGC-023/025), or plant persistence.
 
 **Step 5 — Known variants:**
-The `ms-settings` handler hijack via fodhelper.exe is one of many UAC bypass variants. The same detection logic applies to:
+The `ms-settings` handler hijack via fodhelper.exe is one of several UAC bypass variants. The same detection logic covers:
 - `computerdefaults.exe` (same `ms-settings` handler)
 - `sdclt.exe` (uses `shell\open\command` in `Folder` class)
 - `eventvwr.exe` (uses `mscfile\shell\open\command`)
-Each variant writes to a different HKCU registry path but follows the same pattern: hijack handler + launch auto-elevating binary.
+Each writes to a different HKCU path but follows the same pattern: hijack the handler, then launch the auto-elevating binary.
 
 ### Report
 
-**Verdict: True Positive** — A UAC bypass was attempted via the fodhelper.exe technique. Registry writes to `ms-settings\Shell\Open\command` were followed by fodhelper.exe execution. The combination of this specific registry path and auto-elevating binary has no legitimate use.
+**Verdict: True Positive** — The attacker attempted a fodhelper.exe UAC bypass. Registry writes to `ms-settings\Shell\Open\command` were followed by fodhelper.exe. This registry path paired with an auto-elevating binary has no legitimate use.
 
-**Confidence: Critical** — This is a near-conclusive indicator:
-- The registry path `HKCU\Software\Classes\ms-settings\Shell\Open\command` has no legitimate applications.
-- Sysmon EID 13 tagged the writes with RuleName T1042 (known technique).
-- fodhelper.exe launched 2 seconds after the registry hijack.
-- No single legitimate scenario explains this event sequence.
-- A single corroborating source is sufficient when the indicator is this specific; confidence is not lowered by absence of a second source.
+**Confidence: Critical** — A near-conclusive indicator:
+- No legitimate application writes to `HKCU\Software\Classes\ms-settings\Shell\Open\command`.
+- Sysmon EID 13 tagged the writes with RuleName T1042.
+- fodhelper.exe launched 2 seconds after the hijack.
+- No legitimate sequence produces these events.
+- When the indicator is this specific, one source is enough; a missing second source does not lower confidence.
 
 **Response recommendation:**
 1. **Delete the malicious registry key** immediately: `reg delete "HKCU\Software\Classes\ms-settings" /f`.
-2. **Investigate what the elevated command executed** — the payload in the Default value reveals the attacker's next step.
-3. **Enforce UAC "Always Notify"** via Group Policy — this blocks auto-elevation for all binaries, defeating this class of bypass entirely.
-4. **Detection rule (high-fidelity):** Alert on Sysmon EID 13 where TargetObject contains `ms-settings\Shell\Open\command` — near-zero false positive rate.
-5. **Broader detection:** Alert on any EID 13 writes to `HKCU\Software\Classes\*\Shell\Open\command` for known auto-elevate handlers (ms-settings, Folder, mscfile).
-6. **Investigate the parent process** — PowerShell (PID 5228) performed the registry writes. Determine how this PowerShell session was established.
+2. **Investigate what the elevated command ran** — the payload in the Default value shows the attacker's next step.
+3. **Enforce UAC "Always Notify"** via Group Policy — this blocks auto-elevation for every binary and defeats the whole bypass class.
+4. **Detection rule (high-fidelity):** Alert on Sysmon EID 13 where TargetObject contains `ms-settings\Shell\Open\command`; near-zero false positive rate.
+5. **Broader detection:** Alert on any EID 13 write to `HKCU\Software\Classes\*\Shell\Open\command` for known auto-elevate handlers (ms-settings, Folder, mscfile).
+6. **Investigate the parent process** — PowerShell (PID 5228) made the registry writes. Trace how that PowerShell session started.
 
 ### MITRE Mapping
 

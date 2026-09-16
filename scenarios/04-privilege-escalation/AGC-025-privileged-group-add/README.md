@@ -21,16 +21,16 @@
 
 ### Tradecraft
 
-**What:** The attacker adds an existing (already-compromised) user account to the local Administrators group. Unlike AGC-023 which creates a NEW account, this technique elevates an EXISTING account's privileges:
+**What:** The attacker adds an already-compromised user account to the local Administrators group. Where AGC-023 creates a NEW account, this technique elevates an EXISTING one:
 
-1. **No new account artifact** — in a real attack, no Security EID 4720 is generated because no account is created, making the change less visible in SIEM rules that correlate 4720+4732 pairs.
-2. **Legitimate-looking identity** — an existing employee account's presence in the Administrators group may not trigger name-based alerts.
-3. **Immediate privilege use** — the next logon or token refresh grants the user admin rights without any new credentials to manage.
-4. **Evasion-aware** — experienced attackers prefer escalating existing accounts over creating new ones because new accounts are more conspicuous in user audits.
+1. **No new account artifact** — no account is created, so Security never logs EID 4720, and SIEM rules that correlate 4720+4732 pairs miss the change.
+2. **Legitimate-looking identity** — an existing employee account sitting in Administrators does not trip name-based alerts.
+3. **Immediate privilege use** — the next logon or token refresh grants admin rights, with no new credentials to manage.
+4. **Evasion-aware** — a new account like `svc_helpdesk` in AGC-023 stands out in a user audit; an existing employee account does not.
 
-**Why at this lifecycle stage:** After establishing persistence and obtaining admin access through another path, the attacker grants a compromised user account permanent admin rights. This ensures they can operate with elevated privileges even from the legitimate user's normal sessions.
+**Why at this lifecycle stage:** With persistence in place and admin access already obtained, the attacker grants a compromised user account permanent admin rights. They can then operate elevated from that user's normal sessions.
 
-**Key differentiator from AGC-023:** AGC-023 creates a new account (triggers EID 4720 + 4732). AGC-025 targets an existing account (triggers only EID 4732). The absence of a paired EID 4720 is itself an indicator — it means an existing identity is being escalated rather than a new one provisioned.
+**Key differentiator from AGC-023:** AGC-023 creates a new account and logs EID 4720 + 4732. AGC-025 targets an existing account and logs only EID 4732. The missing 4720 is itself the signal: an existing identity is being escalated, not a new one provisioned.
 
 ### Simulation
 
@@ -47,9 +47,9 @@
 | 4 | 2026-09-15 19:26:31 | Verify membership | COMPROMISED-HOST-01 | `net localgroup Administrators` confirmed agc025user in group (Administrator, agc025user, wadmin) |
 | 5 | 2026-09-15 19:27:50 | Cleanup | COMPROMISED-HOST-01 | agc025user removed from Administrators and deleted |
 
-**Lab limitation:** The original guide calls for `michael.chen` (a domain user) to be added to Administrators. This failed because the trust relationship between COMPROMISED-HOST-01 and the ASHFORDGROVE domain has degraded (error 1789). The retry used a local user account to demonstrate the full detection chain. The Sysmon EID 1 evidence from the failed michael.chen attempt is also documented as it shows the same detection signature an analyst would investigate.
+**Lab limitation:** The guide calls for `michael.chen` (a domain user) to be added to Administrators. That failed with error 1789 because the trust between COMPROMISED-HOST-01 and the ASHFORDGROVE domain has broken. The retry used a local account to exercise the full detection chain. The Sysmon EID 1 record from the failed michael.chen attempt is kept because it carries the same detection signature an analyst would work.
 
-**Cleanup:** agc025user removed from Administrators group and account deleted. michael.chen was never successfully added (command failed).
+**Cleanup:** agc025user removed from Administrators and deleted. michael.chen was never added; the command failed.
 
 ## SOC Perspective
 
@@ -69,37 +69,37 @@
 | 2026-09-15 19:26:28 | 1 (Sysmon) | Process Create | **Image:** `C:\Windows\System32\net.exe` (PID 5480). **CommandLine:** `net.exe localgroup Administrators agc025user /add`. **User:** `COMPROMISED-01\Administrator`. **IntegrityLevel:** High. |
 | 2026-09-15 19:26:28 | 1 (Sysmon) | Process Create | **Image:** `C:\Windows\System32\net1.exe` (PID 1512). **CommandLine:** `net1 localgroup Administrators agc025user /add`. Child process of net.exe. |
 
-**Note on EID 4720:** A Security EID 4720 (account creation) was generated at 19:26:26 because the retry required creating a temp local user. In a real attack using an EXISTING account (the intended scenario), this 4720 would NOT exist — the attacker would only generate EID 4732. The absence of 4720 near a 4732 is the key detection differentiator for this technique.
+**Note on EID 4720:** Security logged EID 4720 (account creation) at 19:26:26 because the retry had to create a temp local user. Against an EXISTING account, the intended scenario, that 4720 would not exist; only EID 4732 would be logged. A 4732 with no 4720 nearby is the signature to hunt for.
 
 ### Investigation
 
 **Step 1 — Identify the privilege escalation attempt:**
-At 19:20:08 UTC, Sysmon EID 1 recorded `net.exe` executing `localgroup Administrators michael.chen /add`. This is a direct attempt to add an existing domain user to the local Administrators group. The command failed (error 1789) but the intent is clear.
+At 19:20:08 UTC, Sysmon EID 1 captured `net.exe` running `localgroup Administrators michael.chen /add`: a direct attempt to add an existing domain user to local Administrators. The command failed with error 1789, but the intent is on record.
 
-At 19:26:28 UTC, the same technique succeeded with a local account — Security EID 4732 confirmed agc025user was added to the Administrators group (SID `S-1-5-32-544`).
+At 19:26:28 UTC, the same technique succeeded with a local account. Security EID 4732 confirmed agc025user was added to the Administrators group (SID `S-1-5-32-544`).
 
 **Step 2 — Check for paired EID 4720 (technique signature):**
-In a real attack targeting an existing account, there would be NO paired EID 4720 near the EID 4732. This absence is the key detection differentiator:
+Against a real existing account there is NO EID 4720 paired with the EID 4732. That absence separates the two patterns:
 - AGC-023 pattern: EID 4720 (account created) + EID 4732 (added to group) = new account provisioned with admin rights.
-- AGC-025 pattern: EID 4732 alone (no 4720) = existing identity escalated. More evasion-aware.
-SIEM rules should treat an unpaired EID 4732 with HIGHER priority than a paired 4720+4732, because it suggests an attacker is using an already-compromised identity rather than creating an obvious new account.
+- AGC-025 pattern: EID 4732 alone (no 4720) = existing identity escalated. Harder to spot.
+SIEM rules should rank an unpaired EID 4732 above a paired 4720+4732: it suggests the attacker is riding an already-compromised identity rather than creating an obvious new account.
 
 **Step 3 — Assess the target user's role:**
-`michael.chen` is a regular employee (phishing victim per AGC scenario chain). They are NOT an IT administrator and have no business justification for local admin privileges on any endpoint. Adding a non-IT user to the Administrators group with no change ticket is a strong indicator of compromise. Compare with FP twin AGC-082 where a legitimate admin addition includes a matching change ticket and IT-approved justification.
+`michael.chen` is a regular employee, the phishing victim earlier in the AGC chain. Not an IT administrator, and no business need for local admin on any endpoint. A non-IT user added to Administrators with no change ticket is a strong indicator of compromise. In FP twin AGC-082 the same addition comes with a matching change ticket and IT approval.
 
 **Step 4 — Cross-reference with AGC-023 and FP twin AGC-082:**
-- AGC-023: NEW account `svc_helpdesk` created AND added to Administrators — generates both EID 4720 and 4732.
-- AGC-025: EXISTING account targeted for escalation — generates only EID 4732 (no 4720). More evasion-aware.
+- AGC-023: NEW account `svc_helpdesk` created AND added to Administrators — logs both EID 4720 and 4732.
+- AGC-025: EXISTING account escalated — logs only EID 4732 (no 4720). Harder to spot.
 - AGC-082 (FP twin): Legitimate admin group addition with matching change ticket and IT approval.
 
 **Step 5 — Assess the domain trust failure:**
-The initial michael.chen attempt failed with error 1789 (domain trust broken). In a production environment, this failure itself warrants investigation — it may indicate the host has been disconnected from the domain intentionally by the attacker for isolation, or that a broader infrastructure issue exists.
+The initial michael.chen attempt failed with error 1789 (domain trust broken). In production that failure is its own lead: the attacker may have cut the host from the domain to isolate it, or a wider infrastructure fault may exist.
 
 ### Report
 
-**Verdict: True Positive** — An attempt was made to add an existing account to the local Administrators group. The initial domain-user attempt was captured by Sysmon process monitoring (failed due to domain trust issue). A retry with a local account succeeded and generated full Security EID 4732 evidence. Both attempts demonstrate the T1098 technique.
+**Verdict: True Positive** — The attacker attempted to add an existing account to local Administrators. Sysmon captured the domain-user attempt, which failed on the broken domain trust. The local-account retry succeeded and Security logged EID 4732. Both attempts are T1098.
 
-**Confidence: High** — The evidence clearly demonstrates privilege escalation intent:
+**Confidence: High** — Both attempts show privilege-escalation intent:
 - Sysmon EID 1 captured `net localgroup Administrators michael.chen /add` (failed attempt, 19:20:08 UTC).
 - Sysmon EID 1 captured `net localgroup Administrators agc025user /add` (successful, 19:26:28 UTC).
 - Security EID 4732 confirmed agc025user added to Administrators group (SID `S-1-5-32-544`).
@@ -111,7 +111,7 @@ The initial michael.chen attempt failed with error 1789 (domain trust broken). I
 2. **Treat affected accounts as compromised** — the attacker has control of the RID-500 Administrator account and attempted to escalate additional identities.
 3. **Investigate the domain trust failure** — error 1789 may indicate intentional domain isolation or broader infrastructure compromise.
 4. **Detection rule (Sysmon):** Alert on EID 1 where CommandLine matches `net* localgroup Administrators * /add` and cross-reference Subject with authorized IT staff.
-5. **Detection rule (Security):** EID 4732 where Group SID = `S-1-5-32-544` WITHOUT a paired EID 4720 within 60 seconds should trigger HIGHER priority than the paired case — it indicates existing-account escalation (more evasion-aware).
+5. **Detection rule (Security):** EID 4732 where Group SID = `S-1-5-32-544` WITHOUT a paired EID 4720 within 60 seconds should fire at HIGHER priority than the paired case; it indicates existing-account escalation.
 6. **Compare with FP twin AGC-082** for the legitimate version of this activity pattern.
 
 ### MITRE Mapping
