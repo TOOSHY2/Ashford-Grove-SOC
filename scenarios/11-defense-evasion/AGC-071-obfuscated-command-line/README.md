@@ -1,6 +1,6 @@
 # AGC-071 — Obfuscated Command Line (Non-Encoded)
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

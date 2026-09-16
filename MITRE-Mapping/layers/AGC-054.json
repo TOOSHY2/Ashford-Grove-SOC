@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-054: 4 first-seen domains resolving to 10.10.40.10 (C2 IP). 4 Sysmon EID 22 events. Domain rarity alone = Medium; combined with behavioral C2 = High. Verdict: True Positive (conditional), Confidence: Medium.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-054: 4 first-seen domains resolving to 10.10.40.10 (C2 IP). 4 Sysmon EID 22 events. Domain rarity alone = Medium; combined with behavioral C2 = High. Verdict: True Positive (conditional), Confidence: Medium.",
     "filters": {
         "platforms": [
             "Windows",

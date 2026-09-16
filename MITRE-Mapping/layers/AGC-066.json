@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-066: Unified archive-to-exfil pipeline. Compress-Archive 8 finance docs (1,838 B ZIP) then WebClient.UploadFile to 10.10.40.10:443 and :80. Both HTTP 200. ProcessGuid {eb65e329-ce83-6aa9-cc04-000000001400} links all events. Confirmed data breach. Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-066: Unified archive-to-exfil pipeline. Compress-Archive 8 finance docs (1,838 B ZIP) then WebClient.UploadFile to 10.10.40.10:443 and :80. Both HTTP 200. ProcessGuid {eb65e329-ce83-6aa9-cc04-000000001400} links all events. Confirmed data breach. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",

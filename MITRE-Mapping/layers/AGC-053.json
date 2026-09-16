@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-053: C2 beacon on non-standard port 8443. 8 attempts, all timed out. 0 Sysmon EID 3 (failed TCP). Network-flow detection required. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-053: C2 beacon on non-standard port 8443. 8 attempts, all timed out. 0 Sysmon EID 3 (failed TCP). Network-flow detection required. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

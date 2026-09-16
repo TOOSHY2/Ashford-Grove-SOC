@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-069: net stop WazuhSvc stopped monitoring agent. 3 EID 1 events. 47-second silence window. Active->Disconnected on manager. Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-069: net stop WazuhSvc stopped monitoring agent. 3 EID 1 events. 47-second silence window. Active->Disconnected on manager. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",

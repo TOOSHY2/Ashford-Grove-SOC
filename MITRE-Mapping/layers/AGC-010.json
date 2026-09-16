@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-010: User-reported phishing triage workflow. No new MITRE technique; references T1566.002/T1566.001 from the reported email (AGC-002 campaign). Verdict: Triage Complete, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-010: User-reported phishing triage workflow. No new MITRE technique; references T1566.002/T1566.001 from the reported email (AGC-002 campaign). Verdict: Triage Complete, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

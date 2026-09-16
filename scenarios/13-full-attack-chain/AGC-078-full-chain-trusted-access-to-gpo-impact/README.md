@@ -1,6 +1,6 @@
 # AGC-078 — Full Attack Chain: Trusted Access to GPO Impact
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

@@ -1,6 +1,6 @@
 # AGC-008 — Password-Reset Phishing Lure
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

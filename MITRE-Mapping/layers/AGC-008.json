@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-008: Password-reset urgency pretext credential harvesting. Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-008: Password-reset urgency pretext credential harvesting. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",

@@ -1,6 +1,6 @@
 # AGC-057 — Bulk Archive Creation (Staging for Exfiltration)
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

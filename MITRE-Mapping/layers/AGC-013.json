@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-013: PowerShell -EncodedCommand with Base64 payload. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-013: PowerShell -EncodedCommand with Base64 payload. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

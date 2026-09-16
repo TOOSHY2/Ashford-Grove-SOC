@@ -1,6 +1,6 @@
 # AGC-084 — DNS Beacon Pattern: Legitimate SaaS Update Checker (False Positive)
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

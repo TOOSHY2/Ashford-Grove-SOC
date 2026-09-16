@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-046: WMI process creation via Invoke-WmiMethod Win32_Process.Create. wmic.exe removed from Win11. cmd.exe spawned by WmiPrvSE.exe -secured -Embedding. Remote target unreachable; localhost demonstrated. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-046: WMI process creation via Invoke-WmiMethod Win32_Process.Create. wmic.exe removed from Win11. cmd.exe spawned by WmiPrvSE.exe -secured -Embedding. Remote target unreachable; localhost demonstrated. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

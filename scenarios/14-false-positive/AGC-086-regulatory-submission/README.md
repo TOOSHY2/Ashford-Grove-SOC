@@ -1,6 +1,6 @@
 # AGC-086 — Large HTTPS Upload: Legitimate Regulatory Data Submission (False Positive)
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

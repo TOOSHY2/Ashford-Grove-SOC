@@ -1,6 +1,6 @@
 # AGC-094 — Proactive Hunt: Scheduled Tasks Created Outside Change Windows
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

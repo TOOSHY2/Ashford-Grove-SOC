@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-033: Chrome Login Data copied by PowerShell (non-browser) to staging dir. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-033: Chrome Login Data copied by PowerShell (non-browser) to staging dir. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

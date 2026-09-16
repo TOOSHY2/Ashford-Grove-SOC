@@ -1,6 +1,6 @@
 # AGC-082 — New Local Admin Account: Matches IT Onboarding Ticket (False Positive)
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

@@ -1,6 +1,6 @@
 # AGC-068 — Windows Defender Real-Time Protection Disabled
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

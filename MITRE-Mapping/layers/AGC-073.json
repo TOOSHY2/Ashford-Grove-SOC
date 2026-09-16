@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-073: sc.exe stop Spooler confirmed Running->Stopped. AGC073DemoSvc installed (EID 7045) and stopped. EID 7036 NOT observed (Win11 gap). Sysmon EID 1 captured all sc.exe commands. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-073: sc.exe stop Spooler confirmed Running->Stopped. AGC073DemoSvc installed (EID 7045) and stopped. EID 7036 NOT observed (Win11 gap). Sysmon EID 1 captured all sc.exe commands. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

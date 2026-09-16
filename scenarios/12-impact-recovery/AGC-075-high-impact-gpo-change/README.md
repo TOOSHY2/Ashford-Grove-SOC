@@ -1,6 +1,6 @@
 # AGC-075 — High-Impact Group Policy Change
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

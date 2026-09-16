@@ -1,6 +1,6 @@
 # AGC-056 — Full C2 Process Tree (mshta -> PowerShell -> beacon)
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

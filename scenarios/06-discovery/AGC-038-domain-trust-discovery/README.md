@@ -1,6 +1,6 @@
 # AGC-038 — Domain Trust Discovery
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

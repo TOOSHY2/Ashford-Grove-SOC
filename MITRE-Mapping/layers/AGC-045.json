@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-045: WinRM lateral movement via Invoke-Command. Remote target 10.10.10.102 unreachable (TCP 5985). Localhost execution succeeded after Enable-PSRemoting. wsmprovhost.exe spawned, 4 Type 3 logons, 50 WinRM operational events. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-045: WinRM lateral movement via Invoke-Command. Remote target 10.10.10.102 unreachable (TCP 5985). Localhost execution succeeded after Enable-PSRemoting. wsmprovhost.exe spawned, 4 Type 3 logons, 50 WinRM operational events. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

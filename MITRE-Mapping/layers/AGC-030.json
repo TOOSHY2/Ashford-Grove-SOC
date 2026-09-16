@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-030: Administrator (RID-500) interactive logon on standard workstation. EID 4624 Logon Type 2 + EID 4672 full privileges. Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-030: Administrator (RID-500) interactive logon on standard workstation. EID 4624 Logon Type 2 + EID 4672 full privileges. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",

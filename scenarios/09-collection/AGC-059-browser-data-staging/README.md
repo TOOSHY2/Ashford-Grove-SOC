@@ -1,6 +1,6 @@
 # AGC-059 — Browser Data Staging (Cookies / History / Web Data)
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

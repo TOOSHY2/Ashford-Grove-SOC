@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-075: Set-GPRegistryValue modified Default Domain Policy on AD-DC-01. UserVersion 0->1. Domain-wide scope. EID 5136 NOT captured. Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-075: Set-GPRegistryValue modified Default Domain Policy on AD-DC-01. UserVersion 0->1. Domain-wide scope. EID 5136 NOT captured. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",

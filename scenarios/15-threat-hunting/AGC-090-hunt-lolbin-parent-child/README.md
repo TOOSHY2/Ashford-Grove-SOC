@@ -1,6 +1,6 @@
 # AGC-090 — Proactive Hunt: Rare Parent-Child Process Relationships (LOLBins)
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

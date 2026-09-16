@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-051: HTTPS beacon from COMPROMISED-HOST-01 to 10.10.40.10:443 every ~30s. 10 cycles, CV=0.11%. 10 Sysmon EID 3 events. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-051: HTTPS beacon from COMPROMISED-HOST-01 to 10.10.40.10:443 every ~30s. 10 cycles, CV=0.11%. 10 Sysmon EID 3 events. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

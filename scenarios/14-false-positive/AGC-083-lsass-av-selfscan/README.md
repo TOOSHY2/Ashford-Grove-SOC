@@ -1,6 +1,6 @@
 # AGC-083 — LSASS Access: Caused by AV/EDR Self-Scan (False Positive)
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

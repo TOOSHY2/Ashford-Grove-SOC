@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-067: wevtutil cl Security cleared 1000+ events. EID 1102 sole survivor. Sysmon EID 1 captured wevtutil.exe PID 5932. Administrator LogonId 0x722BE0. Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-067: wevtutil cl Security cleared 1000+ events. EID 1102 sole survivor. Sysmon EID 1 captured wevtutil.exe PID 5932. Administrator LogonId 0x722BE0. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",

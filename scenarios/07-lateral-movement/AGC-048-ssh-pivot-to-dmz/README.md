@@ -1,6 +1,6 @@
 # AGC-048 — SSH Pivot LAN to DMZ
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

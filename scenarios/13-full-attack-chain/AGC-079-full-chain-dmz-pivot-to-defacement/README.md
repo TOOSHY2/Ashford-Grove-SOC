@@ -1,6 +1,6 @@
 # AGC-079 — Full Attack Chain: DMZ Pivot to External Defacement
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

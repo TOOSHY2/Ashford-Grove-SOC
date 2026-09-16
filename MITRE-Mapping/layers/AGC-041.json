@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-041: Systematic multi-host net view sweep across DC + workstations. All remote targets error 53. Verdict: True Positive, Confidence: Medium.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-041: Systematic multi-host net view sweep across DC + workstations. All remote targets error 53. Verdict: True Positive, Confidence: Medium.",
     "filters": {
         "platforms": [
             "Windows",

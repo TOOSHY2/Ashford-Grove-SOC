@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-035: Password spray -- same password tested against 5 distinct accounts from single source in bounded window. Security EID 4625 (5 events) + Sysmon EID 1 (11 net.exe events). Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-035: Password spray -- same password tested against 5 distinct accounts from single source in bounded window. Security EID 4625 (5 events) + Sysmon EID 1 (11 net.exe events). Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

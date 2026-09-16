@@ -1,6 +1,6 @@
 # AGC-047 — Pass-the-Hash
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

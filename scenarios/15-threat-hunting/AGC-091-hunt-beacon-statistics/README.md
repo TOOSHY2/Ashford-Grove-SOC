@@ -1,6 +1,6 @@
 # AGC-091 — Proactive Hunt: Beaconing Pattern via Connection Statistics
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

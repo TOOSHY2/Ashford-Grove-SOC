@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-040: Process and service enumeration burst (tasklist, sc query, Get-Process, Get-Service). Security stack mapped. Verdict: True Positive, Confidence: Medium.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-040: Process and service enumeration burst (tasklist, sc query, Get-Process, Get-Service). Security stack mapped. Verdict: True Positive, Confidence: Medium.",
     "filters": {
         "platforms": [
             "Windows",

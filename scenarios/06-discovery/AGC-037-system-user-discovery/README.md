@@ -1,6 +1,6 @@
 # AGC-037 — System and User Discovery Burst
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

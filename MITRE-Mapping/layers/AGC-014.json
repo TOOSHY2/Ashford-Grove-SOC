@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-014: Executable placed and launched from user Temp directory. Verdict: True Positive, Confidence: Medium.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-014: Executable placed and launched from user Temp directory. Verdict: True Positive, Confidence: Medium.",
     "filters": {
         "platforms": [
             "Windows",

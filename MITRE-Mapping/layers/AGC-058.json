@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-058: 5 PNG screenshots at 10s intervals in C:\\Windows\\Temp\\ via System.Drawing. EID 11 missed .png. Machine-precise interval proves automation. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-058: 5 PNG screenshots at 10s intervals in C:\\Windows\\Temp\\ via System.Drawing. EID 11 missed .png. Machine-precise interval proves automation. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

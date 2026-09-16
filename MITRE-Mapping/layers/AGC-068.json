@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-068: Set-MpPreference -DisableRealtimeMonitoring $true attempted. Tamper Protection blocked actual state change. Sysmon EID 1 captured attempt (PID 4224). No EID 5001. Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-068: Set-MpPreference -DisableRealtimeMonitoring $true attempted. Tamper Protection blocked actual state change. Sysmon EID 1 captured attempt (PID 4224). No EID 5001. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",

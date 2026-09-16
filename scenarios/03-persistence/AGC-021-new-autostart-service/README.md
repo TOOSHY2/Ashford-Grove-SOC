@@ -1,6 +1,6 @@
 # AGC-021 — New Auto-Start Service Persistence
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

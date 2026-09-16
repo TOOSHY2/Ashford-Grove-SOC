@@ -1,6 +1,6 @@
 # AGC-069 — Wazuh Agent Tampering (Silenced Telemetry)
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

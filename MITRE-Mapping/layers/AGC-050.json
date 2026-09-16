@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-050: East-west port scan from COMPROMISED-HOST-01 (10.10.10.103) targeting 39 IPs on ports 3389/445/5985. 117 TCP attempts in ~100 seconds. 2 EID 3 for successful self-connections. Network-flow detection pattern. FP twin: AGC-087. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-050: East-west port scan from COMPROMISED-HOST-01 (10.10.10.103) targeting 39 IPs on ports 3389/445/5985. 117 TCP attempts in ~100 seconds. 2 EID 3 for successful self-connections. Network-flow detection pattern. FP twin: AGC-087. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

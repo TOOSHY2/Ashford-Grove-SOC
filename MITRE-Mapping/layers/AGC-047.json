@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-047: Pass-the-Hash using shared local admin (wadmin) credentials. NtLmSsp Type 3 logon with no interactive precursor. Remote target unreachable. UAC token filtering partially mitigated. Root enabler: shared local admin password. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-047: Pass-the-Hash using shared local admin (wadmin) credentials. NtLmSsp Type 3 logon with no interactive precursor. Remote target unreachable. UAC token filtering partially mitigated. Root enabler: shared local admin password. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-025: Existing account added to local Administrators group. Security EID 4732 without paired EID 4720. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-025: Existing account added to local Administrators group. Security EID 4732 without paired EID 4720. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

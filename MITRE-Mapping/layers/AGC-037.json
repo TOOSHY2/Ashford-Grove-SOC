@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-037: Discovery burst -- 6 distinct commands (systeminfo, whoami, hostname, ipconfig, net user) in 16 seconds. Verdict: True Positive, Confidence: Medium.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-037: Discovery burst -- 6 distinct commands (systeminfo, whoami, hostname, ipconfig, net user) in 16 seconds. Verdict: True Positive, Confidence: Medium.",
     "filters": {
         "platforms": [
             "Windows",

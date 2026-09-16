@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-036: NTLM auth anomaly -- IP-based SMB connection forces NTLM V2 fallback on domain-joined host. Benign cause (IP-based connection) confirmed. Verdict: True Positive (Probable), Confidence: Medium.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-036: NTLM auth anomaly -- IP-based SMB connection forces NTLM V2 fallback on domain-joined host. Benign cause (IP-based connection) confirmed. Verdict: True Positive (Probable), Confidence: Medium.",
     "filters": {
         "platforms": [
             "Windows",

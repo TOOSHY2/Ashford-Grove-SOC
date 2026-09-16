@@ -178,7 +178,7 @@ All evidence is **textual and embedded directly** in the report sections (Detect
 - Security Onion / Zeek / Suricata log entries
 - File contents and header analysis
 
-The reference pass (executed and documented by Claude Code under direction and review by Hasan, through VirtualBox Guest Control) captured no screenshots, so every scenario's `## Evidence` section currently reads:
+The reference pass (executed and documented by Claude Code under direction and review by Ali, through VirtualBox Guest Control) captured no screenshots, so every scenario's `## Evidence` section currently reads:
 
 > Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 

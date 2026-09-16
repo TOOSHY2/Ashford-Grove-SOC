@@ -1,6 +1,6 @@
 # AGC-092 — Proactive Hunt: Abnormal Domain-Wide Logon-Time Patterns
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 

@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-072: 10 synthetic financial documents XOR-encrypted (key 0x42) and renamed to .agc072locked in 199ms. EID 1 captured powershell.exe PID 3800. EID 11 gap: .agc072locked not captured (EXE/DLL-only filter). Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-072: 10 synthetic financial documents XOR-encrypted (key 0x42) and renamed to .agc072locked in 199ms. EID 1 captured powershell.exe PID 3800. EID 11 gap: .agc072locked not captured (EXE/DLL-only filter). Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",

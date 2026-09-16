@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-044: SMB admin share access (C$, ADMIN$, IPC$) attempted against WIN-CLIENT-02 with raj.patel credentials. All remote failed (errors 67/3743/64). Localhost C$ succeeded with file staging. 3 of 5 Sysmon EID 1 events contain cleartext password. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-044: SMB admin share access (C$, ADMIN$, IPC$) attempted against WIN-CLIENT-02 with raj.patel credentials. All remote failed (errors 67/3743/64). Localhost C$ succeeded with file staging. 3 of 5 Sysmon EID 1 events contain cleartext password. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

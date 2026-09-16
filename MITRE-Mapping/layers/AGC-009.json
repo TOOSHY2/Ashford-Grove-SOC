@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-009: OAuth consent phishing — conceptual simulation. Verdict: True Positive (conceptual), Confidence: Medium.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-009: OAuth consent phishing — conceptual simulation. Verdict: True Positive (conceptual), Confidence: Medium.",
     "filters": {
         "platforms": [
             "Windows",

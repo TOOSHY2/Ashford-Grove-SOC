@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-004: Phishing email delivers malicious URL via embedded QR code image, bypassing email gateway URL scanning. Verdict: True Positive, Confidence: Medium.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-004: Phishing email delivers malicious URL via embedded QR code image, bypassing email gateway URL scanning. Verdict: True Positive, Confidence: Medium.",
     "filters": {
         "platforms": [
             "Windows",

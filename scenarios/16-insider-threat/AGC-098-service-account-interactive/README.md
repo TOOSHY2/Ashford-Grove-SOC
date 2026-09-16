@@ -1,6 +1,6 @@
 # AGC-098 — Service Account Used for Interactive Logon
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
 
 ## Card
 
