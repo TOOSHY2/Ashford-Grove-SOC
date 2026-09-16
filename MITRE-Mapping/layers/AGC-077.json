@@ -1,0 +1,182 @@
+{
+    "name": "AGC-077 -- Full Attack Chain: Credential Harvest to Ransomware",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-077: 10-phase full attack chain from credential harvest through ransomware. 12 MITRE techniques across 10 tactics. Verdict: True Positive, Confidence: Critical.",
+    "filters": {
+        "platforms": [
+            "Windows",
+            "Linux"
+        ]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1566.002",
+            "tactic": "initial-access",
+            "color": "#8ec843ff",
+            "comment": "AGC-077 Phase 1: HTTP GET+POST to credential harvest page on 10.10.40.10. EID 3 captures connections. Credential submission confirmed.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1059.001",
+            "tactic": "execution",
+            "color": "#8ec843ff",
+            "comment": "AGC-077 Phase 2: powershell.exe -EncodedCommand (PID 2028). Decoded payload drops marker file. EID 1 captures encoded command.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1027",
+            "tactic": "defense-evasion",
+            "color": "#8ec843ff",
+            "comment": "AGC-077 Phase 2: Base64-encoded PowerShell command conceals payload. EncodedCommand parameter is primary indicator.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1547.001",
+            "tactic": "persistence",
+            "color": "#8ec843ff",
+            "comment": "AGC-077 Phase 3: reg.exe adds WindowsUpdateHelper to HKCU Run key. EID 1 + EID 13 (tagged T1060,RunKey). Highest-fidelity alert in the chain.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1003.001",
+            "tactic": "credential-access",
+            "color": "#ffe766ff",
+            "comment": "AGC-077 Phase 4: rundll32.exe comsvcs.dll MiniDump targeting LSASS PID 816. Blocked by PPL. EID 1 captures attempt command line.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1021",
+            "tactic": "lateral-movement",
+            "color": "#ffe766ff",
+            "comment": "AGC-077 Phase 5: net.exe use \\\\10.10.10.102\\IPC$ with cleartext credentials. Error 64. EID 1 captures command with password.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1071.001",
+            "tactic": "command-and-control",
+            "color": "#8ec843ff",
+            "comment": "AGC-077 Phase 6: 3x HTTPS beacon to 10.10.40.10:443 at 3s intervals. All returned HTTP 200. EID 3 captures full beacon timeline.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1573",
+            "tactic": "command-and-control",
+            "color": "#8ec843ff",
+            "comment": "AGC-077 Phase 6: HTTPS (TLS) used for C2 beacon and exfiltration. Certificate validation bypassed in client.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1560",
+            "tactic": "collection",
+            "color": "#ffe766ff",
+            "comment": "AGC-077 Phase 7: Compress-Archive created 812-byte ZIP from 5 finance documents. No Sysmon evidence (in-process cmdlet).",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1041",
+            "tactic": "exfiltration",
+            "color": "#8ec843ff",
+            "comment": "AGC-077 Phase 8: agc077-staged.zip uploaded via HTTPS+HTTP to 10.10.40.10. EID 3 captures both upload connections.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1070.001",
+            "tactic": "defense-evasion",
+            "color": "#8ec843ff",
+            "comment": "AGC-077 Phase 9: wevtutil.exe cl Security. EID 1 + EID 1102 (audit log cleared). Sysmon log preserved.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1486",
+            "tactic": "impact",
+            "color": "#8ec843ff",
+            "comment": "AGC-077 Phase 10: 5 files XOR-encrypted (key 0x42) to .agc077locked in 109ms. No EID 11 (EXE/DLL-only filter gap).",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        }
+    ],
+    "gradient": {
+        "colors": [
+            "#ff6666ff",
+            "#ffe766ff",
+            "#8ec843ff"
+        ],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
