@@ -1,0 +1,52 @@
+{
+    "name": "AGC-085 -- Off-Hours Logon: Service Account Scheduled Task (False Positive)",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. | AGC-085: False Positive triage. Verdict: Benign, Confidence: High. Malicious twin: AGC-008.",
+    "filters": {
+        "platforms": ["Windows"]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1078",
+            "tactic": "persistence",
+            "color": "#ffe766ff",
+            "comment": "AGC-085: Off-hours logon by svc_reporting (service account) for scheduled task AGC085NightlyReport at 03:00. Documented service account with matching schedule. VERDICT: BENIGN. Twin: AGC-008.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        }
+    ],
+    "gradient": {
+        "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Observed: Benign (FP)", "color": "#ffe766ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
