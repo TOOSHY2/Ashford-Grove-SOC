@@ -21,7 +21,7 @@
 
 ### Tradecraft
 
-**What:** The attacker uses Windows Management Instrumentation (WMI) to create processes via the `Win32_Process.Create` method. When invoked, the WMI Provider Host (`WmiPrvSE.exe`) spawns the requested process. This breaks the normal parent-child process chain because the actual parent is `WmiPrvSE.exe` rather than the attacker's shell or C2 agent, making attribution harder.
+**What:** The attacker uses Windows Management Instrumentation (WMI) to create processes via the `Win32_Process.Create` method. When invoked, the WMI Provider Host (`WmiPrvSE.exe`) spawns the requested process. That breaks the normal parent-child chain: the recorded parent is `WmiPrvSE.exe`, not the attacker's shell or C2 agent, so attribution gets harder.
 
 WMI process creation is valuable to attackers because:
 1. **Indirect execution** — the spawned process appears as a child of `WmiPrvSE.exe`, not the attacker's tool.
@@ -29,7 +29,7 @@ WMI process creation is valuable to attackers because:
 3. **Legitimate tool overlap** — enterprise management tools (SCCM, SCOM, custom monitoring) use WMI extensively, creating FP noise.
 4. **No additional binaries** — WMI is built into every Windows installation since Windows 2000.
 
-**Why at this lifecycle stage:** After initial compromise, the attacker uses WMI to execute payloads in a way that is harder to trace back to the original infection vector. The `WmiPrvSE.exe` parent obscures the true origin of the command.
+**Why at this lifecycle stage:** After initial compromise, the attacker runs payloads through WMI so they are harder to trace back to the infection vector. The `WmiPrvSE.exe` parent hides where the command came from.
 
 **Key triage differentiator:** `WmiPrvSE.exe` spawning `cmd.exe` or `powershell.exe` is the primary detection signal. Cross-reference against known legitimate WMI consumers (SCCM agent, monitoring tools) before escalating.
 
@@ -70,35 +70,35 @@ WMI process creation is valuable to attackers because:
 ### Investigation
 
 **Step 1 — Identify WMI-spawned processes:**
-At 18:50:55 UTC, Sysmon EID 1 recorded `cmd.exe` (PID 3456) with `ParentImage = C:\Windows\System32\wbem\WmiPrvSE.exe` (PID 5472). The `WmiPrvSE.exe` parent is the definitive indicator that this process was created via a WMI method call, not through normal user interaction or shell execution.
+At 18:50:55 UTC, Sysmon EID 1 recorded `cmd.exe` (PID 3456) with `ParentImage = C:\Windows\System32\wbem\WmiPrvSE.exe` (PID 5472). A `WmiPrvSE.exe` parent means a WMI method call created the process, not a user session or a shell.
 
 **Step 2 — Correlate with WMI-Activity log:**
-WMI-Activity EID 5857 at the same timestamp confirms that the CIMWin32 provider loaded in `WmiPrvSE.exe` PID 5472. The `cimwin32.dll` provider hosts the `Win32_Process` class, confirming that `Win32_Process.Create` was the method invoked. This two-source correlation (Sysmon + WMI-Activity) strengthens the finding.
+WMI-Activity EID 5857 at the same timestamp shows the CIMWin32 provider loading in `WmiPrvSE.exe` PID 5472. `cimwin32.dll` hosts the `Win32_Process` class, confirming `Win32_Process.Create` as the method called. Two sources (Sysmon and WMI-Activity) agree on the same PID and the same second.
 
 **Step 3 — Assess the child process behavior:**
-The spawned `cmd.exe` wrote a file to `C:\Windows\Temp`. In this simulation, the payload is benign. In a real attack, WMI-spawned processes typically:
+The spawned `cmd.exe` wrote a file to `C:\Windows\Temp`. Here the payload is benign. In a real attack a WMI-spawned process would typically:
 - Download and execute second-stage payloads
 - Execute reconnaissance commands (whoami, ipconfig, net group)
 - Establish persistence or lateral movement
 
 **Step 4 — Check against legitimate WMI consumers:**
-No enterprise management tools (SCCM, SCOM, or custom WMI scripts) are deployed in this lab environment. The WMI process creation was not initiated by any known legitimate management workflow, confirming this as anomalous.
+The lab runs no enterprise management tools (SCCM, SCOM, or custom WMI scripts). No known management workflow issued this WMI call, so it is anomalous.
 
 ### Report
 
 **Verdict: True Positive** — WMI `Win32_Process.Create` used to spawn `cmd.exe` through `WmiPrvSE.exe`, confirmed by both Sysmon EID 1 (parent-child relationship) and WMI-Activity EID 5857 (provider load).
 
-**Confidence: High** — The dual-source evidence (Sysmon + WMI-Activity log) and the absence of legitimate WMI management tools in the environment make this a strong indicator:
-- `WmiPrvSE.exe` spawning `cmd.exe` is uncommon in normal desktop usage.
-- The CIMWin32 provider load confirms an actual `Win32_Process` operation.
-- Cross-referencing with known management tools (SCCM, monitoring agents) eliminates legitimate use in this environment.
+**Confidence: High** — Two sources (Sysmon and the WMI-Activity log) plus the absence of WMI management tools in the lab make this a strong finding:
+- `WmiPrvSE.exe` spawning `cmd.exe` is uncommon in normal desktop use.
+- The CIMWin32 provider load confirms a real `Win32_Process` operation.
+- No management tool (SCCM, monitoring agent) runs in the lab that could explain the call.
 
 **Response recommendation:**
 1. **Investigate the WMI invocation source** — determine what process or user initiated the `Invoke-WmiMethod` / `wmic` call. Check the PowerShell script block log or process audit log.
 2. **Check for remote WMI** — if the WMI call came over the network (DCOM), this becomes lateral movement (T1047 + TA0008). Check for source IP in WMI-Activity EID 5860/5861.
 3. **Review all WmiPrvSE.exe children** — search for other processes spawned by the same `WmiPrvSE.exe` instance (PID 5472) to identify additional payload execution.
 4. **Detection rule:** Alert on Sysmon EID 1 where `ParentImage LIKE '%\WmiPrvSE.exe'` AND (`Image LIKE '%\cmd.exe'` OR `Image LIKE '%\powershell.exe'` OR `Image NOT IN (known-legitimate-wmi-children)`).
-5. **Hardening:** Restrict WMI namespace permissions via `wmimgmt.msc`. Consider Windows Firewall rules to block remote WMI (DCOM TCP 135 + dynamic ports) for non-management subnets.
+5. **Hardening:** Restrict WMI namespace permissions via `wmimgmt.msc`. Add Windows Firewall rules to block remote WMI (DCOM TCP 135 + dynamic ports) from non-management subnets.
 
 ### MITRE Mapping
 

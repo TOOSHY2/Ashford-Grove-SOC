@@ -28,9 +28,9 @@
 3. **Privilege escalation** — tasks can be configured to run as SYSTEM or another privileged account.
 4. **Remote capability** — `schtasks /create /s <remote-host>` enables remote task creation for lateral movement.
 
-**Why at this lifecycle stage:** After establishing a foothold, the attacker uses scheduled tasks both for immediate execution (this scenario) and for persistence (AGC-020). The execution focus here is on the task-trigger event: detecting that an unknown task fired and produced suspicious child processes.
+**Why at this lifecycle stage:** With a foothold established, the attacker uses scheduled tasks for immediate execution (this scenario) and for persistence (AGC-020). The focus here is the trigger event: spotting that an unknown task fired and what child process it was set to launch.
 
-**Key triage differentiator:** Compare the task name against a known-good task inventory. In a managed environment, all legitimate scheduled tasks should be documented. An undocumented task name is the primary indicator, because the task-fire event itself looks identical whether legitimate or malicious.
+**Key triage differentiator:** Compare the task name against a known-good task inventory. A managed environment documents every legitimate scheduled task. An undocumented task name is the primary indicator, because the task-fire event looks the same whether the task is legitimate or malicious.
 
 ### Simulation
 
@@ -46,7 +46,7 @@
 | 3 | 2026-09-15 18:53:09 | Task launched | COMPROMISED-HOST-01 | Task Scheduler EID 110 confirms launch. Task action configured as cmd.exe. |
 | 4 | 2026-09-15 18:53:14 | Query task | COMPROMISED-HOST-01 | `schtasks /query /tn AGC017Test /v` — confirmed full task definition |
 
-**Lab note:** The task was created with "Interactive only" logon mode (default for non-interactive `schtasks /create`). In the headless guestcontrol session, the task action (cmd.exe) did not execute to completion. The Task Scheduler EID 110 (task launched) event was generated, but no EID 200/201 (action started/completed) appeared for AGC017Test. In a real attack with an interactive session or SYSTEM-level task, the full execution chain would complete.
+**Lab note:** The task was created with "Interactive only" logon mode (default for non-interactive `schtasks /create`). In the headless guestcontrol session, the task action (cmd.exe) did not run to completion. Task Scheduler logged EID 110 (task launched) but no EID 200/201 (action started/completed) for AGC017Test. In a real attack with an interactive session or a SYSTEM-level task, the full chain would complete.
 
 **Cleanup:** Task deleted with `schtasks /delete /tn "AGC017Test" /f`.
 
@@ -75,10 +75,10 @@
 ### Investigation
 
 **Step 1 — Identify the task creation event:**
-At 18:53:09 UTC, Sysmon EID 1 captured `schtasks.exe /create` with the full command line showing task name `AGC017Test` and action `cmd.exe /c echo AGC017-marker > C:\Windows\Temp\agc017.txt`. The task creation event alone is a detection opportunity: the task definition embedded in the CommandLine reveals the intended payload before it ever executes.
+At 18:53:09 UTC, Sysmon EID 1 captured `schtasks.exe /create` with the full command line showing task name `AGC017Test` and action `cmd.exe /c echo AGC017-marker > C:\Windows\Temp\agc017.txt`. The creation event alone is enough to alert on: the CommandLine carries the full task definition, so the payload is visible before it ever runs.
 
 **Step 2 — Compare against known-good task inventory:**
-The task name `AGC017Test` does not match any documented or expected scheduled tasks in this environment. Known legitimate tasks include system defaults (e.g., `\Microsoft\Windows\Flighting\FeatureConfig\UsageDataReceiver`) and would be documented in an enterprise CMDB. An unknown task name is the primary differentiator between malicious and legitimate task-trigger events.
+The task name `AGC017Test` matches no documented or expected task in the lab. Legitimate tasks here are system defaults (for example `\Microsoft\Windows\Flighting\FeatureConfig\UsageDataReceiver`), and in an enterprise they would also be listed in the CMDB.
 
 **Step 3 — Query the full task definition:**
 `schtasks /query /tn AGC017Test /v` revealed:
@@ -88,21 +88,21 @@ The task name `AGC017Test` does not match any documented or expected scheduled t
 - **Schedule Type:** One Time Only
 - **Created by:** Local Administrator account
 
-The task was created by a local admin account (not a domain service account or GPO), scheduled for one-time execution, and configured to run cmd.exe — all indicators of manual attacker activity rather than automated enterprise management.
+A local admin account (not a domain service account or GPO) created the task, scheduled it to run once, and pointed it at cmd.exe. That reads as hands-on attacker activity, not enterprise management automation.
 
 ### Report
 
-**Verdict: True Positive** — An undocumented scheduled task was created and triggered, configured to execute cmd.exe. The task name, author, and schedule do not match any known-good configuration.
+**Verdict: True Positive** — An undocumented task, `AGC017Test`, was created and triggered with a cmd.exe action; its name, author, and schedule match no known-good configuration.
 
 **Confidence: High** — Multiple independent evidence sources confirm the finding:
 - Sysmon EID 1 captured the full task creation CommandLine with the embedded payload.
 - Task Scheduler EID 110 confirmed the task was triggered.
-- The task definition query revealed a one-time cmd.exe action created by a local admin — inconsistent with enterprise management patterns.
+- The task definition query showed a one-time cmd.exe action created by a local admin — not how enterprise management creates tasks.
 - No matching entry in any known-good task inventory.
 
 **Response recommendation:**
 1. **Disable and investigate the task** — `schtasks /change /tn "AGC017Test" /disable` to prevent re-execution while investigating.
-2. **Determine who created it** — correlate the task creation timestamp with authentication events (Security EID 4624) to identify the source session.
+2. **Determine who created it** — correlate the task creation timestamp with authentication events (Windows Security EID 4624) to identify the source session.
 3. **Check for similar tasks** — `schtasks /query /fo CSV | findstr /v Microsoft` to find non-Microsoft tasks across the system.
 4. **Detection rule:** Alert on Sysmon EID 1 where `Image LIKE '%\schtasks.exe'` AND `CommandLine LIKE '%/create%'` AND (`CommandLine LIKE '%cmd.exe%'` OR `CommandLine LIKE '%powershell%'` OR `CommandLine LIKE '%-enc%'`).
 5. **Supplementary rule:** Alert on Task Scheduler EID 110/100 where the task name does not match an enterprise allowlist.

@@ -28,9 +28,9 @@
 2. **Handle special characters** without escaping — nested quotes, pipes, and semicolons survive Base64 encoding cleanly.
 3. **Proxy execution** — malware droppers, macros, and shellcode stagers frequently call `powershell -enc <blob>` because the Base64 string is a single argument with no quoting issues.
 
-**Key insight:** `-EncodedCommand` does not encrypt the payload. It is trivially reversible: `[System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String("<blob>"))`. The obfuscation stops human eyeballing and simple grep rules, but any SOC analyst or automated decoder can reverse it in one line.
+**Key insight:** `-EncodedCommand` does not encrypt the payload. It is trivially reversible: `[System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String("<blob>"))`. The encoding defeats a skim of the command line and simple grep rules, but an analyst or a pipeline decoder reverses it in one line.
 
-**FP twin: AGC-081** — some legitimate enterprise tools (deployment scripts, ConfigMgr task sequences) use `-EncodedCommand` to pass complex scripts reliably. AGC-081 documents the false-positive variant where the decoded command is a benign backup script.
+**FP twin: AGC-081** — some legitimate tools (deployment scripts, ConfigMgr task sequences) pass complex scripts through `-EncodedCommand` so quoting survives intact. AGC-081 documents the false-positive variant where the decoded command is a benign backup script.
 
 ### Simulation
 
@@ -59,13 +59,13 @@
 | 2026-09-15 18:37:10 | 1 | Process Create | **powershell.exe** (PID 6116) — `CommandLine: "C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe" -EncodedCommand VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAi...` — Base64 blob present |
 
 **Key detection signal:** Sysmon EID 1 where `Image` = `powershell.exe` and `CommandLine` contains `-EncodedCommand` / `-enc` / `-e` followed by a Base64 string. This is a high-signal detection rule because:
-- The `-EncodedCommand` flag is the attacker's fingerprint — it reveals the intent to obfuscate.
-- The Base64 blob can be decoded automatically by the detection pipeline.
+- The `-EncodedCommand` flag itself shows intent to obfuscate.
+- The detection pipeline can decode the Base64 blob automatically and attach the plaintext to the alert.
 
 ### Investigation
 
 **Step 1 — Identify the encoded command:**
-At 18:37:10 UTC, `powershell.exe` (PID 6116) was launched with `-EncodedCommand` and a 244-character Base64 string.
+At 18:37:10 UTC Sysmon logged `powershell.exe` (PID 6116) starting with `-EncodedCommand` and a 244-character Base64 string.
 
 **Step 2 — Decode the payload:**
 ```
@@ -82,7 +82,7 @@ The decoded command writes a marker string to `C:\Windows\Temp\`. In a real atta
 - `New-Object Net.Sockets.TCPClient` — reverse shell
 - Registry/scheduled-task persistence commands
 
-The payload in this simulation is benign (marker write), but the **use of `-EncodedCommand`** itself is the detection signal. The analyst must always decode the blob to assess the actual behavior.
+The payload here is a benign marker write, but the **use of `-EncodedCommand`** is the signal on its own. The blob still has to be decoded every time; the flag says nothing about what actually runs.
 
 **Step 4 — Distinguish from legitimate use (AGC-081 cross-reference):**
 Some legitimate tools use `-EncodedCommand`:
@@ -90,18 +90,18 @@ Some legitimate tools use `-EncodedCommand`:
 - Azure DevOps pipeline agents
 - Enterprise backup scripts
 
-AGC-081 documents the false-positive variant where the decoded command is a benign backup operation. The distinguishing factors are:
+AGC-081 walks through the benign-backup case. What separates the two:
 - **Parent process:** A deployment agent (sccm, agent.worker) vs. a suspicious parent (mshta.exe, cmd.exe from temp)
 - **Decoded content:** Known admin operations vs. download/execute patterns
 - **Execution context:** Scheduled maintenance window vs. ad-hoc execution from a user workstation
 
 ### Report
 
-**Verdict: True Positive** — Confirmed encoded PowerShell execution.
+**Verdict: True Positive** — powershell.exe (PID 6116) ran a command passed as Base64, and the marker file confirms it executed.
 
 **Confidence: High** — The evidence chain is clear:
-1. `-EncodedCommand` flag present in Sysmon EID 1 CommandLine
-2. Base64 blob successfully decoded to reveal the payload
+1. `-EncodedCommand` flag present in the Sysmon EID 1 CommandLine
+2. Base64 blob decoded to the plaintext payload
 3. Marker file confirms the decoded command executed
 4. Execution context (ad-hoc, user workstation, no deployment agent parent) rules out legitimate use
 
@@ -110,7 +110,7 @@ AGC-081 documents the false-positive variant where the decoded command is a beni
 2. **Investigate the parent process** — what spawned the encoded PowerShell? (Macro, exploit, persistence mechanism?)
 3. **Check for follow-on activity** — network connections, file writes, registry changes after the PowerShell execution.
 4. **Detection rule:** Alert on Sysmon EID 1 where `Image = powershell.exe` AND `CommandLine LIKE '%-enc%'` or `CommandLine LIKE '%-EncodedCommand%'`. Auto-decode the Base64 and include the decoded text in the alert enrichment.
-5. **PowerShell Script Block Logging** (Event ID 4104) would capture the decoded script automatically — verify it is enabled.
+5. **PowerShell Script Block Logging** (EID 4104) would capture the decoded script automatically — verify it is enabled.
 
 ### MITRE Mapping
 

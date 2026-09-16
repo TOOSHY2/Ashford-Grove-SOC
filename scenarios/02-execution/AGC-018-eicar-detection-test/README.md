@@ -23,17 +23,17 @@
 
 #### What this is
 
-This is **not** an attack technique simulation. AGC-018 is a **pipeline validation test** using the industry-standard EICAR Anti-Virus Test File (a 68-byte string recognized by all AV engines as a test detection). The purpose is to confirm that the detection chain works end-to-end:
+This is **not** an attack simulation. AGC-018 is a **pipeline validation test** using the EICAR Anti-Virus Test File, a 68-byte string every AV engine recognizes as a test detection. It confirms the detection chain works end-to-end:
 
 1. **Endpoint layer (Defender):** Does real-time protection detect the EICAR string when written to disk?
 2. **SIEM layer (Wazuh):** Does the Defender detection event propagate to the centralized SIEM?
 3. **Detection latency:** How quickly does the alert travel from endpoint to SIEM?
 
-If either layer fails, every prior "no alert triggered, therefore benign" conclusion in this engagement is unreliable until the pipeline is repaired.
+If either layer fails, every earlier "no alert fired, therefore benign" conclusion in this engagement is suspect until the pipeline is repaired.
 
 #### Why this scenario exists
 
-False negatives can occur silently. A detection pipeline that appears functional may have a broken component (disabled RTP, stale signatures, agent disconnection, log forwarding failure) that only surfaces when tested. Running EICAR as a controlled positive provides a known-good test signal through the entire chain.
+False negatives are silent. A pipeline that looks healthy can have a broken component (disabled RTP, stale signatures, a disconnected agent, failed log forwarding) that only shows up under test. EICAR is a controlled positive that pushes a known-good signal through the whole chain.
 
 ### Simulation
 
@@ -79,12 +79,12 @@ False negatives can occur silently. A detection pipeline that appears functional
 ### Investigation
 
 **Step 1 — Confirm Defender endpoint detection:**
-Defender EID 1116 (detection) fired at 18:56:09 UTC for both EICAR files (`eicar.txt` and `eicar.com`). Detection Source: "Real-Time Protection". The EICAR string was detected by signature match (Virus:DOS/EICAR_Test_File, ID 2147519003). **Endpoint layer: PASS.**
+Defender logged EID 1116 (detection) at 18:56:09 UTC for both EICAR files (`eicar.txt` and `eicar.com`). Detection Source: "Real-Time Protection". Real-Time Protection matched the EICAR string by signature (Virus:DOS/EICAR_Test_File, ID 2147519003). **Endpoint layer: PASS.**
 
 **Step 2 — Confirm SIEM propagation:**
-WAZUH-SIEM-01 Guest Additions were temporarily unavailable during this test window. The Wazuh SIEM propagation could not be independently verified in this test run. **SIEM layer: UNTESTED** (infrastructure limitation, not a pipeline failure).
+WAZUH-SIEM-01 Guest Additions were down during the test window, so Wazuh propagation could not be verified in this run. **SIEM layer: UNTESTED** (infrastructure limitation, not a pipeline failure).
 
-In a production environment, the analyst would verify that Wazuh received and displayed the Defender alert for EICAR within the expected propagation window. If Wazuh does not show the detection event, this indicates a log forwarding or agent communication issue that must be resolved before trusting negative Wazuh results.
+In production the analyst would confirm Wazuh received and displayed the Defender EICAR alert within the expected propagation window. If Wazuh does not show it, log forwarding or agent communication is broken, and no negative Wazuh result can be trusted until it is fixed.
 
 **Step 3 — Measure detection latency:**
 - **EICAR file write:** 18:55:55 UTC (first file)
@@ -93,9 +93,9 @@ In a production environment, the analyst would verify that Wazuh received and di
 - **Write-to-detect delta:** ~14 seconds
 - **Write-to-remediate delta:** ~19 seconds
 
-This establishes the baseline detection latency for this lab: approximately 14-19 seconds from file creation to detection and remediation.
+That sets the lab's baseline latency: roughly 14-19 seconds from file creation to detection and remediation.
 
-**Bonus observation:** Defender also retroactively detected the AGC-015 rundll32 `javascript:` execution (at 18:45:46 UTC) as `Trojan:Win32/Powessere.G` and applied remediation at 18:52:08 UTC. This demonstrates Defender's behavioral/AMSI detection operates on a different (slower) pipeline than file-based signature matching (~6 minute lag for command-line pattern matching vs. ~14 seconds for file-based EICAR).
+**Bonus observation:** Defender also retroactively detected the AGC-015 rundll32 `javascript:` execution (at 18:45:46 UTC) as `Trojan:Win32/Powessere.G` and applied remediation at 18:52:08 UTC. Defender's behavioral/AMSI detection runs on a separate, slower pipeline than file signature matching: ~6 minute lag for the command-line pattern versus ~14 seconds for file-based EICAR.
 
 ### Report
 
@@ -112,7 +112,7 @@ This establishes the baseline detection latency for this lab: approximately 14-1
 **Action items:**
 1. **Re-test Wazuh propagation** when WAZUH-SIEM-01 Guest Additions are restored, to confirm the full endpoint-to-SIEM pipeline.
 2. **Periodically re-run EICAR test** (monthly or after infrastructure changes) to validate the pipeline remains intact.
-3. **Document the detection latency baseline** (~14-19 seconds) for this environment to set expectations for real-time alerting.
+3. **Document the detection latency baseline** (~14-19 seconds) for the lab to set expectations for real-time alerting.
 
 ### MITRE Mapping
 

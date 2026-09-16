@@ -21,14 +21,14 @@
 
 ### Tradecraft
 
-**What:** A browser-class process spawns a script interpreter (cmd.exe, powershell.exe, wscript.exe) as a child process. In a real attack, this happens when a drive-by exploit or malicious page triggers code execution through the browser, which then launches a command shell to download payloads, establish persistence, or perform reconnaissance.
+**What:** A browser-class process spawns a script interpreter (cmd.exe, powershell.exe, wscript.exe) as a child process. In a real attack a drive-by exploit or malicious page gets code execution inside the browser, and the browser then launches a command shell to download payloads, establish persistence, or run reconnaissance.
 
-**Why at this lifecycle stage:** This is the transition from Initial Access to Execution. The attacker has delivered a malicious page (via phishing link, watering hole, or malvertising), and the browser is now executing attacker-controlled code. The parent-child relationship (browser -> script interpreter) is one of the highest-signal detection patterns in endpoint telemetry because:
+**Why at this lifecycle stage:** This is the transition from Initial Access to Execution. The attacker has delivered a malicious page (phishing link, watering hole, or malvertising), and the browser is now running attacker-controlled code. The parent-child pair (browser -> script interpreter) is one of the highest-signal patterns in endpoint telemetry because:
 1. **Browsers rarely spawn script interpreters legitimately.** Enterprise browsers do not normally launch cmd.exe or powershell.exe as child processes.
-2. **Few false positives.** Some browser extensions or enterprise management tools may trigger this pattern, but they are easily enumerated and excluded.
-3. **Early in the kill chain.** Catching this pattern stops the attack before the payload downloads or persistence is established.
+2. **Few false positives.** Some browser extensions and management agents produce this chain, but they are few enough to enumerate and exclude.
+3. **Early in the kill chain.** Catching the chain here stops the attack before the payload downloads or persistence lands.
 
-**Lab simulation:** Since the lab cannot execute a real browser exploit, the simulation uses `mshta.exe` (Microsoft HTML Application Host) — a browser-class LOLBin that legitimately hosts HTML/VBScript content and spawns child processes. mshta.exe is classified under T1218.005 (System Binary Proxy Execution) precisely because it exhibits the same browser-spawns-script pattern attackers exploit. An HTA file containing VBScript invokes `cmd.exe` to write a marker file.
+**Lab simulation:** The lab cannot run a real browser exploit, so the simulation uses `mshta.exe` (Microsoft HTML Application Host), a browser-class LOLBin that hosts HTML/VBScript and spawns child processes. ATT&CK files mshta.exe under T1218.005 (System Binary Proxy Execution) because it produces the same browser-spawns-script chain. Here an HTA file containing VBScript calls `cmd.exe` to write a marker file.
 
 ### Simulation
 
@@ -70,29 +70,29 @@
 ### Investigation
 
 **Step 1 — Identify the parent-child chain:**
-At 18:28:29 UTC, `mshta.exe` (PID 5188) was launched with argument `C:\Temp\agc011.hta`. One second later, `cmd.exe` (PID 1460) was spawned with a command line that writes to `C:\Windows\Temp\`. The timing and command structure confirm mshta.exe spawned cmd.exe via the HTA's embedded VBScript `WScript.Shell.Run`.
+At 18:28:29 UTC Sysmon logged `mshta.exe` (PID 5188) starting with argument `C:\Temp\agc011.hta`. One second later it logged `cmd.exe` (PID 1460) with a command line that writes to `C:\Windows\Temp\`. The one-second gap and the command line match the HTA's embedded VBScript `WScript.Shell.Run` call, so mshta.exe is the parent.
 
 **Step 2 — Evaluate the child process action:**
-The spawned `cmd.exe` wrote a file to `C:\Windows\Temp\` — a world-writable staging directory commonly used by malware. In a real attack, this stage would typically involve:
+The child `cmd.exe` wrote a file to `C:\Windows\Temp\`, a world-writable directory malware often uses for staging. In a real attack the same child would typically be:
 - Downloading a second-stage payload (`certutil -urlcache`, `bitsadmin`, `Invoke-WebRequest`)
 - Establishing persistence (registry Run key, scheduled task)
 - Performing host reconnaissance (`whoami`, `ipconfig`, `net user`)
 
 **Step 3 — Rule out legitimate use:**
-mshta.exe executing HTA files with VBScript that spawns cmd.exe is not a legitimate enterprise workflow. The mshta.exe binary is a known LOLBin (Living Off the Land Binary) — it has no legitimate business function in most environments and should be monitored or blocked.
+An HTA whose VBScript spawns cmd.exe is not a legitimate enterprise workflow. mshta.exe is a known LOLBin (Living Off the Land Binary) with no business use in most environments, so it belongs on a monitor-or-block list.
 
 **Step 4 — Scope assessment:**
-The vbscript: protocol variant (PID 2932 at 18:30:41) demonstrates a fileless execution path — mshta.exe can execute script directly from a protocol handler without writing an HTA file to disk. This is more evasive because there is no file artifact to scan.
+The vbscript: protocol variant (PID 2932 at 18:30:41) shows the fileless path: mshta.exe runs the script straight from the protocol handler, and no HTA file touches disk. That leaves nothing for a file scanner to catch; the Sysmon EID 1 command line is the only record.
 
 ### Report
 
-**Verdict: True Positive** — Confirmed browser-class process spawning script interpreter.
+**Verdict: True Positive** — Sysmon EID 1 ties cmd.exe (PID 1460) to mshta.exe (PID 5188) as its parent.
 
 **Confidence: High** — The evidence chain is unambiguous:
-1. mshta.exe (browser-class LOLBin) spawned cmd.exe (script interpreter) — Sysmon EID 1 confirms the parent-child relationship
+1. mshta.exe (browser-class LOLBin) spawned cmd.exe (script interpreter) — Sysmon EID 1 records the parent-child link
 2. The child process wrote to `C:\Windows\Temp\` — a staging pattern
-3. No legitimate justification for this process chain in this environment
-4. Both file-based (HTA) and fileless (vbscript: protocol) variants demonstrated
+3. Nothing in the lab legitimately produces this process chain
+4. Both the file-based (HTA) and fileless (vbscript: protocol) variants ran and were captured
 
 **Response recommendation:**
 1. **Isolate the host** — the endpoint has executed attacker-controlled code via a browser-class process.

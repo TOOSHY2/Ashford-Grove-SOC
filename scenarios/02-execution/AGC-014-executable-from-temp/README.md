@@ -24,9 +24,9 @@
 **What:** An executable is dropped to a temporary directory (`%TEMP%`, `%LOCALAPPDATA%\Temp`, `C:\Windows\Temp`, Downloads) and executed directly from that path. Malware droppers, exploit payloads, and second-stage downloads commonly stage to Temp because:
 1. **Write access guaranteed** — any user can write to their own `%TEMP%` without elevation.
 2. **Expected noise** — installers, updaters, and self-extracting archives legitimately use Temp, so a broad detection rule generates false positives without additional context.
-3. **Cleanup by OS** — Temp directories are periodically purged, which aids evidence destruction.
+3. **Cleanup by OS** — Temp directories get purged periodically, which helps destroy evidence.
 
-**Why at this lifecycle stage:** After initial access (phishing, exploit), the attacker downloads or drops a payload. The payload must land somewhere writable before it can execute. Temp directories are the default staging location because they require no special permissions and are less likely to be monitored than `C:\Program Files` or `C:\Windows\System32`.
+**Why at this lifecycle stage:** After initial access (phishing, exploit), the attacker downloads or drops a payload. The payload has to land somewhere writable before it can run. Temp is the default choice: no special permissions, and less monitoring than `C:\Program Files` or `C:\Windows\System32`.
 
 **Key triage differentiator:** The signature status of the executable is the primary factor separating malicious from benign:
 - **Unsigned or unknown publisher** from Temp = high suspicion.
@@ -59,25 +59,25 @@
 
 **Key detection signal:** Sysmon EID 11 with `RuleName: EXE` where `TargetFilename` matches a Temp directory pattern (`\AppData\Local\Temp\`, `\Windows\Temp\`, `\Downloads\`). This catches the staging phase — the executable landing on disk — before it runs.
 
-**Detection note:** Sysmon EID 1 (Process Create) for the execution may be filtered by the Sysmon configuration when the OriginalFileName matches a known system binary (in this case, `whoami.exe`). In a real attack, the dropped executable would have an unknown OriginalFileName, making EID 1 detection more reliable.
+**Detection note:** The Sysmon configuration may drop the EID 1 (Process Create) for this execution because the OriginalFileName matches a known system binary (here `whoami.exe`). A real dropped executable would carry an unknown OriginalFileName, so EID 1 would capture it.
 
 ### Investigation
 
 **Step 1 — Confirm executable placement:**
-At 18:39:02 UTC, Sysmon EID 11 recorded an executable file write to `C:\Users\michael.chen\AppData\Local\Temp\agc014_test.exe`. The `RuleName: EXE` tag confirms the Sysmon configuration identified this as a potentially suspicious executable placement.
+At 18:39:02 UTC, Sysmon EID 11 recorded an executable file write to `C:\Users\michael.chen\AppData\Local\Temp\agc014_test.exe`. The `RuleName: EXE` tag shows the Sysmon config matched it as an executable write worth flagging.
 
 **Step 2 — Check the signature (critical triage step):**
-The executable has a **valid Microsoft Windows signature** (CN=Microsoft Windows, O=Microsoft Corporation). This is a strong indicator that the file is a legitimate Windows binary — not malware. In this simulation, the file is a renamed copy of `whoami.exe`.
+The executable has a **valid Microsoft Windows signature** (CN=Microsoft Windows, O=Microsoft Corporation). That points strongly to a legitimate Windows binary rather than malware; here it is a renamed copy of `whoami.exe`.
 
 **In a real attack:** The dropped executable would be:
 - **Unsigned** — most custom malware does not carry valid code-signing certificates.
-- **Signed by an unknown publisher** — some sophisticated malware uses stolen or purchased certificates.
-- **Self-signed** — a trivially-generated certificate.
+- **Signed by an unknown publisher** — some malware families use stolen or purchased certificates.
+- **Self-signed** — a certificate anyone can generate in seconds.
 
-The signature status is the **primary differentiator** between a True Positive (malicious) and a False Positive (installer artifact). An unsigned executable in Temp from a non-interactive context is high-confidence malicious.
+Signature status is the **primary differentiator** between a true positive (malware) and a false positive (installer artifact). An unsigned executable in Temp, launched from a non-interactive context, is malicious with high confidence.
 
 **Step 3 — Investigate parent process and follow-on behavior:**
-The dropper process was `powershell.exe` (PID 2436) — in this simulation, the lab automation harness. In a real investigation, the analyst would check:
+The dropper was `powershell.exe` (PID 2436), which here is the lab automation harness. In a real investigation the analyst would check:
 1. **Who dropped the file?** — Was the parent a browser (drive-by), Office app (macro), or another suspicious process?
 2. **What did the executable do after launch?** — Network connections (EID 3), file writes (EID 11), child processes (EID 1).
 3. **Does the hash appear in threat intelligence?** — VirusTotal, internal IOC feeds.
@@ -89,10 +89,10 @@ The dropper process was `powershell.exe` (PID 2436) — in this simulation, the 
 **Confidence: Medium** — This is a broad heuristic with a real false-positive rate:
 - Legitimate software installers, updaters, and self-extracting archives routinely place executables in Temp.
 - The signature check (Valid, Microsoft Windows) would normally lower suspicion.
-- Medium confidence reflects the heuristic's value as a **correlation signal** rather than a standalone alert: combine with parent-process analysis, signature status, and follow-on behavior to reach a final determination.
+- Medium reflects the heuristic's value as a **correlation signal** rather than a standalone alert; parent process, signature status, and follow-on behavior decide the final call.
 
 **Response recommendation:**
-1. **Check the signature first** — a valid, trusted-vendor signature dramatically reduces the risk.
+1. **Check the signature first** — a valid, trusted-vendor signature drops the risk sharply.
 2. **If unsigned:** Isolate the host, collect the binary for analysis, investigate parent and child processes.
 3. **If signed by a known vendor:** Verify the action is expected (is a software update running?). Close as FP if confirmed legitimate.
 4. **Detection rule:** Alert on Sysmon EID 11 where `RuleName = EXE` AND `TargetFilename LIKE '%\AppData\Local\Temp\%'` or `%\Windows\Temp\%`. Enrich with Authenticode signature check. Escalate unsigned executables automatically.

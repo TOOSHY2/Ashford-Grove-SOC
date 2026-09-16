@@ -21,14 +21,14 @@
 
 ### Tradecraft
 
-**What:** A Microsoft Office application (Word, Excel, PowerPoint) spawns a script interpreter (PowerShell, cmd.exe, wscript.exe) as a child process. This is the classic macro-driven execution chain: user opens a malicious document, a VBA macro runs automatically (or after "Enable Content"), and the macro launches PowerShell to download and execute a second-stage payload.
+**What:** A Microsoft Office application (Word, Excel, PowerPoint) spawns a script interpreter (PowerShell, cmd.exe, wscript.exe) as a child process. The macro-driven chain runs like this: the user opens a malicious document, a VBA macro runs (automatically or after "Enable Content"), and the macro launches PowerShell to download and run a second-stage payload.
 
-**Why at this lifecycle stage:** This technique bridges Initial Access (T1566.001 — spearphishing attachment) and Execution (T1059.001 — PowerShell). The macro provides the code execution context; PowerShell provides the download-and-execute capability. The parent-child relationship (Office -> PowerShell) is one of the cleanest detection signals in the entire MITRE catalog because:
-1. **No legitimate use case.** Office applications do not need to spawn PowerShell in any standard business workflow. There is no enterprise-grade reason for winword.exe to create a powershell.exe child.
-2. **Captures the transition.** This is the exact moment the attacker gains code execution on the endpoint — before this, the attack is just a document; after this, it's arbitrary code execution.
+**Why at this lifecycle stage:** This technique bridges Initial Access (T1566.001 — spearphishing attachment) and Execution (T1059.001 — PowerShell). The macro provides the code execution context; PowerShell provides the download-and-execute capability. The parent-child pair (Office -> PowerShell) is one of the cleanest signals in endpoint telemetry because:
+1. **No legitimate use case.** No standard business workflow needs Office to spawn PowerShell; winword.exe has no reason to create a powershell.exe child.
+2. **Captures the transition.** This event marks the moment the attacker gains code execution: before it the attack is a document, after it the attacker runs arbitrary code.
 3. **Complementary to AGC-007.** AGC-007 documented the macro lure delivery; AGC-012 documents the execution-side detection of the same pattern.
 
-**Lab limitation:** Microsoft Office is not installed on COMPROMISED-HOST-01. The simulation uses a renamed-binary technique (cmd.exe copied as WINWORD.EXE) to produce the exact Sysmon parent-child artifacts that detection rules match. This is a standard red team approach for testing detection rules without requiring Office installation. Sysmon records both `Image` (path-based, shows WINWORD.EXE) and `OriginalFileName` (PE header, shows Cmd.Exe) — the mismatch is an additional detection signal (T1036.005 Masquerading: Match Legitimate Name or Location).
+**Lab limitation:** Microsoft Office is not installed on COMPROMISED-HOST-01. The simulation copies cmd.exe as WINWORD.EXE so Sysmon produces the exact parent-child artifacts the detection rules match; red teams use the same renamed-binary method to test rules without installing Office. Sysmon records both `Image` (path, shows WINWORD.EXE) and `OriginalFileName` (PE header, shows Cmd.Exe), and that mismatch is a second detection signal (T1036.005 Masquerading: Match Legitimate Name or Location).
 
 ### Simulation
 
@@ -65,37 +65,37 @@
 ### Investigation
 
 **Step 1 — Confirm the parent-child chain:**
-WINWORD.EXE (PID 1116) at 18:35:06 UTC spawned powershell.exe (PID 3184). The Sysmon EID 1 events are timestamped within the same second, confirming the direct parent-child relationship.
+At 18:35:06 UTC WINWORD.EXE (PID 1116) spawned powershell.exe (PID 3184). Both Sysmon EID 1 events fall in the same second, and the child event names WINWORD.EXE as parent.
 
 **Step 2 — Analyze the child's command line:**
 `powershell.exe -Command "Write-Output 'AGC-012-office-spawn-test' | Out-File C:\Windows\Temp\agc012.txt -Encoding utf8"`
 
-In this simulation, the payload is a benign marker write. In a real attack, the PowerShell command line would typically contain:
+Here the payload is a benign marker write. In a real attack the command line would more likely carry:
 - `Invoke-WebRequest` / `Net.WebClient` — downloading second-stage payload
 - `-EncodedCommand` / `-e` — Base64-encoded payload to evade command-line logging
 - `IEX` (Invoke-Expression) — executing downloaded code in memory
 
 **Step 3 — Cross-reference with AGC-007:**
-AGC-007 documented a macro lure document (`Signed-Contract-2026.docm`) that wrote a marker file. AGC-012 documents the detection perspective of the same pattern — the Sysmon EID 1 event that fires when the macro spawns a script interpreter. In a real incident, the SOC analyst would:
+AGC-007 covered the macro lure (`Signed-Contract-2026.docm`) that wrote a marker file; this report covers the Sysmon EID 1 event captured when that kind of macro spawns a script interpreter. In a real incident the analyst would:
 1. Find the EID 1 event (AGC-012 pattern).
 2. Correlate with the EID 11 event for the source document (AGC-007 pattern).
 3. Retrieve and quarantine the malicious document.
 
 **Step 4 — OriginalFileName detection bonus:**
-Sysmon records `OriginalFileName: Cmd.Exe` in the PE header for the WINWORD.EXE process. This mismatch (Image path vs OriginalFileName) is an independent detection signal for binary masquerading. Detection engineers should alert on `Image` path containing a known application name where `OriginalFileName` does not match.
+Sysmon read `OriginalFileName: Cmd.Exe` from the PE header of the WINWORD.EXE process. The mismatch between Image path and OriginalFileName is a second, independent signal for binary masquerading. A rule that alerts when `Image` carries a known application name and `OriginalFileName` disagrees would have caught this on its own.
 
 ### Report
 
-**Verdict: True Positive** — Confirmed Office-application-spawns-PowerShell execution chain.
+**Verdict: True Positive** — WINWORD.EXE (PID 1116) spawned powershell.exe (PID 3184), captured by Sysmon EID 1.
 
-**Confidence: Critical** — This parent-child combination has effectively zero legitimate justification in a corporate Windows environment. The detection signal is unambiguous:
-1. WINWORD.EXE spawned powershell.exe — Sysmon EID 1 confirms PIDs and timing
-2. PowerShell executed a payload command (file write to staging directory)
+**Confidence: Critical** — No corporate Windows workflow produces this parent-child pair. The signal is unambiguous:
+1. WINWORD.EXE spawned powershell.exe — Sysmon EID 1 records both PIDs and the timing
+2. PowerShell ran a payload command (file write to a staging directory)
 3. No enterprise workflow requires Office to spawn PowerShell
-4. Complementary detection to AGC-007 macro delivery
+4. Matches the delivery side already documented in AGC-007
 
 **Response recommendation:**
-1. **Isolate the host immediately** — Office-spawns-PowerShell is an active breach indicator.
+1. **Isolate the host immediately** — an Office process spawning PowerShell means code execution has already happened.
 2. **Quarantine the source document** — retrieve the .docm/.xlsm that triggered the macro from the user's recent files / email attachments.
 3. **Extract the PowerShell command line** — the full command reveals the attacker's payload (download URL, C2 address, persistence mechanism).
 4. **Block the payload destination** — if the command downloads from a URL, block it at the firewall/proxy.
