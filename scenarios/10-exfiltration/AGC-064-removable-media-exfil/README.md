@@ -21,19 +21,19 @@
 
 ### Tradecraft
 
-**What:** Physical exfiltration via removable media (USB drives) completely bypasses network-based detection:
+**What:** Copying data to a USB drive, which leaves nothing for network-based detection to see:
 - No firewall logs — data never crosses the network
 - No IDS/IPS alerts — no packets to inspect
 - No DNS logs, no conn.log, no proxy logs
 - The only detection surface is host-based telemetry: Sysmon, Windows Security audit events, and endpoint DLP
 
 **Why an Attacker Uses It Here:**
-1. After failed or partially successful network exfiltration (AGC-062, AGC-063), USB provides a guaranteed channel
-2. At a financial firm like Ashford Grove Capital, an insider or a compromised user with physical access can walk data out
+1. After the partial success of network exfiltration in AGC-062 and AGC-063, USB is a channel no firewall rule can cut
+2. At Ashford Grove Capital an insider, or an attacker with a compromised user's physical access, can walk the data out the door
 3. A single USB drive can carry terabytes — far more than any network exfiltration method
-4. The attack leaves no network forensic trail, making detection dependent entirely on endpoint auditing configuration
+4. With no network trail, detection rests entirely on how the endpoint audit policy is configured
 
-**Key prevention control:** The most effective mitigation is GPO-enforced USB write blocking across all endpoints, with a narrow documented exception list. Without this, detection is reactive only.
+**Key prevention control:** GPO-enforced USB write blocking on every endpoint, with a short documented exception list. Without it, the SOC can only detect after the copy has happened.
 
 ### Simulation
 
@@ -57,9 +57,9 @@ xcopy /Y C:\Windows\Temp\staged_usb.zip E:\
 subst E: /D
 ```
 
-**Result:** xcopy successfully copied staged_usb.zip to E:\. subst.exe created the virtual drive mapping, and both operations generated Sysmon EID 1 events.
+**Result:** subst.exe created the virtual drive mapping and xcopy copied staged_usb.zip to E:\. Sysmon EID 1 logged both processes.
 
-**Lab constraint:** VM USB controller is disabled, preventing attachment of a virtual USB mass storage device. `subst.exe` provides the same file copy artifacts without EID 6416 (PnP device recognition). In production, a physical USB device would trigger EID 6416 if Removable Storage auditing is enabled.
+**Lab constraint:** The VM USB controller is disabled, so no virtual USB mass storage device could be attached. `subst.exe` produces the same file copy artifacts, minus EID 6416 (PnP device recognition). In production a physical USB device would log EID 6416 if Removable Storage auditing is enabled.
 
 ## SOC Perspective
 
@@ -103,13 +103,13 @@ User: COMPROMISED-01\Administrator
 ```
 
 **Security EID 6416 — PnP Device Recognition: 0 events**
-VM USB controller disabled. In production with physical USB, this event fires when the removable device is connected and recognized by Windows.
+VM USB controller disabled. In production, Windows logs this event when it recognizes a physical USB device.
 
 **Sysmon EID 11 — File Create on E:: 0 events**
-EID 11 with RuleName `EXE` did not fire because staged_usb.zip has .zip extension (same SwiftOnSecurity gap).
+Sysmon did not log EID 11 because the RuleName `EXE` filter does not match a .zip extension (same SwiftOnSecurity gap).
 
 **Network evidence: NONE**
-No EID 3, no DNS queries, no firewall logs. This technique is completely invisible to network-based detection.
+No EID 3, no DNS queries, no firewall logs. Nothing on the network side recorded the copy.
 
 ### Investigation
 
@@ -117,19 +117,19 @@ No EID 3, no DNS queries, no firewall logs. This technique is completely invisib
 Security EID 6416 (PnP device recognition) produced 0 events. This could mean:
 - No USB device was connected (the case here — simulated via subst)
 - Removable Storage auditing is not enabled (the more dangerous conclusion)
-If this audit category is disabled, USB exfiltration produces zero detection events — a critical gap. Verify via: `auditpol /get /subcategory:"Plug and Play Events"`
+If that audit category is disabled, a real USB copy logs no PnP event at all — a detection gap. Verify via: `auditpol /get /subcategory:"Plug and Play Events"`
 
 **Step 2 — Identify file copy to non-system volume:**
-xcopy.exe CommandLine shows destination `E:\` — a non-system drive letter. In an environment where USB is restricted, any file write to a non-C: volume should trigger investigation:
+The xcopy.exe CommandLine shows destination `E:\`, a non-system drive letter. Where USB is restricted, any file write to a non-C: volume warrants a look:
 - What was the source file? (`staged_usb.zip` — an archive from `C:\Windows\Temp\`)
-- What process initiated the copy? (xcopy.exe, spawned by PowerShell script)
+- What process initiated the copy? (xcopy.exe, spawned by the PowerShell script)
 - Does the user have documented authorization for removable media use?
 
 **Step 3 — Assess USB policy compliance:**
-At a financial services firm handling regulated data (client PII, wire transfer records, M&A documents), USB write access should be disabled by default via GPO. Verify:
+A firm handling regulated data (client PII, wire transfer records, M&A documents) should deny USB write access by default through GPO. Verify:
 - `Computer Configuration > Administrative Templates > System > Removable Storage Access > Removable Disks: Deny write access`
 - Is `michael.chen` on any exception list?
-- If USB write is not blocked, this is both an incident AND a policy gap
+- If USB write is not blocked, this is an incident and a policy gap at once
 
 ### Report
 
@@ -137,15 +137,15 @@ At a financial services firm handling regulated data (client PII, wire transfer 
 
 **Confidence: High** — Not Critical because:
 1. Virtual drive (subst.exe) rather than physical USB — no EID 6416 to confirm actual removable media
-2. In production with a real USB device, this would be Critical because it completely bypasses network detection
+2. With a real USB device this would be Critical, since no network control can see the copy
 
 **Response recommendation:**
-1. **Physically secure the USB device** if possible — in production, the data on the removable media may be the only copy outside attacker control
+1. **Physically secure the USB device** if possible — in production that drive may be the only copy of the data outside attacker control
 2. **Revoke removable media permissions** for the compromised account immediately
-3. **Implement GPO-enforced USB write blocking** (`Removable Disks: Deny write access`) across all endpoints as the primary preventive control
-4. **Enable Removable Storage auditing** (`auditpol /set /subcategory:"Plug and Play Events" /success:enable /failure:enable`) for detection of USB connections
-5. **Alert on file copies to non-C: volumes** from non-whitelisted processes — xcopy.exe, robocopy.exe, Copy-Item to drive letters other than C: should trigger review
-6. **Document that this technique is invisible to network-based SOC tools** — no firewall, IDS, proxy, or DNS log will capture USB exfiltration
+3. **Implement GPO-enforced USB write blocking** (`Removable Disks: Deny write access`) on every endpoint as the primary preventive control
+4. **Enable Removable Storage auditing** (`auditpol /set /subcategory:"Plug and Play Events" /success:enable /failure:enable`) so USB connections get logged
+5. **Alert on file copies to non-C: volumes** from non-whitelisted processes — xcopy.exe, robocopy.exe, or Copy-Item writing to any drive letter other than C: should get a review
+6. **Document that this technique is invisible to network-based SOC tools** — no firewall, IDS, proxy, or DNS log captures a USB copy
 
 ### MITRE Mapping
 

