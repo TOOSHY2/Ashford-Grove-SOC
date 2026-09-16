@@ -233,23 +233,51 @@ This lab is an on-premises enterprise simulation. Cloud identity, SaaS telemetry
 
 All simulation is confined to lab-owned systems. No live malware, no real phishing to real people, no external targets. Safe test artifacts (EICAR and synthetic equivalents) stand in wherever a real payload would otherwise be required. The attacker segment is isolated and reachable only through one logged firewall rule.
 
-## Development Note
+## Methodology — How This Portfolio Was Built
 
-This project's architecture, detection scenarios, and lab implementation
-are my own work — every network zone, every detection logic, and every
-scenario's investigation and verdict was designed and validated by hand
-in a real environment I built and can reproduce end to end.
+This project was built in two deliberate phases, and both are documented
+transparently rather than blended together.
 
-AI (Claude) was used throughout as a development and documentation
-assistant — drafting scenario templates, structuring repository content,
-and helping organize the write-ups — the way any engineer today uses AI
-tooling alongside their own work. It did not design the architecture,
-choose the detection logic, or run the lab.
+**Phase one — AI-built reference pass.** Claude (Anthropic AI) executed
+and documented an initial complete pass across all 100 scenarios,
+operating autonomously against this lab's live infrastructure. Every
+report from this phase carries its own explicit disclosure block stating
+exactly that, including a note on how the execution method (VirtualBox
+Guest Control) shapes what its evidence looks like. This phase served a
+specific purpose: produce a rigorous, consistently-structured model —
+correctly calibrated confidence levels, honest negative-evidence
+documentation, accurate cross-scenario correlation — worth learning from,
+rather than a shortcut worth hiding.
 
-**If asked directly:** yes, I used AI as a development and documentation
-assistant. I designed the SOC architecture, defined the detection and
-investigation scenarios, implemented and validated the lab myself, and
-I can explain and reproduce every component of this project.
+**Phase two — independent manual re-implementation.** Every scenario is
+being personally re-executed by hand, scenario by scenario, using the
+phase-one version purely as a structural reference — never copied
+content. Each manual pass uses independently chosen data and methods,
+adds real screenshot evidence (absent from phase one by design), and
+carries its own accurate disclosure reflecting what actually happened
+for that specific scenario. This is deliberately paced at a realistic
+1–2 scenarios per weekday, because the pace itself is part of the
+evidence: a two-month timeline of naturally-spaced commits is what real,
+hands-on work actually looks like — the opposite of a rushed batch.
+
+**Why build it this way.** Treating an AI-built first pass as something
+to hide would have meant either lying about it or discarding genuinely
+useful reference work. Treating it as a deliberate, disclosed model to
+learn from and independently reproduce turns the same starting point
+into real skill-building — the two phases are not in tension, they're
+sequential: study a rigorous example, then independently prove the same
+capability by hand.
+
+**What this means if you're reading the repository's history.** You'll
+see two layers of work against the same 100 scenario IDs over time — an
+initial AI-authored commit for each, followed later by a human-authored
+revision as phase two reaches that scenario. That's expected, and it's
+the whole point: this repository's git history is itself part of the
+evidence of the process described here, not something to reconcile away.
+
+<!-- Update note for when phase two completes: change "is being personally
+re-executed" to "has been personally re-executed", and consider adding
+completion date. -->
 
 ## Final Engagement Report
 
