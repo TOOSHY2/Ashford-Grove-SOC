@@ -42,7 +42,7 @@ Created a documented service account (`svc_reporting`) with a pre-existing servi
 UtcTime: 2026-09-16 00:49:27.093
 ProcessId: 3028
 Image: C:\Windows\System32\schtasks.exe
-CommandLine: "C:\WINDOWS\system32\schtasks.exe" /create /tn AGC085NightlyReport /tr "cmd.exe /c echo AGC-085 nightly report > C:\Windows\Temp\agc085.txt" /sc daily /st 03:00 /ru COMPROMISED-01\svc_reporting /rp "SvcR3port2026!" /f
+CommandLine: "C:\WINDOWS\system32\schtasks.exe" /create /tn AGC085NightlyReport /tr "cmd.exe /c echo AGC-085 nightly report > C:\Windows\Temp\agc085.txt" /sc daily /st 03:00 /ru COMPROMISED-01\svc_reporting /rp "[REDACTED]" /f
 User: COMPROMISED-01\Administrator
 ```
 
@@ -63,7 +63,7 @@ The task is configured to run under `COMPROMISED-01\svc_reporting` (the `/ru` pa
 ```
 UtcTime: 2026-09-16 00:49:26.982
 Image: C:\Windows\System32\net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" user svc_reporting SvcR3port2026! /add
+CommandLine: "C:\WINDOWS\system32\net.exe" user svc_reporting [REDACTED] /add
 User: COMPROMISED-01\Administrator
 ```
 
