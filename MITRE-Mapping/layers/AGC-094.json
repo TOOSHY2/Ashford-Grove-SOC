@@ -1,0 +1,24 @@
+{
+  "name": "AGC-094: Off-Hours Scheduled Tasks Hunt",
+  "versions": { "attack": "16", "navigator": "4.9.5", "layer": "4.5" },
+  "domain": "enterprise-attack",
+  "description": "AGC-094: Scheduled task creation outside change windows hunt. 9 schtasks operations found outside change window, all from authorized lab scenarios.",
+  "filters": { "platforms": ["Windows", "Linux"] },
+  "sorting": 3,
+  "layout": { "layout": "side", "aggregateFunction": "average", "showID": true, "showName": true, "showAggregateScores": true, "countUnscored": false },
+  "hideDisabled": false,
+  "techniques": [
+    {
+      "techniqueID": "T1053.005",
+      "tactic": "persistence",
+      "color": "#ffe766ff",
+      "comment": "AGC-094: 9 schtasks.exe operations outside change-management window (Wed vs Tue/Thu). All attributable to authorized lab scenarios (AGC-081, AGC-085, AGC-088). All simulation tasks cleaned up. 6 remaining non-Microsoft tasks are legitimate Windows SoftLanding components.",
+      "enabled": true, "metadata": [], "links": [], "showSubtechniques": false, "score": 75
+    }
+  ],
+  "gradient": { "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"], "minValue": 0, "maxValue": 100 },
+  "legendItems": [{ "label": "Hunted: Residual Artifacts", "color": "#ffe766ff" }],
+  "metadata": [], "links": [],
+  "showTacticRowBackground": true, "tacticRowBackground": "#dddddd",
+  "selectTechniquesAcrossTactics": true, "selectSubtechniquesWithParent": false, "selectVisibleTechniques": false
+}
