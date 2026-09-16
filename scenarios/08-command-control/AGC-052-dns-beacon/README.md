@@ -21,17 +21,17 @@
 
 ### Tradecraft
 
-**What:** DNS beaconing uses the DNS protocol as a covert C2 channel. Instead of connecting directly to a C2 server over HTTPS, the attacker encodes commands and data into DNS queries and responses:
+**What:** The attacker runs C2 over DNS instead of a direct HTTPS session, packing data into queries and commands into responses:
 1. **Outbound data:** Encoded into subdomain labels (e.g., `<base64-encoded-data>.c2domain.com`)
 2. **Inbound commands:** Encoded into DNS response records (TXT, CNAME, A records)
-3. **Each query uses a unique subdomain:** DNS resolvers cache responses — same subdomain would return cached answer without reaching the attacker's server
+3. **Each query uses a unique subdomain:** Resolvers cache answers, so a repeated subdomain would be served from cache and never reach the attacker's server
 
 **Why DNS is harder to block than HTTPS:**
-- DNS is required for virtually all network operations — blocking it breaks everything
-- DNS queries often traverse the firewall to external resolvers without inspection
-- DNS traffic volume is high, making individual malicious queries hard to spot
+- Nearly everything on the network needs DNS, so nobody blocks it outright
+- Queries often leave the perimeter to external resolvers with no inspection
+- Query volume is high, so one malicious lookup hides in the noise
 
-**Why subdomain uniqueness is the key signal:** The distinguishing characteristic of DNS C2 is NOT the number of queries but the number of UNIQUE subdomains under a single base domain. Legitimate services reuse the same hostnames; DNS C2 generates a unique subdomain for every query because each carries different encoded data.
+**Why subdomain uniqueness is the key signal:** What gives DNS C2 away is not query count but the number of distinct subdomains under one base domain. Legitimate services reuse the same hostnames; DNS C2 mints a new subdomain per query because each one carries different encoded data.
 
 ### Simulation
 
@@ -92,17 +92,17 @@ User: COMPROMISED-01\Administrator
 2. **High-entropy subdomain labels:** Numeric random strings (e.g., `1549336820`) are not human-readable hostnames
 3. **Single authoritative server:** All queries directed to 10.10.40.10
 4. **Same process:** All from PID 5492 (powershell.exe)
-5. **QueryStatus: 0:** Successful resolution — the C2 DNS server is responding
+5. **QueryStatus: 0:** Resolution succeeded — the C2 DNS server is answering
 
 ### Investigation
 
 **Step 1 — Quantify subdomain cardinality:**
-For each base domain queried by the host, count the number of UNIQUE subdomains within a time window:
+For each base domain the host queries, count distinct subdomains within a time window:
 - Extract base domain from QueryName (strip the leftmost label)
 - Count distinct leftmost labels per base domain per source host
 - Threshold: 5+ unique subdomains under one base domain within 1 hour
 
-In this case: 10 unique subdomains under `agc052lab.local` in ~2.5 minutes.
+Here: 10 unique subdomains under `agc052lab.local` in ~2.5 minutes.
 
 **Step 2 — Assess subdomain entropy:**
 Calculate Shannon entropy of the subdomain labels:
@@ -112,29 +112,29 @@ Calculate Shannon entropy of the subdomain labels:
 **Step 3 — Check destination legitimacy:**
 - `agc052lab.local` is not in the organization's approved domain list
 - `.local` TLD is typically internal mDNS, not authoritative DNS
-- Queries directed to specific external server (10.10.40.10), bypassing organizational DNS resolver
+- Queries went straight to an external server (10.10.40.10), bypassing the organizational resolver
 
 **Step 4 — Correlate with other C2 indicators:**
 Cross-reference with AGC-051 (HTTPS beacon to same destination 10.10.40.10):
-- Both scenarios show C2 communication to the same external IP
-- Dual-channel C2: HTTPS + DNS — if one is blocked, the other continues
+- Both channels terminate at the same external IP
+- That is dual-channel C2: block HTTPS and the DNS channel keeps running
 
 ### Report
 
 **Verdict: True Positive** — DNS-based C2 beaconing using high-entropy unique subdomains.
 
-**Confidence: High** — Calibrated assessment:
+**Confidence: High** — on five points:
 1. 10 unique subdomains under one base domain in 2.5 minutes — no legitimate application generates this cardinality.
-2. Subdomain labels are numeric-random — consistent with algorithmic C2 encoding.
-3. Queries directed to specific external server (10.10.40.10), bypassing organizational DNS.
+2. Subdomain labels are numeric-random, the shape of algorithmic C2 encoding.
+3. Queries went to an external server (10.10.40.10) rather than the organizational resolver.
 4. `agc052lab.local` is not a known legitimate domain.
-5. Same destination as HTTPS beacon (AGC-051) — confirms dual-channel C2 infrastructure.
+5. Same destination as the HTTPS beacon in AGC-051 — one set of infrastructure runs both channels.
 
 **Response recommendation:**
-1. **Block the C2 domain** at DNS resolver level — sinkhole `agc052lab.local`. Block 10.10.40.10 at firewall.
-2. **Isolate the beaconing host** — active remote control via DNS channel.
-3. **Deploy DNS entropy alerting:** Monitor for base domains with high subdomain cardinality + high entropy.
-4. **Note on blocking difficulty:** DNS C2 is harder to fully block than HTTPS C2 — attacker can register a new domain and re-encode the beacon. Best defense is entropy-based detection at the DNS resolver.
+1. **Block the C2 domain** at the resolver — sinkhole `agc052lab.local` — and block 10.10.40.10 at the firewall.
+2. **Isolate the beaconing host** — COMPROMISED-HOST-01 is under remote control over the DNS channel.
+3. **Deploy DNS entropy alerting:** Alert on base domains that combine high subdomain cardinality with high label entropy.
+4. **Note on blocking difficulty:** DNS C2 outlives a domain block — the attacker registers a new domain and re-encodes the beacon. Entropy-based detection at the resolver holds up where a blocklist does not.
 
 ### MITRE Mapping
 

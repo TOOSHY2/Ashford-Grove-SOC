@@ -21,12 +21,12 @@
 
 ### Tradecraft
 
-**What:** Non-standard port C2 uses a port that is not commonly associated with the protocol being carried. In this case, HTTPS over port 8443 instead of the standard port 443. Attackers use non-standard ports because:
-1. **Firewall bypass:** Some firewalls allow all outbound traffic; non-standard ports avoid protocol-specific inspection rules that only apply to standard ports
+**What:** The attacker carries C2 on a port the protocol is not usually tied to — here HTTPS over port 8443 instead of the standard port 443. The reasons:
+1. **Firewall bypass:** Firewalls that allow all outbound traffic apply protocol inspection only to standard ports; 8443 slips past those rules
 2. **IDS/IPS evasion:** Deep packet inspection is often configured only for standard port-protocol pairs (e.g., HTTP inspection on port 80, HTTPS on 443)
-3. **Blending with legitimate alt-HTTPS:** Port 8443 is commonly used by legitimate services (Tomcat, VMware, some web management interfaces), providing plausible deniability
+3. **Blending with legitimate alt-HTTPS:** Tomcat, VMware and assorted web management interfaces use 8443, so the port has cover
 
-**Why port 8443 specifically:** It is the most commonly chosen alternative HTTPS port because many legitimate services use it, making it less suspicious than truly random ports (e.g., 12345). However, a LAN workstation connecting outbound to an external IP on port 8443 is not normal baseline behavior.
+**Why port 8443 specifically:** It is the usual alternate HTTPS port, so it draws less attention than a random port like 12345. A LAN workstation reaching an external IP on port 8443 is still outside the baseline.
 
 ### Simulation
 
@@ -53,7 +53,7 @@
 | 7 | 21:59:53.412 | 23.024 | Timeout |
 | 8 | 22:00:16.444 | 23.032 | Timeout |
 
-**Critical observation:** All 8 connections timed out because no service was listening on port 8443 at the C2 server. Compare with AGC-051 where port 443 reached the EXT-ATTACKER-SIM HTTPS service (SSL/TLS handshake attempted). This difference reveals an important detection gap.
+**Critical observation:** All 8 connections timed out because nothing was listening on port 8443 at the C2 server. In AGC-051, port 443 reached the EXT-ATTACKER-SIM HTTPS service and got as far as an SSL/TLS handshake. That difference is what opens the detection gap below.
 
 ## SOC Perspective
 
@@ -61,7 +61,7 @@
 
 **Sysmon EID 3 — Network Connection: 0 events (port 8443)**
 
-No Sysmon EID 3 events were generated for the 8 connection attempts to port 8443. This is because EID 3 only fires for COMPLETED TCP connections — when the TCP handshake fails (timeout/reset), no EID 3 is generated.
+Sysmon logged no EID 3 for any of the 8 attempts to port 8443. EID 3 only captures completed TCP connections; when the handshake times out or resets, nothing is written.
 
 **Comparison with AGC-051 (same destination, standard port):**
 ```
@@ -69,15 +69,15 @@ Port 443 connections to 10.10.40.10 (last 30 min): 10 EID 3 events
 Port 8443 connections to 10.10.40.10 (last 30 min):  0 EID 3 events
 ```
 
-This demonstrates a critical Sysmon detection gap: when C2 connections fail (as they often do during initial deployment or when the C2 server is temporarily down), host-based detection via Sysmon misses them entirely. Only network-flow monitoring would capture the attempted connections.
+That is the Sysmon detection gap: when C2 connections fail — common during initial deployment or while the C2 server is down — Sysmon sees nothing. Only network-flow monitoring captures the attempts.
 
 **Where detection WOULD occur:**
-1. **Zeek conn.log (Security Onion):** Would capture all 8 TCP SYN attempts regardless of outcome, with destination port 8443 clearly visible
-2. **OPNsense firewall logs:** Would log the outbound connection attempts if the firewall rule permits or explicitly denies port 8443
-3. **Windows Filtering Platform (EID 5156/5157):** Not audited in this configuration, but would capture allowed/blocked connections at the Windows firewall level
+1. **Zeek conn.log (Security Onion):** Would log all 8 TCP SYN attempts whatever the outcome, with destination port 8443 in the record
+2. **OPNsense firewall logs:** Would log each outbound attempt, whether the rule permits or explicitly denies port 8443
+3. **Windows Filtering Platform (EID 5156/5157):** Not audited in the lab, but would capture allowed and blocked connections at the Windows firewall
 
 **Process context (from concurrent EID 1 analysis):**
-The beaconing process (powershell.exe, PID running the Invoke-WebRequest loop) would be visible in Sysmon EID 1 at process creation time, but the individual beacon attempts do not generate separate EID 1 events.
+The beaconing process (powershell.exe running the Invoke-WebRequest loop) shows up once in Sysmon EID 1 at launch; the individual attempts produce no further EID 1 events.
 
 ### Investigation
 
@@ -86,7 +86,7 @@ For the LAN workstation segment, the documented baseline of normal outbound port
 - 80 (HTTP), 443 (HTTPS), 53 (DNS)
 - Possibly: 587/993/995 (email), 8080 (proxy)
 
-Port 8443 is NOT in the standard LAN workstation outbound baseline. Any workstation connecting outbound on port 8443 to an external IP requires investigation.
+Port 8443 is not in that baseline. Any workstation reaching an external IP on 8443 gets investigated.
 
 **Step 2 — Check for legitimate application:**
 Verify whether any approved software on the workstation uses port 8443:
@@ -98,29 +98,29 @@ Verify whether any approved software on the workstation uses port 8443:
 Uncommon port + periodic timing = compound C2 indicator:
 - Port deviation from baseline: confirmed (8443 not in baseline)
 - Timing regularity: 23s mean interval with low variance (same C2 pattern as AGC-051)
-- Combined signal is stronger than either indicator alone
+- Together they are stronger than either alone
 
 **Step 4 — Protocol/port mismatch analysis:**
-Even though the connection failed, if it had succeeded:
-- TLS handshake data (SNI, JA3 fingerprint) would reveal the client/server capabilities
-- A JA3 hash matching known malware frameworks (Cobalt Strike, Metasploit) on a non-standard port is a very high-confidence indicator
+The connection failed, but had it completed:
+- The TLS handshake (SNI, JA3 fingerprint) would expose the client and server
+- A JA3 hash matching Cobalt Strike or Metasploit on a non-standard port would settle the verdict on its own
 
 ### Report
 
 **Verdict: True Positive** — C2 beaconing on non-standard port 8443.
 
-**Confidence: High** — Calibrated assessment:
+**Confidence: High** — on five points:
 1. Port 8443 is outside the documented outbound port baseline for LAN workstations.
 2. No legitimate application on this workstation justifies outbound connections to an external IP on port 8443.
 3. Periodic connection pattern (23s interval, low variance) matches C2 beacon behavior.
 4. Same destination IP (10.10.40.10) as confirmed C2 infrastructure (AGC-051, AGC-052).
-5. The connection failures actually make this MORE suspicious — a legitimate application would not silently retry a failed connection every 23 seconds.
+5. The failures make this more suspicious, not less — a legitimate application would not silently retry a dead connection every 23 seconds.
 
 **Response recommendation:**
-1. **Block port/destination combination** at the firewall — deny 10.10.40.10:8443 and review all non-standard outbound port policies.
-2. **Enforce outbound port whitelist** via firewall policy, not just documentation. Only allow documented baseline ports for the LAN segment. This converts "detect and investigate" into "prevent and alert."
-3. **Isolate the beaconing host** — same host as AGC-051/052, confirming multi-channel C2.
-4. **Deploy non-standard port alerting:** Monitor for outbound connections to ports not in the segment's baseline whitelist. Alert on first occurrence, not volume threshold.
+1. **Block port/destination combination** at the firewall — deny 10.10.40.10:8443 and review every non-standard outbound port rule.
+2. **Enforce outbound port whitelist** in firewall policy, not just in a document. Allow only the documented baseline ports for the LAN segment; the next 8443 attempt is then blocked and alerted rather than found afterward.
+3. **Isolate the beaconing host** — the same host as AGC-051/052; this is another C2 channel on it.
+4. **Deploy non-standard port alerting:** Alert on any outbound connection to a port outside the segment's baseline whitelist — on first occurrence, not after a volume threshold.
 
 ### MITRE Mapping
 

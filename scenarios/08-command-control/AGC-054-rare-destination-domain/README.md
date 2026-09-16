@@ -21,10 +21,10 @@
 
 ### Tradecraft
 
-**What:** Attackers register new domains for C2 infrastructure shortly before use. These domains have no prior history in the target organization's DNS logs, making them "first-seen" or "rare" destinations. The attacker benefits because:
+**What:** The attacker registers C2 domains shortly before using them, so they have no history in the target's DNS logs — "first-seen" or "rare" destinations. That works in the attacker's favor because:
 1. No reputation data exists — the domain has never been flagged as malicious
 2. No prior association with the organization — it won't appear on any whitelist
-3. Short-lived domains can be registered, used for a campaign, and abandoned
+3. The domain can be registered, burned through one campaign, and abandoned
 
 **Why domain rarity is a supporting signal, not a standalone verdict:**
 Many legitimate activities produce first-seen domains:
@@ -33,7 +33,7 @@ Many legitimate activities produce first-seen domains:
 - Software updates from new CDN endpoints
 - Marketing/analytics tracking domains
 
-This means first-seen domain alone cannot drive a high-confidence verdict. It becomes high-confidence only when combined with a behavioral C2 indicator (beacon timing, uncommon port, high-entropy DNS).
+So a first-seen domain on its own cannot carry a high-confidence verdict. It gets there only paired with a behavioral C2 indicator: beacon timing, an uncommon port, or high-entropy DNS.
 
 ### Simulation
 
@@ -52,8 +52,8 @@ This means first-seen domain alone cannot drive a high-confidence verdict. It be
 | 5 | 22:03:12 | DNS resolve | agc054-c2-backup.io | A: 10.10.40.10 |
 
 **Key observations:**
-- All 4 domains resolve to the same IP (10.10.40.10) — multiple domains pointing to single infrastructure is a known C2 pattern
-- Domain names contain operational terms (`c2drop`, `payload-drop`, `exfil-relay`, `c2-backup`) — in real attacks these would be less obvious
+- All 4 domains resolve to the same IP (10.10.40.10) — several domains fronting one server is how C2 operators build in redundancy
+- The names carry operational terms (`c2drop`, `payload-drop`, `exfil-relay`, `c2-backup`) — a real attacker would pick blander labels
 - All domains are genuinely first-seen — zero prior occurrences in the lab's DNS history
 
 ## SOC Perspective
@@ -123,7 +123,7 @@ Query the SIEM's full DNS history for each domain:
 - `agc054-exfil-relay.org`: 0 prior occurrences
 - `agc054-c2-backup.io`: 0 prior occurrences
 
-All 4 domains are genuinely first-seen — zero prior DNS queries from any host in the environment.
+All 4 domains are genuinely first-seen — zero prior DNS queries from any host in the lab.
 
 **Step 2 — Domain age and reputation (enrichment):**
 In a production SOC, this step would include:
@@ -131,7 +131,7 @@ In a production SOC, this step would include:
 - Threat intelligence feed correlation (known C2 infrastructure)
 - Domain categorization services (uncategorized = suspicious)
 
-In this lab: the domains are synthetic and would show as unregistered/uncategorized.
+In the lab the domains are synthetic and would come back unregistered and uncategorized.
 
 **Step 3 — Correlate with behavioral C2 indicators:**
 Domain rarity alone is Medium confidence. Combine with:
@@ -139,30 +139,30 @@ Domain rarity alone is Medium confidence. Combine with:
 - AGC-052: Same destination IP with DNS beacon pattern
 - AGC-053: Same destination IP with non-standard port C2
 
-Combined signal: first-seen domain + beacon timing + same C2 infrastructure = **High confidence** lateral C2.
+Combined: first-seen domain + beacon timing + same C2 infrastructure = **High confidence** C2.
 
 **Step 4 — Multi-domain convergence:**
-4 distinct first-seen domains all resolving to the same IP (10.10.40.10) is itself a significant indicator:
+4 distinct first-seen domains resolving to one IP (10.10.40.10) is an indicator on its own:
 - Legitimate services rarely have multiple unrelated domains pointing to the same IP
-- C2 infrastructure commonly uses multiple domains for redundancy (domain fronting, failover)
+- C2 operators point several domains at one server for redundancy (domain fronting, failover)
 
 ### Report
 
 **Verdict: True Positive (conditional)** — First-seen domains resolving to confirmed C2 infrastructure.
 
 **Confidence: Medium** (domain rarity alone) / **High** (combined with AGC-051/052/053 behavioral indicators):
-1. 4 domains with zero prior DNS history in the environment — genuinely first-seen.
+1. 4 domains with zero prior DNS history in the lab — genuinely first-seen.
 2. All resolve to 10.10.40.10 — confirmed C2 IP from AGC-051/052/053.
 3. Multiple first-seen domains to same IP = C2 domain rotation/redundancy pattern.
-4. Standalone domain rarity is NOT sufficient for high-confidence verdict — many legitimate new services produce first-seen domains weekly.
+4. Rarity alone does not reach a high-confidence verdict — legitimate new services produce first-seen domains every week.
 5. Combined with behavioral C2 indicators (beacon timing, DNS tunneling, uncommon port), confidence rises to High.
 
 **Response recommendation:**
-1. **Flag for monitoring** rather than immediate block if domain rarity is the ONLY indicator. Investigate further before escalating.
+1. **Flag for monitoring** rather than block when rarity is the only indicator, and keep digging before escalating.
 2. **Elevate to High and block** when combined with a second C2 indicator (beacon timing, uncommon port, DNS entropy).
 3. **Block the IP** (10.10.40.10) rather than individual domains — domain rotation makes per-domain blocking a losing game.
-4. **WHOIS enrichment:** In production, add domain age/registration date to the investigation. Domains registered within days of first use are significantly more suspicious.
-5. **Implement first-seen alerting:** SIEM rule that flags domains with zero prior history. Use as a triage accelerator, not an automatic block.
+4. **WHOIS enrichment:** In production, pull the registration date into triage. A domain registered days before its first query is far more suspect.
+5. **Implement first-seen alerting:** A SIEM rule that flags domains with zero prior history, used to speed triage, not to auto-block.
 
 ### MITRE Mapping
 

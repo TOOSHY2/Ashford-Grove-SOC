@@ -21,15 +21,15 @@
 
 ### Tradecraft
 
-**What:** A full C2 process tree represents the complete attack chain from initial execution to active command-and-control. In this scenario:
-1. **Initial access:** An HTA (HTML Application) file serves as the lure document — equivalent to a malicious Office macro but using mshta.exe as the execution engine
-2. **Execution:** mshta.exe parses the HTA, executes embedded VBScript, which spawns PowerShell with -ExecutionPolicy Bypass
-3. **C2 establishment:** The spawned PowerShell process beacons to C2 infrastructure at regular intervals
+**What:** This report traces the whole chain from first execution to live C2 through one process tree:
+1. **Initial access:** An HTA (HTML Application) file is the lure — the Office-macro role, with mshta.exe as the engine
+2. **Execution:** mshta.exe parses the HTA and runs its embedded VBScript, which spawns PowerShell with -ExecutionPolicy Bypass
+3. **C2 establishment:** The spawned PowerShell beacons to the C2 server on a fixed interval
 
 **Why mshta.exe instead of Office:**
 - `mshta.exe` is a signed Microsoft binary present on all Windows systems (T1218.005 — Signed Binary Proxy Execution)
-- HTA files execute with the permissions of the calling user — no macro security prompts
-- Unlike Office macros, HTA execution doesn't require Office to be installed
+- An HTA runs with the calling user's permissions and throws no macro security prompt
+- It needs no Office install, unlike a macro
 - Application whitelisting often allows mshta.exe by default
 
 **Why ProcessGuid correlation is the strongest evidence:**
@@ -37,7 +37,7 @@ ProcessGuid is a cryptographically unique identifier assigned by Sysmon at proce
 - EID 1 (process creation) showing the parent-child relationship
 - EID 3 (network connection) showing the C2 beacon
 
-...it proves beyond doubt that the beaconing process was spawned by the initial lure, not a coincidental timing overlap.
+...it ties the beaconing process to the lure directly and rules out a coincidence of timing.
 
 ### Simulation
 
@@ -173,10 +173,10 @@ DestinationPort: 443
 ### Investigation
 
 **Step 1 — Start from the beacon (the first alert):**
-A SOC analyst would first see periodic outbound connections from powershell.exe to an external IP (same pattern as AGC-051). The initial question: "What launched this PowerShell process?"
+The first thing on the analyst's screen is periodic outbound connections from powershell.exe to an external IP, the AGC-051 pattern. The first question: "What launched this PowerShell process?"
 
 **Step 2 — Trace process ancestry via ProcessGuid:**
-Pull the EID 1 for the beaconing PowerShell (ProcessGuid `{eb65e329-c3de-6aa9-6604-000000001400}`). The ParentProcessGuid field reveals `{eb65e329-c3dc-6aa9-6504-000000001400}`. Query EID 1 for that GUID: it's mshta.exe running an HTA payload from `C:\Temp\`.
+Pull the EID 1 for the beaconing PowerShell (ProcessGuid `{eb65e329-c3de-6aa9-6604-000000001400}`). Its ParentProcessGuid is `{eb65e329-c3dc-6aa9-6504-000000001400}`. Query EID 1 for that GUID: mshta.exe running an HTA payload from `C:\Temp\`.
 
 **Step 3 — Reconstruct the complete chain:**
 ```
@@ -187,40 +187,40 @@ mshta.exe C:\Temp\agc056-payload.hta    (22:17:00 UTC)
             +-> HTTPS to 10.10.40.10:443  (22:17:05, 22:17:10, 22:17:15 UTC)
 ```
 
-This is a single coherent narrative: "An HTA file was opened, it spawned PowerShell with execution policy bypass, and that PowerShell immediately began beaconing to external C2 infrastructure."
+One narrative, no gaps: an HTA opened, spawned PowerShell with the execution policy bypassed, and that PowerShell started beaconing to external C2 straight away.
 
 **Step 4 — Why this is stronger than individual detections:**
 - AGC-055 alone: "PowerShell connected outbound" — could be administrative
 - AGC-051 alone: "Periodic HTTPS beacon" — could be legitimate polling
-- AGC-056 combined: "HTA payload spawned PowerShell which beacons" — no legitimate explanation exists
+- AGC-056 combined: "HTA payload spawned PowerShell which beacons" — nothing legitimate does this
 
-The ProcessGuid link eliminates coincidence: it is mathematically impossible for two unrelated processes to share a GUID.
+The ProcessGuid link rules out coincidence: two unrelated processes cannot share a GUID.
 
 **Cross-reference with prior C2 scenarios:**
 - Same C2 destination (10.10.40.10) as AGC-051/052/053/054/055
 - Same beacon pattern as AGC-051 (periodic HTTPS)
 - Same execution method as AGC-055 (PowerShell -ExecutionPolicy Bypass)
-- Added dimension: process ancestry reveals the initial access vector (HTA via mshta.exe)
+- New here: process ancestry exposes the initial access vector (HTA via mshta.exe)
 
 ### Report
 
 **Verdict: True Positive** — Complete C2 process tree from initial execution to active beaconing.
 
-**Confidence: Critical** — The highest confidence level, based on:
+**Confidence: Critical** — on six points:
 1. **Full process ancestry documented:** mshta.exe -> powershell.exe chain confirmed via ProcessGuid match.
-2. **Initial access vector identified:** HTA payload at `C:\Temp\agc056-payload.hta` — recoverable for forensic analysis.
-3. **Execution policy bypass:** -ExecutionPolicy Bypass in the command line, deliberate security override.
+2. **Initial access vector identified:** HTA payload at `C:\Temp\agc056-payload.hta` — still on disk for forensic analysis.
+3. **Execution policy bypass:** -ExecutionPolicy Bypass on the command line, a deliberate override.
 4. **Active C2 beacon:** 3 connections to 10.10.40.10:443 at 5-second intervals from the spawned process.
-5. **No legitimate explanation:** mshta.exe opening an HTA from a temp directory that spawns PowerShell with outbound C2 connections has zero legitimate use cases.
-6. **ProcessGuid correlation eliminates coincidence:** The GUID chain proves causal relationship, not temporal correlation.
+5. **No legitimate explanation:** mshta.exe opening an HTA from a temp directory, which spawns PowerShell, which connects to C2 — no business process looks like that.
+6. **ProcessGuid correlation eliminates coincidence:** The GUID chain shows cause, not just events close in time.
 
 **Response recommendation:**
-1. **P1 incident — isolate immediately.** This is an active, confirmed compromise with a functioning C2 channel.
-2. **Quarantine the HTA payload** (`C:\Temp\agc056-payload.hta`) for forensic analysis — it reveals the delivery mechanism and attacker tradecraft.
+1. **P1 incident — isolate immediately.** The C2 channel is up and confirmed; COMPROMISED-HOST-01 comes off the network now.
+2. **Quarantine the HTA payload** (`C:\Temp\agc056-payload.hta`) for forensic analysis — it holds the delivery mechanism and the attacker's tradecraft.
 3. **Block the C2 IP** (10.10.40.10) at the firewall and all proxy layers.
-4. **Use this investigation template** (ProcessGuid tracing from beacon to parent) as the standard methodology for all C2 investigations — it produces the strongest evidentiary chain.
-5. **Block mshta.exe** via application control on standard user workstations — there is no legitimate business need for HTA execution on end-user machines.
-6. **Hunt laterally:** Check all other hosts for HTA file creation in temp directories, mshta.exe execution, and connections to 10.10.40.10.
+4. **Use this investigation template** (ProcessGuid tracing from beacon back to parent) as the standard for every C2 investigation — it yields the strongest evidence chain.
+5. **Block mshta.exe** with application control on standard user workstations — end-user machines have no business need to run HTA files.
+6. **Hunt laterally:** Check every other host for HTA files written to temp directories, mshta.exe launches, and connections to 10.10.40.10.
 
 ### MITRE Mapping
 

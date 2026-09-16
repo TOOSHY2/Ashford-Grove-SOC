@@ -21,14 +21,14 @@
 
 ### Tradecraft
 
-**What:** Attackers use PowerShell's built-in web cmdlets (Invoke-WebRequest, Invoke-RestMethod, Net.WebClient, Net.HttpClient) to establish outbound connections to C2 infrastructure. PowerShell is the preferred tool because:
-1. **Pre-installed and trusted:** PowerShell is a signed Microsoft binary, present on every Windows system, and generally allowed by application whitelisting
-2. **Rich networking API:** Multiple cmdlets and .NET classes provide HTTP/HTTPS/FTP capabilities without needing external tools
-3. **Living-off-the-land:** No additional binaries to download or deploy — the attack uses only built-in Windows capabilities
-4. **Execution policy bypass:** `-ExecutionPolicy Bypass` is a command-line parameter, not a system setting — it requires no administrative privilege to use
+**What:** The attacker reaches C2 with PowerShell's built-in web cmdlets (Invoke-WebRequest, Invoke-RestMethod, Net.WebClient, Net.HttpClient). PowerShell suits the job because:
+1. **Pre-installed and trusted:** It is a signed Microsoft binary on every Windows system, and application whitelisting usually lets it run
+2. **Rich networking API:** Several cmdlets and .NET classes handle HTTP/HTTPS/FTP without any external tool
+3. **Living-off-the-land:** Nothing to download or drop — the attack runs on what Windows ships with
+4. **Execution policy bypass:** `-ExecutionPolicy Bypass` is a command-line switch, not a system setting, so it needs no admin privilege
 
 **Why the process identity matters more than the destination:**
-While destination-based detection (known-bad IPs/domains) is valuable, process-based detection catches novel C2 infrastructure. A SOC rule that alerts on "powershell.exe outbound to any external IP" catches C2 regardless of whether the destination is known-bad.
+Destination-based detection only catches IPs and domains already known bad. A rule on "powershell.exe outbound to any external IP" catches C2 on infrastructure nobody has seen yet.
 
 ### Simulation
 
@@ -46,11 +46,11 @@ While destination-based detection (known-bad IPs/domains) is valuable, process-b
 | 4 | 22:09:01.118 | Net.WebClient | https://10.10.40.10/agc055-stage2 | 443 | SSL/TLS trust failure |
 
 **Key observations:**
-- All 4 connections completed TCP handshake (EID 3 captured all 4), even when SSL/TLS subsequently failed
-- 3 different PowerShell networking methods used — all produce identical Sysmon EID 3 signatures (Image=powershell.exe)
+- All 4 connections completed the TCP handshake, so EID 3 captured all 4, even where SSL/TLS then failed
+- 3 different PowerShell networking methods, and all leave the same Sysmon EID 3 signature (Image=powershell.exe)
 - HTTP (port 80) returned 200 OK; HTTPS (port 443) reached TCP but SSL certificate trust failed
-- All 4 connections within 0.6 seconds — burst pattern, not periodic beacon
-- ProcessGuid `{eb65e329-c1f7-6aa9-4d04-000000001400}` links all connections to the same PowerShell process
+- All 4 connections inside 0.6 seconds — a burst, not a periodic beacon
+- ProcessGuid `{eb65e329-c1f7-6aa9-4d04-000000001400}` ties every connection to one PowerShell process
 
 ## SOC Perspective
 
@@ -154,16 +154,16 @@ User: COMPROMISED-01\Administrator
 The core detection question: "Should powershell.exe be making outbound web connections from this workstation?"
 - `michael.chen` is a standard user (Finance department) — not an IT administrator
 - No administrative scripts are scheduled on this workstation
-- PowerShell outbound connections from end-user machines are anomalous by default
+- PowerShell reaching out from an end-user machine is anomalous by default
 
 **Step 2 — Correlate EID 3 with EID 1 via ProcessGuid:**
-ProcessGuid `{eb65e329-c1f7-6aa9-4d04-000000001400}` links the network connections (EID 3) to the process creation (EID 1). The EID 1 CommandLine reveals:
-- `-ExecutionPolicy Bypass`: deliberate policy override — a strong indicator of malicious intent on a non-admin workstation
-- `-File C:\Temp\agc055-sim.ps1`: script execution from `C:\Temp\` — an unusual and suspicious location (writable by all users, not a standard script path)
+ProcessGuid `{eb65e329-c1f7-6aa9-4d04-000000001400}` ties the EID 3 connections to the EID 1 process creation. The EID 1 CommandLine shows:
+- `-ExecutionPolicy Bypass`: a deliberate policy override, which on a non-admin workstation points at malicious intent
+- `-File C:\Temp\agc055-sim.ps1`: a script run from `C:\Temp\`, a location any user can write to and no standard script lives in
 
 **Step 3 — Destination analysis:**
 - Destination 10.10.40.10 is in the External zone — confirmed C2 infrastructure from AGC-051/052/053/054
-- Multiple connections to same C2 IP using different methods suggests automated C2 framework behavior (trying multiple transport options)
+- Several connections to the same C2 IP by different methods looks like a framework cycling through transport options
 
 **Step 4 — Detection method comparison:**
 
@@ -174,26 +174,26 @@ ProcessGuid `{eb65e329-c1f7-6aa9-4d04-000000001400}` links the network connectio
 | PowerShell Script Block Logging (EID 4104) | Full script content | Actual malicious commands |
 | AMSI (Antimalware Scan Interface) | In-memory content | Obfuscated/encoded payloads |
 
-Sysmon EID 3 catches the network behavior regardless of script content. PowerShell Script Block Logging (EID 4104) would reveal the full script, but was not explicitly queried in this investigation.
+Sysmon EID 3 catches the network behavior whatever the script contains. PowerShell Script Block Logging (EID 4104) would show the full script, but this investigation did not query it.
 
 ### Report
 
 **Verdict: True Positive** — PowerShell outbound C2 connections to external infrastructure.
 
-**Confidence: High** — Calibrated assessment:
+**Confidence: High** — on six points:
 1. powershell.exe initiated 4 outbound TCP connections to an external IP (10.10.40.10) — anomalous for a standard user workstation.
-2. `-ExecutionPolicy Bypass` in the command line indicates deliberate policy override.
+2. `-ExecutionPolicy Bypass` on the command line is a deliberate policy override.
 3. Script executed from `C:\Temp\` — non-standard, user-writable location.
 4. Destination is confirmed C2 infrastructure (AGC-051/052/053/054).
-5. 3 different networking methods used (Invoke-WebRequest, Invoke-RestMethod, Net.WebClient) — suggests automated C2 framework probing transport options.
+5. 3 different networking methods (Invoke-WebRequest, Invoke-RestMethod, Net.WebClient) — a framework probing transport options.
 6. Not attributable to any legitimate administrative activity on michael.chen's workstation.
 
 **Response recommendation:**
-1. **Isolate the host** immediately — powershell.exe outbound to C2 is an active compromise indicator.
-2. **Retrieve and analyze the script** (`C:\Temp\agc055-sim.ps1`) — the script content determines the scope of compromise (data exfiltration, lateral movement staging, persistence installation).
-3. **Enable PowerShell Script Block Logging** (EID 4104) if not already active — this captures the full content of every PowerShell script execution, even when obfuscated.
+1. **Isolate the host** now — powershell.exe talking to C2 means the compromise is live.
+2. **Retrieve and analyze the script** (`C:\Temp\agc055-sim.ps1`) — its content sets the scope: exfiltration, lateral movement staging, or persistence.
+3. **Enable PowerShell Script Block Logging** (EID 4104) if not already active — it records the full content of every script run, obfuscated or not.
 4. **SIEM rule: powershell.exe outbound to non-whitelisted destinations** — alert on any EID 3 where Image contains `powershell.exe` (or `pwsh.exe` for PS 7+) and DestinationIp is not in the approved administrative endpoint list.
-5. **Application control:** Consider restricting PowerShell execution on standard user workstations via AppLocker or WDAC, with exceptions only for documented administrative scripts.
+5. **Application control:** Restrict PowerShell on standard user workstations with AppLocker or WDAC, excepting only documented administrative scripts.
 
 ### MITRE Mapping
 
