@@ -1,0 +1,24 @@
+{
+  "name": "AGC-097: Personal Cloud Upload",
+  "versions": { "attack": "16", "navigator": "4.9.5", "layer": "4.5" },
+  "domain": "enterprise-attack",
+  "description": "AGC-097: Upload to unsanctioned cloud storage. T1567.002 confirmed (insider motive, not external attack).",
+  "filters": { "platforms": ["Windows", "Linux"] },
+  "sorting": 3,
+  "layout": { "layout": "side", "aggregateFunction": "average", "showID": true, "showName": true, "showAggregateScores": true, "countUnscored": false },
+  "hideDisabled": false,
+  "techniques": [
+    {
+      "techniqueID": "T1567.002",
+      "tactic": "exfiltration",
+      "color": "#ff6666ff",
+      "comment": "AGC-097: Upload of client list (198 bytes) via HTTP POST to unsanctioned endpoint (10.10.40.10/personal-cloud-upload). Insider policy violation, not external attack. No preceding attack chain.",
+      "enabled": true, "metadata": [], "links": [], "showSubtechniques": false, "score": 50
+    }
+  ],
+  "gradient": { "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"], "minValue": 0, "maxValue": 100 },
+  "legendItems": [{ "label": "Confirmed: Insider Policy Violation", "color": "#ff6666ff" }],
+  "metadata": [], "links": [],
+  "showTacticRowBackground": true, "tacticRowBackground": "#dddddd",
+  "selectTechniquesAcrossTactics": true, "selectSubtechniquesWithParent": false, "selectVisibleTechniques": false
+}
