@@ -21,15 +21,15 @@
 
 ### Tradecraft
 
-**What:** Credential-harvesting phishing — the attacker hosts a convincing login portal (styled as an internal SSO page) on their infrastructure and sends the victim an email containing a link to it. Unlike AGC-001 (display-name spoof) and AGC-002 (homoglyph domain), which tested whether the victim would click a suspicious link, AGC-003 completes the attack by having the victim actually submit valid Active Directory credentials into the fake form. The attacker now possesses working credentials.
+**What:** Credential-harvesting phishing. The attacker hosts a login portal styled as an internal SSO page and emails the victim a link to it. AGC-001 (display-name spoof) and AGC-002 (homoglyph domain) tested whether the victim would click; AGC-003 finishes the job by getting the victim to type valid Active Directory credentials into the fake form. The attacker walks away with working credentials.
 
-**Why at this lifecycle stage:** This is the culmination of the initial-access phishing chain. AGC-001 and AGC-002 delivered links; AGC-003 harvests the credential. Once the attacker has a valid username/password pair, they can authenticate to internal services (Outlook, VPN, RDP, file shares) without needing malware on the endpoint. This is often the path of least resistance for an attacker — social engineering the credential is quieter than exploiting a vulnerability.
+**Why at this lifecycle stage:** The end of the initial-access phishing chain. AGC-001 and AGC-002 delivered links; AGC-003 harvests the credential. With a valid username and password the attacker can authenticate to Outlook, VPN, RDP, and file shares with no malware on the endpoint. Talking a user out of a credential is quieter than exploiting a vulnerability.
 
 **Where in this lab's tooling:**
 - **Email gateway:** None. The phishing email is pre-staged as a `.eml` file on COMPROMISED-HOST-01. No SPF/DKIM/DMARC to block or flag it.
-- **Endpoint (Sysmon):** EID 1 (Process Create) captures the PowerShell process executing the link click. EID 3 (Network Connection) logs the TCP connection from 10.10.10.103 to 10.10.40.10:80. The POST containing credentials traverses the network in plaintext over HTTP.
+- **Endpoint (Sysmon):** Sysmon EID 1 (Process Create) captures the PowerShell process that performs the click. EID 3 (Network Connection) captures the TCP connection from 10.10.10.103 to 10.10.40.10:80. The POST carrying the credentials crosses the network as plaintext HTTP.
 - **Wazuh:** No credential-harvesting or phishing rule. Standard Windows logon events fire for the guestcontrol session.
-- **Network (Security Onion):** Zeek `http.log` would capture both the GET request for the login page and the POST request containing the submitted credentials — including the form field names (`username`, `password`). This is the strongest detection surface for this scenario.
+- **Network (Security Onion):** Zeek `http.log` should hold both the GET for the login page and the POST with the submitted credentials, including the form field names (`username`, `password`). That is the strongest detection surface here.
 
 ### Simulation
 
@@ -61,7 +61,7 @@ Best regards,
 Ashford Grove IT Helpdesk
 ```
 
-**Key difference from AGC-001/002:** The victim not only clicks the link but submits their real AD credentials (`michael.chen@ashfordgrove.local` / password) into the fake form. The attacker's server captures and confirms receipt.
+**Key difference from AGC-001/002:** The victim clicks the link and then submits real AD credentials (`michael.chen@ashfordgrove.local` / password) into the fake form. The attacker's server captures them and confirms receipt.
 
 **Steps executed (all timestamps UTC):**
 
@@ -78,7 +78,7 @@ Ashford Grove IT Helpdesk
 
 ### Detection
 
-**Automated alerts:** No phishing-specific or credential-harvesting alert fired. Wazuh generated standard Windows logon events from the guestcontrol session:
+**Automated alerts:** No phishing-specific or credential-harvesting alert fired. Wazuh logged only the standard Windows logon events from the guestcontrol session:
 
 | Timestamp (UTC) | Rule ID | Level | Description |
 |---|---|---|---|
@@ -93,21 +93,21 @@ Ashford Grove IT Helpdesk
 | 2026-09-15 17:26:19 | 11 | File Create | Temp files from PowerShell HTTP request execution |
 | (prior run 17:00:32) | 3 | Network Connection | `powershell.exe` → `10.10.40.10:80` TCP from `10.10.10.103:53211` (same infrastructure as AGC-002) |
 
-**Detection gap — Critical:** No mechanism detects credential submission to an external host. The POST request containing `username` and `password` form fields travels in plaintext HTTP to an IP outside the trusted network zones. A Zeek `http.log` rule watching for POST requests to non-corporate IPs containing form fields named `user*`/`pass*`/`login*`/`credential*` would catch this pattern. The endpoint-side Sysmon telemetry captures the network connection but not the POST body — network-level detection (Security Onion) is the correct layer for this scenario.
+**Detection gap — Critical:** Nothing detects a credential submission to an external host. The POST with `username` and `password` fields travels as plaintext HTTP to an IP outside the trusted zones. A Zeek `http.log` rule that watches POSTs to non-corporate IPs for form fields named `user*`/`pass*`/`login*`/`credential*` would catch it. Sysmon sees the connection but not the POST body, so Security Onion is the right layer for this one.
 
 ### Investigation
 
 **Step 1 — Email analysis:**
-The `.eml` file uses a legitimate-looking sender address (`helpdesk@ashfordgrove.local`) — unlike AGC-001 (spoofed display name) and AGC-002 (homoglyph domain), the sender domain is the organization's actual domain. In a real attack, this could indicate a compromised internal mailbox. The lure ("shared document, verify your identity") creates urgency and a plausible reason for the victim to enter credentials.
+The `.eml` sender is `helpdesk@ashfordgrove.local` — the organization's real domain, unlike the spoofed display name in AGC-001 or the homoglyph in AGC-002. In a real incident that would point to a compromised internal mailbox. The lure ("shared document, verify your identity") gives the victim both urgency and a plausible reason to type a password.
 
 **Step 2 — Link destination analysis:**
-The link `http://10.10.40.10/portal-login` points to the EXT-SIM-NET (10.10.40.0/24) — outside all trusted zones. The landing page title is "Acme Corp - Secure Document Portal" — same phishing infrastructure used in AGC-001 and AGC-002. The form collects `username` (email) and `password` fields and POSTs to `/login`.
+The link `http://10.10.40.10/portal-login` points to EXT-SIM-NET (10.10.40.0/24), outside every trusted zone. The landing page is the same "Acme Corp - Secure Document Portal" seen in AGC-001 and AGC-002. The form collects `username` (email) and `password` and POSTs to `/login`.
 
 **Step 3 — Credential capture confirmation:**
-The POST to `http://10.10.40.10/login` with `username=michael.chen@ashfordgrove.local` returned HTTP 200 with body "Sign-in received. Redirecting..." — confirming the attacker's server captured the credentials. This is the critical escalation from AGC-001/002: the attacker now has a valid AD credential pair for `michael.chen`.
+The POST to `http://10.10.40.10/login` with `username=michael.chen@ashfordgrove.local` returned HTTP 200 and the body "Sign-in received. Redirecting..." — the attacker's server has the credentials. That is the escalation from AGC-001/002: the attacker now holds a valid AD credential pair for `michael.chen`.
 
 **Step 4 — Cross-reference with AGC-001/002:**
-All three phishing scenarios target `michael.chen`, link to `10.10.40.10/portal-login`, and land on the same credential harvesting page. AGC-001 used display-name spoofing, AGC-002 used a homoglyph domain, and AGC-003 achieves the attacker's goal — credential capture. This represents an escalating campaign: reconnaissance (will the victim click?) followed by exploitation (harvest the credential).
+All three scenarios target `michael.chen`, link to `10.10.40.10/portal-login`, and land on the same credential page. AGC-001 used display-name spoofing, AGC-002 a homoglyph domain, and AGC-003 gets the credential. Read together they are one escalating campaign: first test whether the victim clicks, then harvest.
 
 **Dead end:** Checked Wazuh for any rule correlating HTTP POST activity with credential-like field names — none exists. Sysmon EID 3 captures the connection but not the HTTP payload.
 
@@ -118,7 +118,7 @@ All three phishing scenarios target `michael.chen`, link to `10.10.40.10/portal-
 **Confidence: Critical** — Five independent indicators confirm not just malicious intent but actual compromise:
 1. Phishing email with urgency lure ("verify your account") and link to external IP
 2. Landing page is a credential harvesting form on attacker infrastructure (10.10.40.10)
-3. Form fields specifically named `username` and `password` — designed to capture AD credentials
+3. Form fields named `username` and `password`, built to capture AD credentials
 4. Victim submitted valid AD credentials via HTTP POST
 5. Attacker server confirmed receipt ("Sign-in received. Redirecting...")
 

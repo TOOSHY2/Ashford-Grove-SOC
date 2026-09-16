@@ -23,17 +23,17 @@
 
 #### What this is
 
-This scenario is **not** a new attack technique. It is a **triage workflow** that begins from a user's phishing report, not from a SIEM alert. The reported email is from the AGC-002 lookalike-domain campaign (`compliance@ashf0rdgrove.com` — note the zero replacing 'o' in the domain).
+This scenario is **not** a new attack technique. It is a **triage workflow** that starts from a user's phishing report rather than a SIEM alert. The reported email belongs to the AGC-002 lookalike-domain campaign (`compliance@ashf0rdgrove.com`, with a zero in place of 'o').
 
 #### Why this scenario exists
 
-User-reported phishing is one of the most valuable detection sources in a SOC. It surfaces threats that bypass technical controls (email gateway, URL reputation, sandbox detonation). The workflow validates three things:
+A user report surfaces email that got past the technical controls (gateway, URL reputation, sandbox detonation). The workflow answers three questions:
 
 1. **Is the report legitimate?** — Inspect original headers, sender domain, embedded links.
 2. **What is the scope?** — Did other mailboxes receive the same email?
 3. **What is the impact?** — Did anyone click a link or open an attachment?
 
-The correct SOC response reinforces the user's reporting behavior (acknowledgment) and contains the threat (block sender/domain, purge from mailboxes).
+The response has two jobs: thank the reporter so they report again, and contain the threat (block the sender domain, purge the mail from mailboxes).
 
 ### Simulation
 
@@ -59,10 +59,10 @@ The correct SOC response reinforces the user's reporting behavior (acknowledgmen
 
 **Detection source: User report** — not a SIEM alert.
 
-There is no automated alert for this scenario. The detection signal is the user's own judgment that the email appeared suspicious. This is a high-value detection source because:
-- It catches emails that passed email gateway filters.
-- It provides the original email with headers intact for forensic analysis.
-- It confirms the user's awareness training is effective.
+No automated alert fired. The signal is the user's own judgment that the email looked wrong. That is worth having because:
+- It catches email that passed the gateway filters.
+- It delivers the original message with headers intact.
+- It shows the awareness training took.
 
 **Sysmon telemetry confirms negative findings:**
 
@@ -78,36 +78,36 @@ There is no automated alert for this scenario. The detection signal is the user'
 
 **Step 1 — Validate the report:**
 The reported email matches the AGC-002 lookalike-domain campaign:
-- **Sender:** `compliance@ashf0rdgrove.com` — uses a zero instead of 'o' in the domain name. The legitimate domain is `ashfordgrove.com`.
+- **Sender:** `compliance@ashf0rdgrove.com` — a zero in place of 'o'. The legitimate domain is `ashfordgrove.com`.
 - **Subject:** "Quarterly Compliance Review - Action Required" — urgency pretext.
-- **Link destination:** Points to `10.10.40.10/portal-login` — the same credential-harvesting infrastructure identified in AGC-001 through AGC-009.
+- **Link destination:** `10.10.40.10/portal-login`, the credential harvester seen in AGC-001 through AGC-009.
 
-This is a confirmed phishing email. The user correctly identified it as suspicious.
+Confirmed phishing; the user called it right.
 
 **Step 2 — Determine scope (campaign breadth):**
-In a production environment, the SOC analyst would search the mail server logs for other recipients of emails from `ashf0rdgrove.com` or with the same Subject line. In this lab, the AGC-002 campaign was documented as targeting `michael.chen` on `COMPROMISED-HOST-01`. A broader campaign search would check `sarah.jenkins` (WIN-CLIENT-01) and `raj.patel` (WIN-CLIENT-02).
+In production the analyst would search mail server logs for other recipients from `ashf0rdgrove.com` or with the same Subject. In the lab, AGC-002 documented `michael.chen` on `COMPROMISED-HOST-01` as the target. A wider search would cover `sarah.jenkins` (WIN-CLIENT-01) and `raj.patel` (WIN-CLIENT-02).
 
 **Step 3 — Determine impact (did anyone click?):**
-Sysmon EID 3 (Network Connect) and EID 22 (DNS Query) on COMPROMISED-HOST-01 show **no connections to the phishing destination** and **no DNS resolution of the lookalike domain** in the 30-minute window preceding the triage. This confirms the reporting user (`michael.chen`) did not click the link.
+Sysmon EID 3 (Network Connect) and EID 22 (DNS Query) on COMPROMISED-HOST-01 show **no connection to the phishing destination** and **no DNS lookup of the lookalike domain** in the 30-minute window before triage. `michael.chen` did not click.
 
-In a production environment, the same check would be performed across all identified recipients' endpoints.
+In production the same check runs on every identified recipient's endpoint.
 
 **Step 4 — Contain:**
 Containment actions (production environment):
 1. **Block the sender domain** (`ashf0rdgrove.com`) at the email gateway.
 2. **Purge matching emails** from all mailboxes (search by sender domain + Subject).
 3. **Block the destination** (`10.10.40.10`) at the firewall (already recommended in AGC-002).
-4. **Acknowledge the reporter** — confirm that the report was received and the email is confirmed phishing. This reinforces reporting behavior.
+4. **Acknowledge the reporter** — tell them the report landed and the email was phishing, so they report the next one.
 
 **Step 5 — Cross-reference with prior scenarios:**
-This email is from the same campaign documented in AGC-002 (lookalike domain). The credential-harvesting infrastructure at `10.10.40.10/portal-login` has been active across AGC-001 through AGC-009. The entire campaign shares the same IOCs:
+The email belongs to the campaign documented in AGC-002. The harvester at `10.10.40.10/portal-login` has been live across AGC-001 through AGC-009, and the campaign shares one IOC set:
 - Sender domain variations: `ashf0rdgrove.com` and similar lookalikes
 - Destination: `10.10.40.10:80` (`/portal-login`)
 - Server response: "Sign-in received. Redirecting..."
 
 ### Report
 
-**Verdict: Triage Complete** — This is not a True Positive / False Positive determination in the traditional sense. The verdict assesses triage completeness:
+**Verdict: Triage Complete** — Not a true positive / false positive call; the verdict measures triage completeness:
 
 | Triage Question | Answer | Confidence |
 |---|---|---|
@@ -116,10 +116,10 @@ This email is from the same campaign documented in AGC-002 (lookalike domain). T
 | Did anyone click? | **No** — Sysmon EID 3 and EID 22 confirm no outbound connection or DNS query to the phishing destination from the reporting user's endpoint | High |
 | Is the threat contained? | Containment actions recommended (block domain, purge emails, block destination IP); partially implemented in prior scenarios (firewall block for `10.10.40.10`) | High |
 
-**Overall triage confidence: High** — The three core triage questions (legitimacy, scope, impact) were answered with high confidence. The reported email is confirmed malicious, the reporting user did not click, and containment actions are defined.
+**Overall triage confidence: High** — The three core triage questions (legitimacy, scope, impact) were answered with high confidence. The email is confirmed malicious, the reporter did not click, and containment actions are defined.
 
 **Response recommendation:**
-1. **Acknowledge the reporter** — thank `michael.chen` for reporting. This reinforces the behavior that made this detection possible.
+1. **Acknowledge the reporter** — thank `michael.chen`; the report is the only reason this email was caught.
 2. **Block sender domain** at the email gateway.
 3. **Purge campaign emails** from all mailboxes.
 4. **Verify no other recipients clicked** — run the same EID 3/EID 22 check across all identified recipients.

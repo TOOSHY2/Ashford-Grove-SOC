@@ -21,14 +21,14 @@
 
 ### Tradecraft
 
-**What:** URL shortener/redirect chain — the attacker places an intermediate hop between the phishing link and the malicious destination. The email contains a URL like `http://10.10.40.10/go/abc123` which looks like a shortened or tracking link (benign in appearance). The server responds with HTTP 302 Found, redirecting the browser to `/portal-login` — the actual credential harvester. The victim's browser follows the redirect automatically and transparently.
+**What:** URL-shortener redirect chain. The attacker puts one hop between the phishing link and the destination. The email carries `http://10.10.40.10/go/abc123`, which reads like a shortened or tracking link. The server answers HTTP 302 Found with a redirect to `/portal-login`, the credential harvester, and the browser follows it without showing the user anything.
 
-**Why at this lifecycle stage:** URL shorteners and redirect chains serve two purposes for the attacker: (1) the initial URL survives basic reputation checks because it is newly generated and has no history, and (2) the destination can be changed post-delivery by updating the redirect target — meaning the link can point to a benign page during email scanning and switch to the phishing page after delivery. In this lab, both hops are on the same server (10.10.40.10), but in a real attack, the shortener would typically be a legitimate service (bit.ly, t.co) or an attacker-controlled domain separate from the final destination.
+**Why at this lifecycle stage:** The redirect buys the attacker two things: (1) the first URL is freshly minted with no history, so it passes basic reputation checks, and (2) the destination can be swapped after delivery, so the link can point at a harmless page while the email is scanned and at the phishing page afterwards. In the lab both hops sit on 10.10.40.10; a real attacker would use a public shortener (bit.ly, t.co) or a separate domain for the first hop.
 
 **Where in this lab's tooling:**
-- **Email gateway:** None. Even with one, a reputation check on `/go/abc123` would likely pass — the URL itself has no malicious content, and the 302 destination isn't visible until the redirect is followed.
-- **Endpoint (Sysmon):** EID 1 (Process Create) logs the browser/PowerShell process. EID 3 (Network Connection) logs connections to 10.10.40.10. Both the initial request and the redirected request go to the same server — in a real attack, they might hit different IPs, creating two separate EID 3 events.
-- **Network (Security Onion):** Zeek `http.log` captures both requests as separate entries: the first showing the 302 response with `Location` header, the second showing the 200 response from the final destination. This is the strongest detection surface.
+- **Email gateway:** None. Even with one, a reputation check on `/go/abc123` would likely pass: the URL carries nothing malicious, and the 302 target is invisible until something follows it.
+- **Endpoint (Sysmon):** Sysmon EID 1 (Process Create) captures the browser or PowerShell process. EID 3 (Network Connection) captures connections to 10.10.40.10. Here both requests hit the same server; in a real attack they might hit two IPs and produce two EID 3 events.
+- **Network (Security Onion):** Zeek `http.log` records the two requests as separate entries: the first with the 302 and its `Location` header, the second with the 200 from the final page. That is the strongest detection surface.
 
 ### Simulation
 
@@ -63,7 +63,7 @@ This link expires in 72 hours.
 
 ### Detection
 
-**Automated alerts:** No alert fired. Wazuh logged standard Windows logon events:
+**Automated alerts:** No alert fired. Wazuh logged only the standard Windows logon events:
 
 | Timestamp (UTC) | Rule ID | Level | Description |
 |---|---|---|---|
@@ -76,38 +76,38 @@ This link expires in 72 hours.
 |---|---|---|---|
 | 2026-09-15 17:37:36 | 1 | Process Create | `powershell.exe -ExecutionPolicy Bypass -File C:\Temp\agc005-sim.ps1`, parent: `VBoxService.exe` |
 
-**Detection gap:** No rule correlates HTTP 302 redirects with known-bad final destinations. The initial URL `/go/abc123` has no malicious reputation. The redirect chain is only visible in network logs (Zeek `http.log`), not at the endpoint or Wazuh level.
+**Detection gap:** No rule ties an HTTP 302 to a known-bad final destination. `/go/abc123` has no reputation at all. The chain is visible only in Zeek `http.log`, not on the endpoint or in Wazuh.
 
 ### Investigation
 
 **Step 1 — Do not stop at the first hop:**
-The initial request to `/go/abc123` returns HTTP 302 — this is a redirect, not the payload. An analyst who checks only this URL would see a benign-looking shortener endpoint and might dismiss the alert. The critical step is pulling the full session/connection history to find the follow-on request that the 302 triggered.
+The request to `/go/abc123` returns HTTP 302 — a redirect, not the payload. Checking that URL alone shows a harmless-looking shortener endpoint, and it would be easy to close the ticket there. The step that matters is pulling the full connection history to find the request the 302 triggered.
 
 **Step 2 — Evaluate the final destination:**
-The `Location: /portal-login` header in the 302 response points to the credential harvester on the same server (10.10.40.10). The final page is "Acme Corp - Secure Document Portal" with username/password form fields — the same phishing infrastructure used in AGC-001 through AGC-004. The final destination, not the shortener URL, is where the malicious intent lives.
+The `Location: /portal-login` header in the 302 response points to the credential harvester on the same server (10.10.40.10). The final page is "Acme Corp - Secure Document Portal" with username and password fields — the infrastructure from AGC-001 through AGC-004. The malicious intent lives at the final destination, not the shortener URL.
 
 **Step 3 — Explicitly identify each hop:**
 - **Hop 1:** `http://10.10.40.10/go/abc123` — shortener/redirect endpoint. HTTP 302. No malicious content at this stage.
 - **Hop 2:** `http://10.10.40.10/portal-login` — credential harvester. HTTP 200. This is the malicious endpoint.
-An analyst seeing only hop 1 would reach the wrong conclusion. The redirect chain must be reconstructed.
+Hop 1 alone leads to the wrong verdict; the chain has to be rebuilt through to hop 2.
 
 **Step 4 — Cross-reference with prior scenarios:**
-The final destination `10.10.40.10/portal-login` matches AGC-001/002/003/004 — same campaign infrastructure. The redirect chain is a new delivery technique (obfuscation of the final URL), not a new payload.
+The final destination `10.10.40.10/portal-login` matches AGC-001/002/003/004 — same campaign infrastructure. The redirect is a new way to hide the URL, not a new payload.
 
 ### Report
 
 **Verdict: True Positive** — Confirmed phishing attack using a URL redirect chain to obscure the final malicious destination.
 
-**Confidence: High** — After reconstructing the full redirect chain, the evidence is strong:
+**Confidence: High** — With the chain rebuilt, four points support the verdict:
 1. Initial URL `/go/abc123` returns HTTP 302 redirect
 2. Redirect target `/portal-login` is a known credential-harvesting page
 3. Final destination matches campaign infrastructure from AGC-001 through AGC-004
-4. The redirect chain is a deliberate obfuscation technique — the email URL bears no visual resemblance to the phishing page
+4. The redirect exists to hide the destination — the email URL looks nothing like the phishing page
 
 **Response recommendation:**
-1. **Block the final destination** (`10.10.40.10/portal-login`), not just the shortener URL. Blocking only `/go/abc123` is ineffective — the attacker can generate new shortener paths instantly.
+1. **Block the final destination** (`10.10.40.10/portal-login`), not just the shortener URL. Blocking only `/go/abc123` achieves nothing — the attacker can mint a new path in seconds.
 2. **Detection engineering:** Create a Zeek/Security Onion rule that flags HTTP 302 redirects where: (a) the initial URL matches a shortener pattern (`/go/`, `/r/`, `/l/`, `/click/`, or known shortener domains), AND (b) the `Location` header points to a different domain or an IP address rather than the same site.
-3. **URL detonation:** Implement sandbox-based URL following at the email gateway — scan the final destination after following all redirects, not just the initial URL.
+3. **URL detonation:** Add sandboxed URL following at the gateway so the scan covers the final destination after every redirect, not the first URL.
 
 ### MITRE Mapping
 

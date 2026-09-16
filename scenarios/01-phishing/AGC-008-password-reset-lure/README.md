@@ -21,14 +21,14 @@
 
 ### Tradecraft
 
-**What:** The attacker sends a phishing email styled as an automated security notification: "Your Ashford Grove Capital password expires in 24 hours — reset now to avoid lockout." The link points to a credential-harvesting page on the attacker's infrastructure. The page presents fields for "current password" and "new password," capturing the victim's valid credentials when submitted.
+**What:** A phishing email styled as an automated security notice: "Your Ashford Grove Capital password expires in 24 hours — reset now to avoid lockout." The link leads to a credential-harvesting page on attacker infrastructure with "current password" and "new password" fields, so the victim hands over a valid credential while thinking they are rotating it.
 
-**Why at this lifecycle stage:** Password-reset pretexts are among the most effective social-engineering frames because they (1) create artificial urgency ("24 hours"), (2) align with a legitimate action users expect to perform, and (3) exploit the user's security-conscious behavior — they think they are protecting their account by resetting their password. The attacker gains the victim's current, valid credentials.
+**Why at this lifecycle stage:** The password-reset frame works because it (1) manufactures urgency ("24 hours"), (2) matches an action users expect to perform anyway, and (3) turns the user's own caution against them — they believe they are protecting the account. The attacker ends up with the victim's current, valid credentials.
 
-**Comparison with AGC-003:** The technical delivery (phishing link → credential-harvesting page → POST) is nearly identical to AGC-003. The difference is purely in the social-engineering frame: AGC-003 used a generic "review document" pretext; AGC-008 uses a security-notification/urgency frame. The same detection and investigation logic applies, but AGC-008 is more likely to succeed because it preys on security-conscious behavior rather than curiosity.
+**Comparison with AGC-003:** The delivery (link → credential page → POST) is nearly identical to AGC-003. Only the frame differs: AGC-003 used a "review document" pretext; AGC-008 uses a security notice with a deadline. Detection and investigation are the same, but AGC-008 is the more likely to land because it preys on caution rather than curiosity.
 
 **Where in this lab's tooling:**
-- **Endpoint (Sysmon):** EID 1 (Process Create) captures the browser/PowerShell process that makes the outbound request. EID 3 (Network Connect) would capture the connection to 10.10.40.10.
+- **Endpoint (Sysmon):** Sysmon EID 1 (Process Create) captures the browser or PowerShell process that makes the outbound request. EID 3 (Network Connect) would capture the connection to 10.10.40.10.
 - **Wazuh:** Standard logon events. No rule distinguishes a phishing-form POST from legitimate web traffic.
 - **Network (Security Onion):** HTTP POST from 10.10.10.103 to 10.10.40.10 with form data.
 
@@ -52,7 +52,7 @@
 
 ### Detection
 
-**Automated alerts:** No phishing-specific alert. Wazuh agent reconnecting after VM cold boot — standard logon events expected once the agent re-registers.
+**Automated alerts:** No phishing-specific alert fired. The Wazuh agent was reconnecting after a VM cold boot; the standard logon events appear once it re-registers.
 
 **Sysmon telemetry (COMPROMISED-HOST-01):**
 
@@ -60,27 +60,27 @@
 |---|---|---|---|
 | 2026-09-15 18:17:05 | 1 | Process Create | `powershell.exe` (PID 5264), parent: `VBoxService.exe` — the process that made the outbound HTTP request to the credential harvester |
 
-**Key detection signal:** Same as AGC-003 — outbound HTTP POST carrying credential-shaped form data (`username=...&password=...`) to a non-corporate IP address. The distinguishing feature of AGC-008 is the pretext, not the technical indicator.
+**Key detection signal:** Same as AGC-003: an outbound HTTP POST carrying credential-shaped form data (`username=...&password=...`) to a non-corporate IP. What sets AGC-008 apart is the pretext, not the indicator.
 
 ### Investigation
 
 **Step 1 — Outbound POST confirmation:**
-At 18:17:06 UTC, a POST request was sent from 10.10.10.103 to 10.10.40.10/portal-login with URL-encoded form data containing `username=michael.chen`, `password=[REDACTED]`, `current_password=[REDACTED]`, and `new_password=[REDACTED]`. The server responded with HTTP 200 and "Sign-in received. Redirecting..." — confirming the credentials were captured.
+At 18:17:06 UTC, 10.10.10.103 sent a POST to 10.10.40.10/portal-login with URL-encoded form data: `username=michael.chen`, `password=[REDACTED]`, `current_password=[REDACTED]`, and `new_password=[REDACTED]`. The server answered HTTP 200 with "Sign-in received. Redirecting..." — the credentials landed.
 
 **Step 2 — Destination verification:**
-The destination `10.10.40.10` does not match any Ashford Grove Capital corporate endpoint. The legitimate password-reset endpoint would be on the domain controller at `ashfordgrove.local` (10.10.10.100), not on an external IP in the 10.10.40.0/24 (DMZ-External) subnet. This is a non-corporate, attacker-controlled destination.
+`10.10.40.10` is not an Ashford Grove Capital endpoint. A real password reset would go to the domain controller for `ashfordgrove.local` (10.10.10.100), not to an external IP in the 10.10.40.0/24 (DMZ-External) subnet. The destination is attacker-controlled.
 
 **Step 3 — Cross-reference with AGC-003:**
-The same credential-harvesting infrastructure (`10.10.40.10/portal-login`) was used in AGC-003. The server response ("Sign-in received. Redirecting...") is identical. This confirms the same campaign with a different social-engineering pretext.
+AGC-003 used the same harvester (`10.10.40.10/portal-login`) and drew the same response ("Sign-in received. Redirecting..."). Same campaign, different pretext.
 
 **Step 4 — AGC-085 False Positive relationship:**
-AGC-085 (False Positive: off-hours service account logon) is the FP twin of this scenario. If the credentials harvested here were used later by the attacker during off-hours, the resulting authentication event would produce the same pattern of "anomalous off-hours logon" that AGC-085 is built to distinguish as benign (service account). A SOC analyst must determine whether an off-hours logon uses a service account (AGC-085, benign) or compromised user credentials (post-AGC-008 exploitation, malicious).
+AGC-085 (False Positive: off-hours service account logon) is this scenario's FP twin. If the attacker later used the credentials harvested here during off-hours, the authentication event would look like the "anomalous off-hours logon" that AGC-085 exists to clear as benign. The analyst has to tell an off-hours service-account logon (AGC-085, benign) from a logon with stolen user credentials (post-AGC-008, malicious).
 
 ### Report
 
 **Verdict: True Positive** — Confirmed credential harvesting via password-reset phishing lure.
 
-**Confidence: Critical** — The evidence chain is unambiguous:
+**Confidence: Critical** — Four points, none of them circumstantial:
 1. POST to non-corporate IP (10.10.40.10) carrying cleartext credentials
 2. Server confirmed receipt ("Sign-in received. Redirecting...")
 3. Destination does not match corporate password-reset endpoint (ashfordgrove.local)

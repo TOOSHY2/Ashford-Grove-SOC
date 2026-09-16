@@ -21,15 +21,15 @@
 
 ### Tradecraft
 
-**What:** Display-name spoofing — the attacker sets the `From` header's display name to a trusted identity ("IT Support") while using an entirely different sending domain (`ashford-grove-support.local` instead of the legitimate `ashfordgrove.local`). Most email clients render the display name prominently and hide the actual address, making this a low-effort, high-success phishing vector.
+**What:** Display-name spoofing. The attacker sets the `From` header's display name to "IT Support" and sends from `ashford-grove-support.local` rather than the legitimate `ashfordgrove.local`. Most mail clients show the display name and hide the address, so the mismatch is easy to miss.
 
-**Why at this lifecycle stage:** This is the initial access point (MITRE TA0001). The attacker needs a foothold before any later-stage technique is possible. A credential-harvesting phish is preferred over a payload-delivery phish when the target has endpoint protection (Defender + Sysmon) because clicking a link generates far less endpoint telemetry than executing an attachment.
+**Why at this lifecycle stage:** Initial access (MITRE TA0001) — nothing later in the chain happens without a foothold. The attacker chose a credential-harvesting link over an attachment because the target runs Defender and Sysmon, and a link click leaves far less endpoint telemetry than a payload execution.
 
 **Where in this lab's tooling:**
-- **Email gateway:** None. The lab has no MTA or email gateway, so SPF/DKIM/DMARC checks do not exist. Detection depends entirely on manual header inspection or user reporting.
-- **Network (Security Onion):** Zeek `http.log` and `conn.log` capture the outbound HTTP request from COMPROMISED-HOST-01 (10.10.10.103) to the attacker-controlled sink at EXT-ATTACKER-SIM (10.10.40.10). Suricata may flag the connection if a relevant rule matches.
-- **Endpoint (Sysmon):** Sysmon EID 1 (Process Create) logs the browser/PowerShell process making the request. With the SwiftOnSecurity config, EID 3 (Network Connection) is filtered for common processes, so no network event is logged for this specific connection.
-- **Wazuh:** No built-in rule triggers specifically for display-name spoofing. Wazuh records Windows logon events (Rule 60118) and privilege assignments (Rule 67028) for the user session but has no phishing-specific detection in default rulesets.
+- **Email gateway:** None. The lab has no MTA or gateway, so no SPF/DKIM/DMARC checks run. Detection depends on manual header inspection or a user report.
+- **Network (Security Onion):** Zeek `http.log` and `conn.log` capture the outbound HTTP request from COMPROMISED-HOST-01 (10.10.10.103) to the attacker sink at EXT-ATTACKER-SIM (10.10.40.10). Suricata fires only if a rule matches the request.
+- **Endpoint (Sysmon):** Sysmon EID 1 (Process Create) captures the browser or PowerShell process that makes the request. The SwiftOnSecurity config filters EID 3 (Network Connection) for common processes, so this connection produces no network event.
+- **Wazuh:** No default rule covers display-name spoofing. Wazuh logs the user session's logon (Wazuh rule 60118) and privilege assignment (Wazuh rule 67028) but nothing phishing-specific.
 
 ### Simulation
 
@@ -72,13 +72,13 @@ http://10.10.40.10/portal-login
 <!-- Login form styled to look legitimate, hosted on attacker infrastructure -->
 ```
 
-**Cleanup:** No persistent changes made. PowerShell request was stateless. VM can be reverted to baseline snapshot `post-domain-rename-2026-09-13`.
+**Cleanup:** The PowerShell request was stateless and left no persistent changes. The VM reverts to baseline snapshot `post-domain-rename-2026-09-13`.
 
 ## SOC Perspective
 
 ### Detection
 
-**Automated alerts:** No phishing-specific alert fired. Wazuh generated standard Windows logon events:
+**Automated alerts:** No phishing-specific alert fired. Wazuh logged only the standard Windows logon events:
 
 | Timestamp (UTC) | Rule ID | Level | Description |
 |---|---|---|---|
@@ -91,7 +91,7 @@ http://10.10.40.10/portal-login
 - EID 11 (File Create): PSScriptPolicyTest temp files created during execution
 - EID 3 (Network Connection): Not captured — filtered by SwiftOnSecurity Sysmon config for PowerShell outbound
 
-**Detection gap identified:** The current lab stack has no automated mechanism to detect display-name spoofing or email header anomalies. Detection relies entirely on:
+**Detection gap identified:** Nothing in the lab stack detects display-name spoofing or header anomalies automatically. Detection relies on:
 1. User awareness (recognizing the mismatch)
 2. Manual inspection of raw email headers
 3. Network monitoring for connections to known-bad or unusual external IPs
@@ -103,18 +103,18 @@ Inspected the .eml file raw headers. The `From` header shows:
 - Display name: `IT Support`
 - Actual address: `it-support@ashford-grove-support.local`
 
-The sending domain `ashford-grove-support.local` is **not** the legitimate organizational domain `ashfordgrove.local`. The subtle difference (hyphenated, with `-support` suffix) is a classic typosquat/lookalike pattern designed to pass casual visual inspection.
+The sending domain `ashford-grove-support.local` is **not** the organization's `ashfordgrove.local`. The hyphen and `-support` suffix are small enough to survive a glance at the inbox.
 
 **Step 2 — Link analysis:**
-The email body links to `http://10.10.40.10/portal-login`. This IP address resolves to `EXT-ATTACKER-SIM` on the EXT-SIM-NET (10.10.40.0/24), which is outside the organization's trusted network zones (LAN-NET 10.10.10.0/24, SOC-NET 10.10.30.0/24). The page returned a credential-harvesting form titled "Acme Corp - Secure Document Portal" — a generic name inconsistent with the organization's branding ("Ashford Grove Capital").
+The body links to `http://10.10.40.10/portal-login`. That IP is `EXT-ATTACKER-SIM` on EXT-SIM-NET (10.10.40.0/24), outside the trusted zones LAN-NET (10.10.10.0/24) and SOC-NET (10.10.30.0/24). The page returned a credential form titled "Acme Corp - Secure Document Portal", which does not match the organization's branding ("Ashford Grove Capital").
 
 **Step 3 — Endpoint impact assessment:**
-The victim (`michael.chen`) clicked the link. HTTP 200 response confirmed the page loaded. However, no credential submission was performed (the phish-click simulation only loaded the page, did not submit form data). Sysmon shows the PowerShell process creation but no further suspicious activity chain.
+`michael.chen` clicked the link and the HTTP 200 confirms the page loaded. No credentials were submitted — the simulation fetched the page and stopped. Sysmon shows the PowerShell process creation and nothing after it.
 
 **Step 4 — Network correlation:**
-Connection from 10.10.10.103 (COMPROMISED-HOST-01) to 10.10.40.10 (EXT-ATTACKER-SIM) on port 80 at approximately 16:50:30 UTC. Security Onion Zeek logs would capture this in `conn.log` and `http.log` (Security Onion Guest Additions unavailable for automated extraction; manual verification via SOC Console recommended).
+10.10.10.103 (COMPROMISED-HOST-01) connected to 10.10.40.10 (EXT-ATTACKER-SIM) on port 80 at about 16:50:30 UTC. Zeek on Security Onion should hold this in `conn.log` and `http.log`; Guest Additions are unavailable for automated extraction, so confirm it by hand in the SOC Console.
 
-**Dead end:** Checked Wazuh for phishing-specific rules — none exist in the default ruleset. Rule 60118 (Workstation Logon Success) fires for the guestcontrol session, not for the phishing event itself.
+**Dead end:** Checked Wazuh for phishing-specific rules — none exist in the default ruleset. Wazuh rule 60118 (Workstation Logon Success) fires for the guestcontrol session, not for the phishing event itself.
 
 ### Report
 
@@ -123,13 +123,13 @@ Connection from 10.10.10.103 (COMPROMISED-HOST-01) to 10.10.40.10 (EXT-ATTACKER-
 **Confidence: High** — Three independent indicators confirm malicious intent:
 1. From-address domain (`ashford-grove-support.local`) does not match the legitimate domain (`ashfordgrove.local`)
 2. Link destination (10.10.40.10) is on an external, untrusted network segment
-3. Landing page is a generic credential-harvesting form inconsistent with organizational branding
+3. Landing page is a credential-harvesting form branded "Acme Corp", not "Ashford Grove Capital"
 
 **Response recommendation:**
 1. **Immediate:** Block `10.10.40.10` at the firewall (OPNsense-FW). Block/sinkhole `ashford-grove-support.local` in DNS.
 2. **Containment:** Reset `michael.chen`'s credentials if any were submitted. Inspect browser history and cache on COMPROMISED-HOST-01 for evidence of form submission.
 3. **Detection engineering:** Create a custom Wazuh rule or email gateway policy to flag mismatches between `From` display name and domain. Implement SPF/DKIM/DMARC checking.
-4. **Awareness:** Distribute advisory to all users about display-name spoofing, using this incident as a sanitized example.
+4. **Awareness:** Send all users an advisory on display-name spoofing, using this email as a sanitized example.
 
 ### MITRE Mapping
 

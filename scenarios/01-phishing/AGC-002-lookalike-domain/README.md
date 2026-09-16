@@ -21,15 +21,15 @@
 
 ### Tradecraft
 
-**What:** Lookalike-domain (homoglyph) phishing — the attacker registers a domain visually similar to the legitimate `ashfordgrove.local` by substituting the letter 'o' with the digit '0': `ashfordgr0ve.local`. In most fonts, especially at small sizes in email clients, '0' and 'o' are nearly indistinguishable. Unlike AGC-001's display-name spoof, this technique also survives casual domain inspection — a reader who checks the sender address may still miss the substitution.
+**What:** Lookalike-domain (homoglyph) phishing. The attacker swaps the letter 'o' in `ashfordgrove.local` for the digit '0' and sends from `ashfordgr0ve.local`. At mail-client font sizes, '0' and 'o' are nearly indistinguishable. Unlike AGC-001's display-name spoof, this survives a check of the sender address — the reader sees a domain that looks right.
 
-**Why at this lifecycle stage:** Same as AGC-001 — initial access (TA0001). The attacker is refining the approach: where AGC-001 relied on the email client hiding the real sender address behind a display name, AGC-002 makes the actual sender domain itself deceptive. This defeats the first layer of user training ("always check the sender address") because the address *looks* correct at a glance.
+**Why at this lifecycle stage:** Initial access (TA0001), as in AGC-001. The attacker is refining the approach: AGC-001 relied on the mail client hiding the sender address behind a display name; AGC-002 makes the sender domain itself deceptive. That defeats the first line of user training ("check the sender address") because the address *looks* correct.
 
 **Where in this lab's tooling:**
-- **Email gateway:** None. No MTA, no SPF/DKIM/DMARC. The lookalike domain `ashfordgr0ve.local` has no DNS record in the lab, which means DNS resolution fails — but the email is pre-staged as a `.eml` file, bypassing delivery entirely. In a real environment, the attacker would register the lookalike domain with proper MX and SPF records.
-- **Endpoint (Sysmon):** EID 22 (DNS Query) captures the attempted resolution of `ashfordgr0ve.local` with QueryStatus 9003 (NXDOMAIN). EID 3 (Network Connection) logs the outbound HTTP request to the phishing server. EID 1 (Process Create) logs the PowerShell process.
-- **Wazuh:** No phishing-specific rule. Standard Windows logon events (Rules 60118, 67028, 67023) fire for the guestcontrol session executing the simulation.
-- **Network (Security Onion):** Zeek `conn.log` and `http.log` would capture the connection from 10.10.10.103 to 10.10.40.10:80.
+- **Email gateway:** None. No MTA, no SPF/DKIM/DMARC. `ashfordgr0ve.local` has no DNS record in the lab, so resolution fails, but the email is pre-staged as a `.eml` file and never passes through delivery. A real attacker would register the lookalike with working MX and SPF records.
+- **Endpoint (Sysmon):** Sysmon EID 22 (DNS Query) captures the failed lookup of `ashfordgr0ve.local` with QueryStatus 9003 (NXDOMAIN). EID 3 (Network Connection) captures the outbound HTTP request to the phishing server. EID 1 (Process Create) captures the PowerShell process.
+- **Wazuh:** No phishing-specific rule. Wazuh rules 60118, 67028, and 67023 fire for the guestcontrol session that runs the simulation.
+- **Network (Security Onion):** Zeek `conn.log` and `http.log` should hold the connection from 10.10.10.103 to 10.10.40.10:80.
 
 ### Simulation
 
@@ -63,7 +63,7 @@ Ashford Grove HR Team
 **Key evidence — the homoglyph:**
 - Sender domain: `ashfordgr0ve.local` (digit zero '0' replacing letter 'o')
 - Legitimate domain: `ashfordgrove.local` (letter 'o')
-- The substitution is in the 10th character position — difficult to spot visually
+- The substitution is the 10th character — easy to miss by eye
 
 **Steps executed (all timestamps UTC):**
 
@@ -80,7 +80,7 @@ Ashford Grove HR Team
 
 ### Detection
 
-**Automated alerts:** No phishing-specific alert fired. Wazuh generated standard Windows logon events from the guestcontrol session:
+**Automated alerts:** No phishing-specific alert fired. Wazuh logged only the standard Windows logon events from the guestcontrol session:
 
 | Timestamp (UTC) | Rule ID | Level | Description |
 |---|---|---|---|
@@ -97,7 +97,7 @@ Ashford Grove HR Team
 | 2026-09-15 17:00:32 | 3 | Network Connection | PowerShell → 10.10.40.10:80 (HTTP) |
 | 2026-09-15 17:00:32 | 11 | File Create | Temp files from PowerShell execution |
 
-**Detection gap:** Same as AGC-001 — no automated mechanism to flag homoglyph/lookalike domain patterns. Sysmon EID 22 captures the DNS query for the lookalike domain (with NXDOMAIN result), but no rule correlates this with a potential homoglyph attack. The NXDOMAIN itself could be a detection signal: a user attempting to resolve a domain that is *almost* the organization's domain but fails DNS suggests they received a phishing email pointing to an unregistered lookalike.
+**Detection gap:** As in AGC-001, nothing flags homoglyph or lookalike domains automatically. Sysmon EID 22 captured the NXDOMAIN lookup for `ashfordgr0ve.local`, but no rule ties that to a near-miss of the organization's domain. The NXDOMAIN itself is a usable signal: a host that tries to resolve a domain one character off `ashfordgrove.local`, and fails, has most likely received a phish pointing at an unregistered lookalike.
 
 ### Investigation
 
@@ -106,16 +106,16 @@ Inspected the `.eml` file raw headers. The `From` header shows:
 - Display name: `HR Department` (generic, trusted)
 - Actual address: `hr@ashfordgr0ve.local`
 
-The sender domain `ashfordgr0ve.local` is a homoglyph of the legitimate `ashfordgrove.local`. The substitution is '0' (zero, U+0030) for 'o' (lowercase O, U+006F) in position 10 of the domain name. This is a classic homoglyph attack — the attacker relies on visual similarity to pass both user inspection and any simple string-match allowlists that check for exact domain matches.
+The sender domain `ashfordgr0ve.local` is a homoglyph of the legitimate `ashfordgrove.local`: '0' (zero, U+0030) replaces 'o' (lowercase O, U+006F) at position 10. The attacker is counting on visual similarity to pass both the reader's eye and any allowlist that only checks for an exact domain match.
 
 **Step 2 — DNS investigation:**
-Sysmon EID 22 recorded a DNS query for `ashfordgr0ve.local` returning QueryStatus 9003 (NXDOMAIN). In the lab, this domain has no DNS record. In a real attack, the attacker would register the domain so it resolves successfully, making the phishing infrastructure functional end-to-end. The NXDOMAIN is an artifact of the lab setup — the phishing link uses the direct IP `10.10.40.10` instead.
+Sysmon EID 22 captured the query for `ashfordgr0ve.local` with QueryStatus 9003 (NXDOMAIN); the domain has no record in the lab. A real attacker would register it so the whole chain resolves. The NXDOMAIN is a lab artifact, which is why the link uses the raw IP `10.10.40.10`.
 
 **Step 3 — Link and network analysis:**
-The email body links to `http://10.10.40.10/portal-login`. Sysmon EID 3 confirmed the network connection from COMPROMISED-HOST-01 to 10.10.40.10:80. The server returned HTTP 200 with a credential harvesting page titled "Acme Corp - Secure Document Portal" — same phishing infrastructure as AGC-001, consistent with a campaign using multiple phishing vectors against the same target.
+The body links to `http://10.10.40.10/portal-login`. Sysmon EID 3 captured the connection from COMPROMISED-HOST-01 to 10.10.40.10:80. The server returned HTTP 200 with the same "Acme Corp - Secure Document Portal" credential page as AGC-001 — one set of infrastructure, several lures, one target.
 
 **Step 4 — Comparison with AGC-001:**
-AGC-001 used display-name spoofing (`IT Support` display name, `ashford-grove-support.local` sender). AGC-002 uses a homoglyph domain (`ashfordgr0ve.local`). Both target `michael.chen`, both link to `10.10.40.10/portal-login`, both deliver the same credential harvesting page. This suggests a single threat actor running a multi-vector phishing campaign, testing which technique gets past the victim's awareness.
+AGC-001 used display-name spoofing (`IT Support` display name, `ashford-grove-support.local` sender). AGC-002 uses a homoglyph domain (`ashfordgr0ve.local`). Both target `michael.chen`, both link to `10.10.40.10/portal-login`, both serve the same credential page. One attacker is running a multi-lure campaign and testing which lure gets past the user.
 
 **Dead end:** Checked Wazuh for DNS-based detection rules — none correlate NXDOMAIN responses with potential homoglyph patterns or near-misses of the organization's domain.
 
@@ -133,7 +133,7 @@ AGC-001 used display-name spoofing (`IT Support` display name, `ashford-grove-su
 1. **Immediate:** Add `ashfordgr0ve.local` to DNS blocklist. Block `10.10.40.10` at OPNsense-FW (if not already blocked from AGC-001).
 2. **Detection engineering:** Create a Sysmon or Wazuh rule that flags DNS queries (EID 22) where the queried domain is within edit distance 1-2 of `ashfordgrove.local` and returns NXDOMAIN. This catches homoglyph attacks at the DNS resolution stage.
 3. **Pattern alert:** Implement a Wazuh decoder that computes Levenshtein distance between queried domains and the organization's domain — flag any query where distance is 1-3 and QueryStatus is not 0.
-4. **User awareness:** Update phishing training to cover homoglyph attacks specifically, using this scenario as a worked example. Emphasize that "checking the sender address" is not sufficient when the attacker registers a near-identical domain.
+4. **User awareness:** Update phishing training to cover homoglyph domains, using this email as the worked example. Make the point that checking the sender address is not enough once the attacker owns a near-identical domain.
 
 ### MITRE Mapping
 

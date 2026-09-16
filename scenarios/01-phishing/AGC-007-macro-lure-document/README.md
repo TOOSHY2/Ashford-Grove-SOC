@@ -21,14 +21,14 @@
 
 ### Tradecraft
 
-**What:** A `.docm` (macro-enabled Word document) is delivered as an email attachment with a social-engineering pretext ("signed contract," "invoice"). When the victim opens the document and clicks "Enable Content" (bypassing the default macro security prompt), the embedded VBA `AutoOpen()` macro executes. In this safe-lab scenario, the macro writes a marker file to `C:\Windows\Temp\macro_marker.txt`. In a real attack, this stage would chain to `cmd.exe` or `powershell.exe` to download and execute a second-stage payload.
+**What:** A macro-enabled Word document (`.docm`) arrives as an attachment under a pretext ("signed contract," "invoice"). The victim opens it, clicks "Enable Content" past the macro warning, and the embedded VBA `AutoOpen()` runs. In the lab the macro only writes a marker to `C:\Windows\Temp\macro_marker.txt`; a real one would chain to `cmd.exe` or `powershell.exe` to fetch and run a second stage.
 
-**Why at this lifecycle stage:** Macro-enabled documents remain one of the most common initial access vectors despite years of mitigation efforts. The technique works because: (1) users trust document formats (.doc, .docm, .xlsx) more than executables, (2) the "Enable Content" prompt creates a false sense of security — users believe they are enabling editing, not running code, (3) VBA macros execute in the context of the Office process, inheriting its network access and local file permissions.
+**Why at this lifecycle stage:** Macro documents still work as initial access because: (1) users trust document formats (.doc, .docm, .xlsx) more than executables, (2) "Enable Content" reads as enabling editing, not running code, and (3) VBA runs inside the Office process and inherits its network access and file permissions.
 
 **Where in this lab's tooling:**
-- **Endpoint (Sysmon):** **EID 11 (File Create)** is the primary detection — captures both the `.docm` file arriving in Downloads and the macro writing to `C:\Windows\Temp\`. **EID 1 (Process Create)** would capture any child processes spawned by the macro (e.g., `cmd.exe`, `powershell.exe`) — in this scenario, the macro is intentionally limited to a file write, so no child process is spawned.
-- **Wazuh:** No rule specifically correlates Office process file writes to system temp directories. Standard logon events only.
-- **Key gap:** An Office application writing to `C:\Windows\Temp\` (or any system directory outside the user's Documents folder) is anomalous and should be alerted on.
+- **Endpoint (Sysmon):** **Sysmon EID 11 (File Create)** is the primary detection: it captures the `.docm` arriving in Downloads and the macro's write to `C:\Windows\Temp\`. **EID 1 (Process Create)** would capture any child the macro spawned (`cmd.exe`, `powershell.exe`); this macro stops at a file write, so there is none.
+- **Wazuh:** No rule ties an Office process to a write in a system temp directory. Standard logon events only.
+- **Key gap:** An Office application writing to `C:\Windows\Temp\`, or any system directory outside the user's profile, is abnormal and deserves an alert.
 
 ### Simulation
 
@@ -44,7 +44,7 @@ Sub AutoOpen()
     Close #1
 End Sub
 ```
-This is intentionally limited to a marker-file write for lab safety. A real-world macro would typically chain to `cmd.exe /c powershell -enc ...` or download a second-stage payload.
+Limited to a marker-file write for lab safety. A real macro would chain to `cmd.exe /c powershell -enc ...` or pull a second-stage payload.
 
 **Steps executed (all timestamps UTC):**
 
@@ -60,10 +60,10 @@ This is intentionally limited to a marker-file write for lab safety. A real-worl
 
 ### Detection
 
-**Automated alerts:** No macro-specific alert. Wazuh logged standard logon/privilege events:
-- 17:44:43 — Rule 60118 (L3): Windows Workstation Logon Success
-- 17:44:43 — Rule 67028 (L3): Special privileges assigned to new logon
-- 17:44:47 — Rule 60118 (L3): Windows Workstation Logon Success
+**Automated alerts:** No macro-specific alert fired. Wazuh logged only the standard logon and privilege events:
+- 17:44:43 — Wazuh rule 60118 (L3): Windows Workstation Logon Success
+- 17:44:43 — Wazuh rule 67028 (L3): Special privileges assigned to new logon
+- 17:44:47 — Wazuh rule 60118 (L3): Windows Workstation Logon Success
 
 **Sysmon telemetry (COMPROMISED-HOST-01):**
 
@@ -72,31 +72,31 @@ This is intentionally limited to a marker-file write for lab safety. A real-worl
 | 2026-09-15 17:44:49 | 11 | File Create | **RuleName: Downloads** — `powershell.exe` wrote `C:\Users\michael.chen\Downloads\Signed-Contract-2026.docm` |
 | 2026-09-15 17:44:49 | 1 | Process Create | `powershell.exe -ExecutionPolicy Bypass -File C:\Temp\agc007-sim.ps1`, parent: `VBoxService.exe` |
 
-**Key detection signal:** Sysmon EID 11 capturing a `.docm` file write to the user's Downloads folder is a moderate indicator on its own (users do receive legitimate macro documents). The **high-fidelity signal** is EID 11 showing an Office process (`winword.exe`, `excel.exe`) writing a file to a system temp directory (`C:\Windows\Temp\`) rather than the user's Documents folder — this is characteristic of macro payload behavior. In this simulation, `powershell.exe` performed both writes; in a real attack, the Downloads write would come from the email client/browser and the temp write from `winword.exe`.
+**Key detection signal:** Sysmon EID 11 showing a `.docm` write to Downloads is a moderate indicator by itself — users do receive legitimate macro documents. The **high-fidelity signal** is EID 11 showing an Office process (`winword.exe`, `excel.exe`) writing to `C:\Windows\Temp\` instead of the user's Documents folder; that is what a macro payload does. In this simulation `powershell.exe` performed both writes; in a real attack the Downloads write would come from the mail client or browser and the temp write from `winword.exe`.
 
 ### Investigation
 
 **Step 1 — .docm delivery to Downloads:**
-Sysmon EID 11 recorded `Signed-Contract-2026.docm` written to `C:\Users\michael.chen\Downloads\` at 17:44:49 UTC with `RuleName: Downloads`. The filename uses a social-engineering pretext ("Signed-Contract") designed to create urgency and trust.
+Sysmon EID 11 captured `Signed-Contract-2026.docm` written to `C:\Users\michael.chen\Downloads\` at 17:44:49 UTC with `RuleName: Downloads`. The filename ("Signed-Contract") is the pretext — it promises something the user expects and wants to open.
 
 **Step 2 — Macro execution evidence (marker file):**
-The macro wrote `C:\Windows\Temp\macro_marker.txt` at 17:44:49 UTC. An Office application writing to `C:\Windows\Temp\` is anomalous — normal document operations save to the user's Documents, Desktop, or AppData directories. System temp writes indicate the macro is performing actions beyond normal document editing.
+The macro wrote `C:\Windows\Temp\macro_marker.txt` at 17:44:49 UTC. Normal document work saves to Documents, Desktop, or AppData; an Office application writing to `C:\Windows\Temp\` is doing something other than editing.
 
 **Step 3 — Scope assessment (intentional safe stop):**
-In a real attack, the `AutoOpen()` macro would chain to a second-stage execution: spawning `cmd.exe` or `powershell.exe` as a child process of `winword.exe`, downloading a remote payload, or establishing C2. **This scenario intentionally stops at the marker-file write for lab safety.** The investigation would normally continue by examining Sysmon EID 1 for child processes of `winword.exe` and EID 3 for outbound network connections from the Office process.
+A real `AutoOpen()` would go on to spawn `cmd.exe` or `powershell.exe` under `winword.exe`, download a payload, or set up C2. **This scenario stops at the marker-file write for lab safety.** The next investigative step would be Sysmon EID 1 for children of `winword.exe` and EID 3 for outbound connections from the Office process.
 
 **Step 4 — Cross-reference with prior scenarios:**
-This is the same campaign's eighth variation — the attacker has now used: spoofed display names (AGC-001), lookalike domains (AGC-002), credential-harvesting links (AGC-003), QR codes (AGC-004), URL shorteners (AGC-005), HTML attachments (AGC-006), and now macro-enabled documents (AGC-007). Each scenario tests a different delivery vector for the same ultimate goal: gaining initial access to the victim's endpoint.
+This is the same campaign's eighth variation — the attacker has now used spoofed display names (AGC-001), lookalike domains (AGC-002), credential-harvesting links (AGC-003), QR codes (AGC-004), URL shorteners (AGC-005), HTML attachments (AGC-006), and macro documents (AGC-007). Each one is a different delivery vector for the same goal: a foothold on the victim's endpoint.
 
 ### Report
 
 **Verdict: True Positive** — Confirmed phishing delivery via macro-enabled document attachment.
 
-**Confidence: High** — The evidence chain is clear:
+**Confidence: High** — Four points carry the verdict:
 1. `.docm` file delivered to user's Downloads folder (Sysmon EID 11, RuleName: Downloads)
 2. Macro execution writes to system temp directory (`C:\Windows\Temp\macro_marker.txt`)
-3. Office writing to system temp (not user Documents) is anomalous and characteristic of malicious macros
-4. Social-engineering filename ("Signed-Contract-2026") designed to compel the victim to enable macros
+3. Office writing to system temp rather than user Documents is what a malicious macro does, not what a document edit does
+4. Filename ("Signed-Contract-2026") chosen to push the victim into enabling macros
 
 **Response recommendation:**
 1. **Quarantine the .docm** and search for copies across other users' mailboxes.
