@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">Ashford Grove Capital — SOC L1 Detection &amp; Investigation Portfolio</title>
+  <desc id="desc">One breach · one hundred cases · every verdict evidenced. 100 of 100 scenarios documented, 85 ATT&amp;CK technique–tactic pairs, 12 of 12 tactics evidenced.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#0D192B"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0F766E" stop-opacity="0.34"/>
+      <stop offset="0.6" stop-color="#0F766E" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#101C30"/>
+      <stop offset="1" stop-color="#0C1626"/>
+    </linearGradient>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.2" fill="#1E293B"/>
+    </pattern>
+  </defs>
+
+  <g font-family="Segoe UI, Inter, -apple-system, 'Helvetica Neue', Arial, sans-serif">
+    <rect width="1280" height="640" fill="url(#bg)"/>
+    <rect width="1280" height="640" fill="url(#grid)"/>
+    <rect width="760" height="640" fill="url(#glow)"/>
+    <rect width="8" height="640" fill="#14B8A6"/>
+
+    <!-- header tags -->
+    <g font-family="'Cascadia Code', Consolas, 'JetBrains Mono', Menlo, monospace" font-size="15" letter-spacing="3">
+      <text x="80" y="98" fill="#5EEAD4" fill-opacity="0.85">ASHFORD-GROVE-SOC  ·  MITRE ATT&amp;CK v16</text>
+      <text x="1200" y="98" fill="#64748B" text-anchor="end">21 CRITICAL · 60 HIGH · 13 MEDIUM</text>
+    </g>
+
+    <!-- title block -->
+    <text x="76" y="212" font-size="86" font-weight="700" letter-spacing="-1.5" fill="#F8FAFC">Ashford Grove Capital</text>
+    <text x="80" y="266" font-size="33" font-weight="600" fill="#99F6E4">SOC L1 Detection &amp; Investigation Portfolio</text>
+    <text x="80" y="314" font-size="24" fill="#94A3B8">One breach · one hundred cases · every verdict evidenced</text>
+
+    <!-- stat strip -->
+    <rect x="80" y="356" width="1120" height="190" rx="16" fill="url(#panel)" stroke="#1E293B" stroke-width="1.5"/>
+    <text x="106" y="386" font-family="'Cascadia Code', Consolas, 'JetBrains Mono', Menlo, monospace" font-size="13" letter-spacing="3" fill="#64748B">COVERAGE</text>
+    <line x1="453" y1="400" x2="453" y2="524" stroke="#1E293B" stroke-width="1.5"/>
+    <line x1="827" y1="400" x2="827" y2="524" stroke="#1E293B" stroke-width="1.5"/>
+
+    <g text-anchor="middle">
+      <text x="266" y="458" font-size="62" font-weight="700" letter-spacing="-2" fill="#2DD4BF">100/100</text>
+      <text x="266" y="492" font-size="15" letter-spacing="2.2" fill="#94A3B8">SCENARIOS</text>
+      <text x="266" y="514" font-size="15" letter-spacing="2.2" fill="#94A3B8">DOCUMENTED</text>
+      <rect x="196" y="528" width="140" height="5" rx="2.5" fill="#0F766E"/>
+
+      <text x="640" y="458" font-size="62" font-weight="700" letter-spacing="-2" fill="#2DD4BF">85</text>
+      <text x="640" y="492" font-size="15" letter-spacing="2.2" fill="#94A3B8">ATT&amp;CK TECHNIQUE–</text>
+      <text x="640" y="514" font-size="15" letter-spacing="2.2" fill="#94A3B8">TACTIC PAIRS</text>
+      <text x="640" y="536" font-family="'Cascadia Code', Consolas, 'JetBrains Mono', Menlo, monospace" font-size="13" fill="#475569">78 distinct techniques</text>
+
+      <text x="1013" y="458" font-size="62" font-weight="700" letter-spacing="-2" fill="#2DD4BF">12/12</text>
+      <text x="1013" y="492" font-size="15" letter-spacing="2.2" fill="#94A3B8">TACTICS</text>
+      <text x="1013" y="514" font-size="15" letter-spacing="2.2" fill="#94A3B8">EVIDENCED</text>
+      <rect x="943" y="528" width="140" height="5" rx="2.5" fill="#0F766E"/>
+    </g>
+
+    <!-- four-zone motif -->
+    <g font-family="'Cascadia Code', Consolas, 'JetBrains Mono', Menlo, monospace">
+      <line x1="130" y1="592" x2="292" y2="592" stroke="#F87171" stroke-opacity="0.75" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <line x1="310" y1="592" x2="1052" y2="592" stroke="#334155" stroke-width="1.5"/>
+      <text x="211" y="578" font-size="11" letter-spacing="1.5" fill="#FCA5A5" fill-opacity="0.9" text-anchor="middle">1 LOGGED RULE</text>
+
+      <circle cx="120" cy="592" r="8" fill="#0B1220" stroke="#F87171" stroke-width="2"/>
+      <text x="120" y="616" font-size="12" fill="#94A3B8" text-anchor="middle">EXT-SIM-NET</text>
+      <text x="120" y="631" font-size="11" fill="#475569" text-anchor="middle">10.10.40.0/24</text>
+
+      <rect x="292" y="583" width="18" height="18" rx="3" fill="#0F766E" stroke="#2DD4BF" stroke-width="1.5"/>
+      <text x="301" y="616" font-size="12" fill="#94A3B8" text-anchor="middle">OPNsense-FW</text>
+      <text x="301" y="631" font-size="11" fill="#475569" text-anchor="middle">default-deny</text>
+
+      <circle cx="560" cy="592" r="8" fill="#0B1220" stroke="#2DD4BF" stroke-width="2"/>
+      <text x="560" y="616" font-size="12" fill="#94A3B8" text-anchor="middle">LAN-NET</text>
+      <text x="560" y="631" font-size="11" fill="#475569" text-anchor="middle">10.10.10.0/24</text>
+
+      <circle cx="800" cy="592" r="8" fill="#0B1220" stroke="#F59E0B" stroke-width="2"/>
+      <text x="800" y="616" font-size="12" fill="#94A3B8" text-anchor="middle">DMZ-NET</text>
+      <text x="800" y="631" font-size="11" fill="#475569" text-anchor="middle">10.10.20.0/24</text>
+
+      <circle cx="1040" cy="592" r="8" fill="#0F766E" stroke="#2DD4BF" stroke-width="2"/>
+      <text x="1040" y="616" font-size="12" fill="#94A3B8" text-anchor="middle">SOC-NET</text>
+      <text x="1040" y="631" font-size="11" fill="#475569" text-anchor="middle">10.10.30.0/24</text>
+    </g>
+
+    <text x="1200" y="386" font-family="'Cascadia Code', Consolas, 'JetBrains Mono', Menlo, monospace" font-size="13" letter-spacing="1.5" fill="#475569" text-anchor="end">100% open-source · wazuh · security onion · sysmon · opnsense</text>
+  </g>
+</svg>

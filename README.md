@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.svg" alt="Ashford Grove Capital — SOC L1 Detection &amp; Investigation Portfolio. One breach, one hundred cases, every verdict evidenced. 100/100 scenarios documented, 85 ATT&amp;CK technique–tactic pairs, 12/12 tactics evidenced." width="100%">
+</p>
+
 <h1 align="center">Ashford Grove Capital</h1>
 
 <p align="center">
@@ -461,7 +465,7 @@ Every scenario was run against live VirtualBox lab infrastructure — Wazuh SIEM
 
 | Phase | What it is | Progress |
 |---|---|:--|
-| **Phase one — directed reference pass** | All 100 scenarios executed and documented by Claude Code under Hasan's direction, each report reviewed before publication and carrying its disclosure line | `██████████` 100 / 100 |
+| **Phase one — directed reference pass** | All 100 scenarios executed and documented with Claude Code as a supporting engine under Ali's direction, each report reviewed before publication and carrying its disclosure line | `██████████` 100 / 100 |
 | **Phase two — hand-executed track** | Each scenario re-run by hand, independently, with its own data, methods, and screenshot evidence; the disclosure line is updated when that lands | `░░░░░░░░░░` 0 / 100 |
 
 Phase-two progress is counted from scenario reports whose disclosure line records a hand-executed run — never from intent. See [Methodology & disclosure](#methodology--disclosure).
@@ -549,11 +553,11 @@ When triage proves an alert benign, the discriminating evidence is stated plainl
 
 ## Methodology & disclosure
 
-This lab's architecture, the 100-scenario curriculum, and every investigative judgment call in it were designed and directed by Hasan. Claude Code (Anthropic's agentic coding tool) was used as the execution and documentation engine — running the simulations, capturing the evidence, and drafting each report under that direction, with every report reviewed and audited before publication. A fully hand-executed version of each scenario, built independently, is in progress as a parallel skill-building track.
+This lab's architecture, the 100-scenario curriculum, and every investigative judgment call in it were designed and directed by Ali. Claude Code (Anthropic's agentic coding tool) was used as a supporting engine — assisting in running simulations, capturing evidence, and drafting reports under that direction, with every report reviewed and audited before publication. A fully hand-executed version of each scenario, built independently, is in progress as a parallel skill-building track.
 
 **What that means in practice.**
 
-- Every scenario report opens with the same one-line disclosure — *Executed & documented by Claude Code under direction and review by Hasan.* — and each scenario's ATT&CK Navigator layer carries the same line in its description.
+- Every scenario report opens with the same one-line disclosure — *Executed & documented by Claude Code under direction and review by Ali.* — and each scenario's ATT&CK Navigator layer carries the same line in its description.
 - Execution ran through VirtualBox Guest Control against the live lab, which is why the reference-pass evidence is text (command output, event fields, alert records) rather than screenshots.
 - The hand-executed track re-runs each scenario independently — its own data and methods, screenshot evidence, and an updated disclosure line — at 1–2 scenarios per weekday. The [Progress](#results--coverage) table counts only scenarios where that has landed.
 
