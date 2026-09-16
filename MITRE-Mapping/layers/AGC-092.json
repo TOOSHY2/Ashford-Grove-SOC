@@ -1,0 +1,24 @@
+{
+  "name": "AGC-092: Logon Time Pattern Hunt",
+  "versions": { "attack": "16", "navigator": "4.9.5", "layer": "4.5" },
+  "domain": "enterprise-attack",
+  "description": "AGC-092: Per-account logon-hour distribution hunt. Insufficient baseline data due to Security log clear and broken domain trust.",
+  "filters": { "platforms": ["Windows", "Linux"] },
+  "sorting": 3,
+  "layout": { "layout": "side", "aggregateFunction": "average", "showID": true, "showName": true, "showAggregateScores": true, "countUnscored": false },
+  "hideDisabled": false,
+  "techniques": [
+    {
+      "techniqueID": "T1078",
+      "tactic": "persistence",
+      "color": "#ffe766ff",
+      "comment": "AGC-092: Per-account logon-hour distribution hunt. 56 EID 4624 events found, all system/machine accounts. No human account logons available for analysis (Security log cleared by AGC-088, domain trust broken).",
+      "enabled": true, "metadata": [], "links": [], "showSubtechniques": false, "score": 75
+    }
+  ],
+  "gradient": { "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"], "minValue": 0, "maxValue": 100 },
+  "legendItems": [{ "label": "Hunted: Insufficient Data", "color": "#ffe766ff" }],
+  "metadata": [], "links": [],
+  "showTacticRowBackground": true, "tacticRowBackground": "#dddddd",
+  "selectTechniquesAcrossTactics": true, "selectSubtechniquesWithParent": false, "selectVisibleTechniques": false
+}
