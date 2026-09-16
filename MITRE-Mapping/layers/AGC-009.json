@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-009: OAuth consent phishing — conceptual simulation. Verdict: True Positive (conceptual), Confidence: Medium.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-009: OAuth consent phishing — conceptual simulation. Verdict: True Positive (conceptual), Confidence: Medium.",
     "filters": {
         "platforms": [
             "Windows",

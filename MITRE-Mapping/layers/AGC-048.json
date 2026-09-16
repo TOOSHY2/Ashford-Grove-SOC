@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-048: SSH pivot from LAN workstation to DMZ (10.10.20.10) and EXT (10.10.40.10). Both connections timed out (firewall blocked). 2 Sysmon EID 1 for ssh.exe with target usernames. Cross-zone SSH from workstation is extremely high-signal. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-048: SSH pivot from LAN workstation to DMZ (10.10.20.10) and EXT (10.10.40.10). Both connections timed out (firewall blocked). 2 Sysmon EID 1 for ssh.exe with target usernames. Cross-zone SSH from workstation is extremely high-signal. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-007: Macro-enabled .docm attachment executes VBA AutoOpen writing marker to system temp. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-007: Macro-enabled .docm attachment executes VBA AutoOpen writing marker to system temp. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

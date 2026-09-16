@@ -1,10 +1,6 @@
 # AGC-079 — Full Attack Chain: DMZ Pivot to External Defacement
 
-> **Execution & Documentation Note:** This scenario was executed
-> and documented in full by Claude (Anthropic AI), operating
-> autonomously on the lab infrastructure. All commands, detection
-> analysis, investigation steps, and conclusions in this report
-> were performed by AI, not by a human analyst.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
 
 ## Card
 

@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. | AGC-081: False Positive triage. Verdict: Benign, Confidence: High. Malicious twin: AGC-013.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-081: False Positive triage. Verdict: Benign, Confidence: High. Malicious twin: AGC-013.",
     "filters": {
         "platforms": ["Windows"]
     },

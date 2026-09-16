@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-060: Bulk copy attempt from \\\\10.10.10.10\\Finance share. net.exe EID 1 with cleartext credentials. Share unreachable (error 67). Baseline comparison unavailable. Verdict: True Positive, Confidence: Medium.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-060: Bulk copy attempt from \\\\10.10.10.10\\Finance share. net.exe EID 1 with cleartext credentials. Share unreachable (error 67). Baseline comparison unavailable. Verdict: True Positive, Confidence: Medium.",
     "filters": {
         "platforms": [
             "Windows",

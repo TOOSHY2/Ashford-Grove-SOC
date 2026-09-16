@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-054: 4 first-seen domains resolving to 10.10.40.10 (C2 IP). 4 Sysmon EID 22 events. Domain rarity alone = Medium; combined with behavioral C2 = High. Verdict: True Positive (conditional), Confidence: Medium.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-054: 4 first-seen domains resolving to 10.10.40.10 (C2 IP). 4 Sysmon EID 22 events. Domain rarity alone = Medium; combined with behavioral C2 = High. Verdict: True Positive (conditional), Confidence: Medium.",
     "filters": {
         "platforms": [
             "Windows",

@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-055: powershell.exe initiated 4 outbound TCP connections to 10.10.40.10 using 3 cmdlets (Invoke-WebRequest, Invoke-RestMethod, Net.WebClient) across ports 443/80. 4 Sysmon EID 3, 1 EID 1 with -ExecutionPolicy Bypass. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-055: powershell.exe initiated 4 outbound TCP connections to 10.10.40.10 using 3 cmdlets (Invoke-WebRequest, Invoke-RestMethod, Net.WebClient) across ports 443/80. 4 Sysmon EID 3, 1 EID 1 with -ExecutionPolicy Bypass. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

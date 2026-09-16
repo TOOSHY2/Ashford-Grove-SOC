@@ -1,10 +1,6 @@
 # AGC-078 — Full Attack Chain: Trusted Access to GPO Impact
 
-> **Execution & Documentation Note:** This scenario was executed
-> and documented in full by Claude (Anthropic AI), operating
-> autonomously on the lab infrastructure. All commands, detection
-> analysis, investigation steps, and conclusions in this report
-> were performed by AI, not by a human analyst.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
 
 ## Card
 
@@ -222,7 +218,7 @@ The Wazuh agent silence (Phase 9) is **supporting evidence** for intentional def
 
 ```
 TO:       SOC Tier 2 / Incident Response
-FROM:     SOC L1 Analyst (AI-Assisted)
+FROM:     SOC L1 Analyst
 PRIORITY: CRITICAL -- Active Intrusion via Legitimate Channels
 TIME:     2026-09-16 00:07 UTC
 SUBJECT:  Trusted-Access Attack Chain on COMPROMISED-HOST-01 + AD-DC-01

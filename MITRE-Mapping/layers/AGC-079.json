@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. | AGC-079: 10-phase cross-environment attack chain. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-079: 10-phase cross-environment attack chain. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": ["Windows", "Linux"]
     },

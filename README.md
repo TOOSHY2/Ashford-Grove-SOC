@@ -187,7 +187,7 @@ Full specification, including the box-drawing topology diagram: [`docs/01-archit
 Every scenario is a single `README.md` with the same shape, so the hundredth reads like the first.
 
 ```
-Execution & Documentation Note     who executed and documented this scenario (disclosed on every report)
+Disclosure                         who executed, documented, and reviewed this scenario (stated on every report)
 
 Card                               ID · category · ATT&CK technique · verdict · confidence
                                    affected systems · time to detect · time to triage
@@ -461,10 +461,10 @@ Every scenario was run against live VirtualBox lab infrastructure — Wazuh SIEM
 
 | Phase | What it is | Progress |
 |---|---|:--|
-| **Phase one — AI-executed reference pass** | All 100 scenarios executed and documented autonomously by Claude (Anthropic) against the live lab, each report carrying its own disclosure block | `██████████` 100 / 100 |
-| **Phase two — manual re-execution** | Each scenario re-run by hand with independently chosen data and methods, screenshot evidence added, disclosure block updated to reflect what actually happened | `░░░░░░░░░░` 0 / 100 |
+| **Phase one — directed reference pass** | All 100 scenarios executed and documented by Claude Code under Hasan's direction, each report reviewed before publication and carrying its disclosure line | `██████████` 100 / 100 |
+| **Phase two — hand-executed track** | Each scenario re-run by hand, independently, with its own data, methods, and screenshot evidence; the disclosure line is updated when that lands | `░░░░░░░░░░` 0 / 100 |
 
-Phase-two progress is counted from scenario reports whose disclosure block records a manual re-execution — never from intent. See [Methodology & disclosure](#methodology--disclosure).
+Phase-two progress is counted from scenario reports whose disclosure line records a hand-executed run — never from intent. See [Methodology & disclosure](#methodology--disclosure).
 
 </details>
 
@@ -549,22 +549,19 @@ When triage proves an alert benign, the discriminating evidence is stated plainl
 
 ## Methodology & disclosure
 
-This project was built in two deliberate phases. Both are documented openly rather than blended together, and every scenario report says which phase produced it.
+This lab's architecture, the 100-scenario curriculum, and every investigative judgment call in it were designed and directed by Hasan. Claude Code (Anthropic's agentic coding tool) was used as the execution and documentation engine — running the simulations, capturing the evidence, and drafting each report under that direction, with every report reviewed and audited before publication. A fully hand-executed version of each scenario, built independently, is in progress as a parallel skill-building track.
 
-**Phase one — AI-executed reference pass.**
-Claude (Anthropic) executed and documented a complete first pass across all 100 scenarios, operating autonomously against this lab's live infrastructure through VirtualBox Guest Control. Every report from this phase opens with an explicit *Execution & Documentation Note* stating that fact. The purpose was specific: produce a rigorous, consistently structured model — calibrated confidence levels, honest negative-evidence documentation, accurate cross-scenario correlation — worth learning from rather than a shortcut worth hiding.
+**What that means in practice.**
 
-**Phase two — independent manual re-execution.**
-Each scenario is being re-executed by hand, using the phase-one version only as a structural reference — never copied content. Each manual pass uses independently chosen data and methods, adds screenshot evidence (absent from phase one by design), and replaces the disclosure block with one that reflects what actually happened for that scenario. The pace is deliberately 1–2 scenarios per weekday: a two-month timeline of naturally spaced commits is what hands-on work looks like, and the git history is part of the evidence.
+- Every scenario report opens with the same one-line disclosure — *Executed & documented by Claude Code under direction and review by Hasan.* — and each scenario's ATT&CK Navigator layer carries the same line in its description.
+- Execution ran through VirtualBox Guest Control against the live lab, which is why the reference-pass evidence is text (command output, event fields, alert records) rather than screenshots.
+- The hand-executed track re-runs each scenario independently — its own data and methods, screenshot evidence, and an updated disclosure line — at 1–2 scenarios per weekday. The [Progress](#results--coverage) table counts only scenarios where that has landed.
 
-**Why build it this way.**
-Treating an AI-built first pass as something to hide would have meant either lying about it or discarding useful reference work. Treating it as a disclosed model to study and then independently reproduce turns the same starting point into skill-building. The two phases are sequential, not in tension: study a rigorous example, then prove the same capability by hand.
+**Why say all this.**
+A portfolio that is transparent about its process reads as more serious, not less. The direction, the curriculum, the review, and the judgment calls are the analyst's work; the tooling that ran the commands is disclosed rather than hidden, and the git history shows both layers against the same scenario IDs.
 
-**Reading the git history.**
-Two layers of work appear against the same 100 scenario IDs over time — an initial AI-authored commit for each, followed by a human-authored revision as phase two reaches that scenario. That is expected, and it is the point.
-
-<!-- Update note for when phase two completes: change "is being re-executed"
-to "has been re-executed", set the Progress table to 100 / 100, and consider
+<!-- Update note for when the hand-executed track completes: change "is in
+progress" to "is complete", set the Progress table to 100 / 100, and consider
 adding the completion date. -->
 
 ---

@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. | AGC-078: 10-phase trusted-access attack chain. Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-078: 10-phase trusted-access attack chain. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": ["Windows", "Linux"]
     },

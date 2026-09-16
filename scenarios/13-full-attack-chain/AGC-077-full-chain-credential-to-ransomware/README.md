@@ -1,10 +1,6 @@
 # AGC-077 — Full Attack Chain: Credential Harvest to Ransomware
 
-> **Execution & Documentation Note:** This scenario was executed
-> and documented in full by Claude (Anthropic AI), operating
-> autonomously on the lab infrastructure. All commands, detection
-> analysis, investigation steps, and conclusions in this report
-> were performed by AI, not by a human analyst.
+> **Disclosure:** Executed & documented by Claude Code under direction and review by Hasan.
 
 ## Card
 
@@ -203,7 +199,7 @@ wevtutil.exe cleared the Security event log at 23:56:35.890 UTC. EID 1102 confir
 
 ```
 TO:       SOC Tier 2 / Incident Response
-FROM:     SOC L1 Analyst (AI-Assisted)
+FROM:     SOC L1 Analyst
 PRIORITY: CRITICAL -- Active Intrusion with Ransomware Impact
 TIME:     2026-09-15 23:57 UTC
 SUBJECT:  Full Attack Chain Detected on COMPROMISED-HOST-01

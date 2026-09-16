@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-061: Bulk AD enumeration (net user/group /domain + LDAP DirectorySearcher) with CSV export to C:\\Windows\\Temp\\. 4 net.exe/net1.exe EID 1 events. Domain trust broken (error 1355). Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-061: Bulk AD enumeration (net user/group /domain + LDAP DirectorySearcher) with CSV export to C:\\Windows\\Temp\\. 4 net.exe/net1.exe EID 1 events. Domain trust broken (error 1355). Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

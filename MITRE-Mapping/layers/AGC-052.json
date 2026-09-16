@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-052: DNS beacon with 10 unique high-entropy subdomains under agc052lab.local. All resolved to 10.10.40.10 (wildcard A). 10 Sysmon EID 22 events. Verdict: True Positive, Confidence: High.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-052: DNS beacon with 10 unique high-entropy subdomains under agc052lab.local. All resolved to 10.10.40.10 (wildcard A). 10 Sysmon EID 22 events. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",

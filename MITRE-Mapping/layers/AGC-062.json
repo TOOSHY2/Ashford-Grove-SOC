@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-062: 3 outbound connections (powershell.exe PID 4336) to 10.10.40.10 on ports 443/80. POST + WebClient upload of staged.zip. WebClient succeeded (HTTP 200). Confirmed data breach. Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-062: 3 outbound connections (powershell.exe PID 4336) to 10.10.40.10 on ports 443/80. POST + WebClient upload of staged.zip. WebClient succeeded (HTTP 200). Confirmed data breach. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",

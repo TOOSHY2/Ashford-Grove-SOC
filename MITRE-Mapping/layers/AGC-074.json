@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-074: /var/www/html/index.html overwritten with defacement content at 23:42:17 UTC. File modification confirmed via stat. Original content restored. Atomic technique reused by AGC-079. Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-074: /var/www/html/index.html overwritten with defacement content at 23:42:17 UTC. File modification confirmed via stat. Original content restored. Atomic technique reused by AGC-079. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",

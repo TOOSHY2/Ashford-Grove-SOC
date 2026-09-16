@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. All commands, detection analysis, investigation steps, and conclusions in this report were performed by AI, not by a human analyst. | AGC-059: 4 Chrome browser files (Cookies, History, Web Data, Login Data) staged to C:\\Windows\\Temp\\agc059_staged\\. Cookies = session hijack without auth. AD reset does NOT invalidate. Verdict: True Positive, Confidence: Critical.",
+    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Hasan. | AGC-059: 4 Chrome browser files (Cookies, History, Web Data, Login Data) staged to C:\\Windows\\Temp\\agc059_staged\\. Cookies = session hijack without auth. AD reset does NOT invalidate. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",
