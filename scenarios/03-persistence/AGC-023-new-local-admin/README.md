@@ -21,14 +21,14 @@
 
 ### Tradecraft
 
-**What:** The attacker creates a new local user account and adds it to the local Administrators group using `net user /add` and `net localgroup Administrators /add`. This provides:
+**What:** The attacker creates a new local user account and adds it to the local Administrators group using `net user /add` and `net localgroup Administrators /add`. The attacker gets:
 
-1. **Credential-independent persistence** — even if the originally compromised account's password is changed, the attacker retains access through the new account.
-2. **Administrative access** — membership in the local Administrators group grants full control over the endpoint.
-3. **Name camouflage** — the account name `svc_helpdesk` mimics a legitimate service account naming convention, making it less likely to be questioned during casual review.
-4. **Backup access path** — if other persistence mechanisms (Run keys, services, WMI) are discovered and removed, the attacker can re-establish them using this account.
+1. **Credential-independent persistence** — a password reset on the originally compromised account changes nothing; the new account still works.
+2. **Administrative access** — local Administrators membership is full control of the endpoint.
+3. **Name camouflage** — `svc_helpdesk` follows a service-account naming convention, so a quick review is less likely to question it.
+4. **Backup access path** — if the Run key, service, or WMI persistence is found and removed, the attacker rebuilds it from this account.
 
-**Why at this lifecycle stage:** After establishing technical persistence (AGC-019 through AGC-022), the attacker creates credential-based persistence. This is the most resilient form — even a full system rebuild that preserves the user database would maintain access.
+**Why at this lifecycle stage:** With technical persistence in place (AGC-019 through AGC-022), the attacker adds credential-based persistence. It is the most resilient form: even a rebuild that preserves the user database keeps the door open.
 
 ### Simulation
 
@@ -68,38 +68,38 @@
 | 2026-09-15 19:14:15 | 1 | Process Create | **Image:** `net1.exe` (PID 6008). **CommandLine:** `net1 localgroup Administrators svc_helpdesk /add`. |
 
 **Key detection signals:**
-1. **Security EID 4720** is the authoritative source for local account creation. The Subject field identifies WHO created the account.
-2. **Security EID 4732** with Group SID `S-1-5-32-544` (Administrators) is the high-severity event — adding any account to local Administrators.
-3. **Sysmon EID 1** captures the exact commands used, including the password in plaintext in the CommandLine (a bonus indicator of manual/scripted creation vs. UI-based).
-4. **Temporal correlation** — account creation (4720) and admin group addition (4732) within 2 seconds suggests scripted/automated activity, not interactive user management.
+1. **Security EID 4720** is the authoritative source for local account creation. The Subject field names who created the account.
+2. **Security EID 4732** with Group SID `S-1-5-32-544` (Administrators) is the high-severity event: any account joining local Administrators.
+3. **Sysmon EID 1** captures the exact commands, password in plaintext in the CommandLine, which also marks the creation as command-line rather than UI-driven.
+4. **Temporal correlation** — account creation (4720) and admin group addition (4732) 2 seconds apart points to a script, not interactive user management.
 
 ### Investigation
 
 **Step 1 — Identify account creation:**
-At 19:14:13 UTC, Security EID 4720 recorded the creation of local account `svc_helpdesk`. The Subject field shows it was created by `COMPROMISED-01\Administrator` (the built-in RID-500 account).
+At 19:14:13 UTC, Security EID 4720 recorded the creation of local account `svc_helpdesk`. The Subject field shows `COMPROMISED-01\Administrator` (the built-in RID-500 account) created it.
 
 **Step 2 — Identify privilege escalation:**
-Two seconds later at 19:14:15, Security EID 4732 shows `svc_helpdesk` was added to the local `Administrators` group (SID S-1-5-32-544). Same Subject — `COMPROMISED-01\Administrator`.
+Two seconds later at 19:14:15, Security EID 4732 shows `svc_helpdesk` added to the local `Administrators` group (SID S-1-5-32-544), same Subject `COMPROMISED-01\Administrator`.
 
 **Step 3 — Cross-reference with change management:**
-No IT change ticket or onboarding request exists for a `svc_helpdesk` account on COMPROMISED-HOST-01. The account name mimics a service account naming convention but has no documented purpose. This is the key differentiator from FP twin AGC-082, where a legitimate new admin account would be accompanied by a change ticket.
+No IT change ticket or onboarding request exists for a `svc_helpdesk` account on COMPROMISED-HOST-01. The name follows a service-account convention but has no documented purpose. That is the differentiator from FP twin AGC-082, where the new admin account comes with a change ticket.
 
 **Step 4 — Analyze the creating identity:**
-The Subject is the built-in `Administrator` account (RID-500). In this environment, the RID-500 account should not be used for routine user management — IT staff use their own named accounts. Use of RID-500 is itself suspicious.
+The Subject is the built-in `Administrator` account (RID-500). In the lab, IT staff use their own named accounts for user management, not RID-500. Use of RID-500 is itself suspicious.
 
 **Step 5 — Assess the Sysmon evidence:**
-The Sysmon CommandLine for `net.exe user svc_helpdesk P@ssw0rd2026! /add` exposes the password in plaintext. This is a secondary indicator: the password contains common substitution patterns (`@` for `a`, `0` for `o`) typical of attacker-chosen passwords, not IT-provisioned passwords which would typically follow a stronger policy or be set via Active Directory.
+The Sysmon CommandLine for `net.exe user svc_helpdesk P@ssw0rd2026! /add` exposes the password in plaintext. That is a secondary indicator: the substitutions (`@` for `a`, `0` for `o`) are what an attacker types by hand, not what an IT provisioning policy or Active Directory would set.
 
 ### Report
 
-**Verdict: True Positive** — A new local account was created and added to the Administrators group with no corresponding change ticket, using the built-in Administrator account as the creating identity.
+**Verdict: True Positive** — A new local account was created and added to the Administrators group with no change ticket, by the built-in Administrator account.
 
-**Confidence: High** — Multiple corroborating signals:
+**Confidence: High** — Five signals corroborate:
 - Security EID 4720 + 4732 with timestamps 2 seconds apart (scripted behavior).
 - No change management record for `svc_helpdesk`.
-- Account created by RID-500 (not a named IT admin account).
-- Account name mimics service account convention but has no documented purpose.
-- Sysmon captures the exact command including plaintext password.
+- Account created by RID-500, not a named IT admin account.
+- Account name follows service-account convention but has no documented purpose.
+- Sysmon captured the exact command, plaintext password included.
 
 **Response recommendation:**
 1. **Immediately disable and delete the account:** `net user svc_helpdesk /active:no` then `net user svc_helpdesk /delete`

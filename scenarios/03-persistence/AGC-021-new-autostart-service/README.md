@@ -23,17 +23,17 @@
 
 **What:** The attacker uses `sc.exe create` to install a new Windows service with `start= auto` (automatic start on boot). The service is configured to:
 - **Run as LocalSystem** (default for `sc create`) — the highest-privilege account on the machine.
-- **Execute cmd.exe** with a command to write a marker file — in a real attack, this would be a reverse shell, beacon, or malware loader.
-- **Start automatically** on every boot — the service manager restarts it even after crashes.
+- **Execute cmd.exe** with a command that writes a marker file — in a real intrusion this would be a reverse shell, beacon, or loader.
+- **Start automatically** on every boot — the service manager brings it back even after a crash.
 
-This provides:
+The attacker gets:
 
-1. **SYSTEM-level persistence** — the service runs as `NT AUTHORITY\SYSTEM`, giving the attacker the highest possible local privileges automatically.
-2. **Boot-time execution** — auto-start services launch before any user logs on, before most security tools fully initialize.
-3. **Service restart resilience** — the service control manager can be configured to restart failed services automatically (recovery options).
-4. **Privilege escalation** — if the attacker initially had standard user access and compromised a local admin account, installing a SYSTEM service elevates their persistent access beyond even the admin account.
+1. **SYSTEM-level persistence** — the service runs as `NT AUTHORITY\SYSTEM`, the highest local privilege, with no further escalation needed.
+2. **Boot-time execution** — an auto-start service launches before any user logs on and before most security tools finish initializing.
+3. **Service restart resilience** — the service control manager can be told to restart a failed service on its own (recovery options).
+4. **Privilege escalation** — an attacker who started as a standard user and took a local admin account now holds SYSTEM persistence, above even that admin account.
 
-**Why at this lifecycle stage:** After simpler persistence via Run keys (AGC-019) and scheduled tasks (AGC-020), the attacker escalates to service-based persistence for SYSTEM-level access. This is the most privileged form of persistence available without kernel-level modifications.
+**Why at this lifecycle stage:** With Run key (AGC-019) and scheduled task (AGC-020) persistence in place, the attacker steps up to a service for SYSTEM-level access. Short of a kernel modification, nothing persists with more privilege.
 
 ### Simulation
 
@@ -69,27 +69,27 @@ This provides:
 | 2026-09-15 19:08:20 | 1 | Process Create | **Image:** `C:\Windows\System32\cmd.exe` (PID 5692). **CommandLine:** `cmd.exe /c echo AGC-021 test > C:\Windows\Temp\agc021.txt`. **User:** `NT AUTHORITY\SYSTEM`. **IntegrityLevel:** System. **ParentImage:** `services.exe` (PID 804). |
 
 **Key detection signals:**
-1. **System EID 7045** is the primary detection source for new service installations. It contains the service name, binary path, start type, and service account in a single event.
-2. **Binary path analysis** — `cmd.exe /c echo ...` as a service binary is immediately suspicious. Legitimate services use dedicated executables in `C:\Program Files\` or `System32`.
-3. **Service Account: LocalSystem** — combined with an unknown service name and non-standard binary, this is the strongest persistence indicator.
-4. **Sysmon EID 1** shows `cmd.exe` spawning as `NT AUTHORITY\SYSTEM` with `services.exe` as parent — confirms the service actually executed with SYSTEM privileges.
+1. **System EID 7045** is the primary source for new service installs. One event carries the service name, binary path, start type, and service account.
+2. **Binary path analysis** — `cmd.exe /c echo ...` as a service binary is suspicious on sight. Legitimate services use dedicated executables in `C:\Program Files\` or `System32`.
+3. **Service Account: LocalSystem** — paired with an unknown service name and a non-standard binary, this is the strongest persistence indicator in the set.
+4. **Sysmon EID 1** shows `cmd.exe` spawning as `NT AUTHORITY\SYSTEM` under `services.exe`, proof the service ran with SYSTEM privileges.
 
 ### Investigation
 
 **Step 1 — Identify new service installation:**
-At 19:08:17 UTC, System EID 7045 recorded the installation of a new service `AGC021Svc`. The Service File Name field reveals `cmd.exe /c echo AGC-021 test > C:\Windows\Temp\agc021.txt` — immediately suspicious.
+At 19:08:17 UTC, System EID 7045 recorded a new service `AGC021Svc`. The Service File Name field shows `cmd.exe /c echo AGC-021 test > C:\Windows\Temp\agc021.txt`, suspicious on sight.
 
 **Step 2 — Analyze the binary path:**
-The service binary path points to `cmd.exe` with a command-line argument, not a dedicated service executable. This is a hallmark of malicious service persistence:
-- Legitimate services use purpose-built .exe or .dll files, typically in `C:\Program Files\` or `C:\Windows\System32\`.
-- The command writes to `C:\Windows\Temp`, a known attacker staging location.
-- No legitimate software in this environment has a service named `AGC021Svc`.
+The service binary path points to `cmd.exe` with a command-line argument, not a dedicated service executable. That pattern belongs to malicious service persistence:
+- Legitimate services use purpose-built .exe or .dll files, usually in `C:\Program Files\` or `C:\Windows\System32\`.
+- The command writes to `C:\Windows\Temp`, a common staging location.
+- No software in the lab installs a service named `AGC021Svc`.
 
 **Step 3 — Analyze the service account and start type:**
-The service runs as `LocalSystem` (the default for `sc create`) with `AUTO_START`. This means:
-- It executes with the highest local privileges — SYSTEM is more powerful than any local administrator.
-- It starts automatically on every boot, before user logon.
-- Sysmon confirmed the actual execution context: `cmd.exe` ran as `NT AUTHORITY\SYSTEM` spawned by `services.exe`.
+The service runs as `LocalSystem` (the default for `sc create`) with `AUTO_START`. Three consequences:
+- It runs with the highest local privilege — SYSTEM outranks any local administrator.
+- It starts on every boot, before any user logon.
+- Sysmon confirmed the execution context: `cmd.exe` ran as `NT AUTHORITY\SYSTEM`, spawned by `services.exe`.
 
 **Step 4 — Assess the persistence chain:**
 This is the third persistence mechanism detected on COMPROMISED-HOST-01:
@@ -97,13 +97,13 @@ This is the third persistence mechanism detected on COMPROMISED-HOST-01:
 2. AGC-020: Scheduled task (user-level, time-triggered)
 3. AGC-021: Windows service (SYSTEM-level, boot-triggered)
 
-The escalation from user-level to SYSTEM-level persistence indicates an attacker with local admin access establishing the most resilient foothold possible.
+The climb from user-level to SYSTEM-level persistence says the attacker holds local admin and is digging in as deep as the host allows.
 
 ### Report
 
-**Verdict: True Positive** — An unknown service was installed with a suspicious binary path (cmd.exe), auto-start configuration, and LocalSystem privileges. No legitimate software justification exists.
+**Verdict: True Positive** — An unknown service was installed with cmd.exe as its binary path, auto-start, and LocalSystem privileges, and no software in the lab justifies it.
 
-**Confidence: Critical** — The combination of indicators leaves no room for legitimate explanation:
+**Confidence: Critical** — Four indicators together leave no benign reading:
 - System EID 7045 with `cmd.exe` as the Service File Name.
 - LocalSystem service account with AUTO_START.
 - Sysmon confirmed SYSTEM-level execution (cmd.exe spawned by services.exe as NT AUTHORITY\SYSTEM).
@@ -111,11 +111,11 @@ The escalation from user-level to SYSTEM-level persistence indicates an attacker
 
 **Response recommendation:**
 1. **Immediately stop and delete the service:** `sc stop AGC021Svc && sc delete AGC021Svc`
-2. **Treat as confirmed compromise** — the attacker has/had local admin access and established SYSTEM-level persistence.
+2. **Treat as confirmed compromise** — the attacker has or had local admin and now holds SYSTEM-level persistence.
 3. **Audit all services** on the host: `sc query type= all state= all` and compare against a known-good baseline.
-4. **Investigate lateral movement** — check if the attacker used SYSTEM privileges to move to other hosts.
-5. **Check other persistence mechanisms** — the attacker likely established multiple persistence methods (Run keys, scheduled tasks, services).
-6. **Detection rule:** Alert on System EID 7045 where the Service File Name does not match a whitelist of known application paths and the Service Account is `LocalSystem`.
+4. **Investigate lateral movement** — check whether the attacker used SYSTEM privileges to reach other hosts.
+5. **Check other persistence mechanisms** — this host already carries a Run key (AGC-019) and a scheduled task (AGC-020); sweep for more.
+6. **Detection rule:** Alert on System EID 7045 where the Service File Name does not match an allowlist of known application paths and the Service Account is `LocalSystem`.
 
 ### MITRE Mapping
 

@@ -26,15 +26,15 @@
 2. **Event Consumer** (`CommandLineEventConsumer`) — defines WHAT to execute (`cmd.exe` writing a marker file).
 3. **Binding** (`__FilterToConsumerBinding`) — links the filter to the consumer.
 
-This provides:
+The attacker gets:
 
-1. **Fileless persistence** — the subscription lives entirely in the WMI repository (`C:\Windows\System32\wbem\Repository`), not as a file on disk. No executable to scan, no registry key to find.
-2. **Survives reboots** — WMI permanent subscriptions persist across reboots; the WMI service (`winmgmt`) re-activates them automatically.
-3. **SYSTEM-level execution** — `CommandLineEventConsumer` executes commands as `NT AUTHORITY\SYSTEM` regardless of who created the subscription.
-4. **Recurring execution** — the `WITHIN 60` polling interval means the command fires approximately every minute as long as the system is running.
-5. **Detection blind spot** — many organizations do not enable Sysmon WMI event logging (EID 19/20/21), making this technique invisible without specific configuration.
+1. **Fileless persistence** — the subscription lives in the WMI repository (`C:\Windows\System32\wbem\Repository`), not as a file on disk. No executable to scan, no registry key to find.
+2. **Survives reboots** — the WMI service (`winmgmt`) re-activates permanent subscriptions on every boot.
+3. **SYSTEM-level execution** — `CommandLineEventConsumer` runs its command as `NT AUTHORITY\SYSTEM` no matter who created the subscription.
+4. **Recurring execution** — the `WITHIN 60` polling interval fires the command about once a minute for as long as the host is up.
+5. **Detection gap** — many organizations never enable Sysmon WMI logging (EID 19/20/21), so the technique goes unseen without that configuration.
 
-**Why at this lifecycle stage:** After establishing file-based (Run keys), time-based (scheduled tasks), and service-based persistence, the attacker adds a fileless persistence mechanism. WMI subscriptions are harder to discover during incident response because they do not appear in common persistence locations (autoruns, services, scheduled tasks).
+**Why at this lifecycle stage:** With Run key, scheduled task, and service persistence in place, the attacker adds a fileless mechanism. WMI subscriptions are harder to find during incident response because they sit outside the usual persistence locations (autoruns, services, scheduled tasks).
 
 ### Simulation
 
@@ -72,36 +72,36 @@ This provides:
 | 2026-09-15 19:11:30 | 5861 | Subscription activated | Full subscription details: EventFilter `AGC022Filter` bound to `CommandLineEventConsumer="AGC022Consumer"` with complete WQL query and command template in the event body. |
 
 **Key detection signals:**
-1. **Sysmon EID 19/20/21 triad** — the complete lifecycle of a WMI permanent subscription captured: filter creation, consumer creation, and binding. Each event contains the critical details (WQL query, command template, user context).
-2. **CommandLineEventConsumer** type — this consumer type directly executes commands, making it the most dangerous WMI consumer class. Other types (LogFileEventConsumer, SMTPEventConsumer) are lower risk.
-3. **Consumer destination analysis** — `cmd.exe /c echo ... > C:\Windows\Temp\...` is suspicious: no legitimate monitoring tool uses CommandLineEventConsumer to write echo output to Temp.
-4. **WMI-Activity EID 5861** provides an independent corroboration of the subscription activation with full object definitions.
+1. **Sysmon EID 19/20/21 triad** — Sysmon captured the whole lifecycle of the permanent subscription: filter creation, consumer creation, and binding. Each event carries the detail that matters (WQL query, command template, user context).
+2. **CommandLineEventConsumer** type — this consumer runs commands directly, which makes it the most dangerous WMI consumer class. LogFileEventConsumer and SMTPEventConsumer carry less risk.
+3. **Consumer destination analysis** — `cmd.exe /c echo ... > C:\Windows\Temp\...` is suspicious; no legitimate monitoring tool uses CommandLineEventConsumer to write echo output to Temp.
+4. **WMI-Activity EID 5861** independently corroborates the activation with full object definitions.
 
 ### Investigation
 
 **Step 1 — Confirm Sysmon WMI logging is active:**
-Sysmon EID 19/20/21 events were successfully captured, confirming the SwiftOnSecurity Sysmon configuration on this host does include WMI event subscription monitoring. This is a critical prerequisite — without these events, WMI persistence is nearly invisible to endpoint telemetry.
+Sysmon captured EID 19/20/21, so the SwiftOnSecurity config on this host does cover WMI subscriptions. Without those three events, WMI persistence is close to invisible in endpoint telemetry.
 
 **Step 2 — Analyze the filter (EID 19):**
-The WQL query `SELECT * FROM __InstanceModificationEvent WITHIN 60 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System'` polls every 60 seconds for changes in system performance counters. This is a generic trigger designed to fire reliably and frequently — not tied to any specific condition. The `WITHIN 60` clause means the consumer fires approximately once per minute.
+The WQL query `SELECT * FROM __InstanceModificationEvent WITHIN 60 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System'` polls system performance counters every 60 seconds. It is a generic trigger built to fire often and reliably, tied to no particular condition. The `WITHIN 60` clause puts the consumer on a roughly once-a-minute cadence.
 
 **Step 3 — Analyze the consumer (EID 20):**
-The consumer is of type `CommandLineEventConsumer` with destination `cmd.exe /c echo AGC-022 test > C:\Windows\Temp\agc022.txt`. Key observations:
-- CommandLineEventConsumer executes as SYSTEM — the highest privilege level.
-- The command writes to `C:\Windows\Temp`, a known staging location.
-- No legitimate monitoring tool in this environment uses WMI CommandLineEventConsumer.
+The consumer is a `CommandLineEventConsumer` with destination `cmd.exe /c echo AGC-022 test > C:\Windows\Temp\agc022.txt`. Three points:
+- CommandLineEventConsumer runs as SYSTEM, the highest privilege level.
+- The command writes to `C:\Windows\Temp`, a common staging location.
+- No monitoring tool in the lab uses WMI CommandLineEventConsumer.
 
 **Step 4 — Analyze the binding (EID 21):**
-The binding connects AGC022Filter to AGC022Consumer, completing the persistence triad. Only with all three components in place does the subscription become active.
+The binding joins AGC022Filter to AGC022Consumer and completes the triad. The subscription goes live only once all three pieces exist.
 
 **Step 5 — Cross-reference with known WMI subscriptions:**
-Only one other subscription exists on this system: `SCM Event Log Filter` bound to `NTEventLogEventConsumer` — this is a legitimate Windows built-in subscription. The AGC022 subscription is entirely unknown.
+The host carries one other subscription: `SCM Event Log Filter` bound to `NTEventLogEventConsumer`, a built-in Windows subscription. AGC022 has no such pedigree.
 
 ### Report
 
-**Verdict: True Positive** — An unknown WMI permanent event subscription was created with a CommandLineEventConsumer executing suspicious commands. The subscription has no legitimate business justification.
+**Verdict: True Positive** — An unknown WMI permanent event subscription was created with a CommandLineEventConsumer running cmd.exe to write to Temp, with nothing in the lab to justify it.
 
-**Confidence: High** — The Sysmon EID 19/20/21 triad provides complete evidence:
+**Confidence: High** — The Sysmon EID 19/20/21 triad is complete evidence:
 - Filter, consumer, and binding all created by `COMPROMISED-01\Administrator`.
 - Consumer type is CommandLineEventConsumer (direct command execution as SYSTEM).
 - Consumer action (`cmd.exe` writing to Temp) has no legitimate use case.
@@ -115,8 +115,8 @@ Only one other subscription exists on this system: `SCM Event Log Filter` bound 
    Get-CimInstance -Namespace root/subscription -ClassName CommandLineEventConsumer | Where-Object {$_.Name -eq "AGC022Consumer"} | Remove-CimInstance
    Get-CimInstance -Namespace root/subscription -ClassName __EventFilter | Where-Object {$_.Name -eq "AGC022Filter"} | Remove-CimInstance
    ```
-2. **Audit all WMI subscriptions** across the environment — enumerate `__EventFilter`, `CommandLineEventConsumer`, `ActiveScriptEventConsumer`, and `__FilterToConsumerBinding` on every endpoint.
-3. **Ensure Sysmon EID 19/20/21** are enabled domain-wide. Without these events, WMI persistence is a blind spot.
+2. **Audit all WMI subscriptions** fleet-wide — enumerate `__EventFilter`, `CommandLineEventConsumer`, `ActiveScriptEventConsumer`, and `__FilterToConsumerBinding` on every endpoint.
+3. **Ensure Sysmon EID 19/20/21** are enabled domain-wide. Without these events, WMI persistence is a detection gap.
 4. **Detection rule:** Alert on Sysmon EID 20 where Consumer Type is `Command Line` or `Active Script` and the Destination does not match known legitimate WMI consumers.
 
 ### MITRE Mapping
