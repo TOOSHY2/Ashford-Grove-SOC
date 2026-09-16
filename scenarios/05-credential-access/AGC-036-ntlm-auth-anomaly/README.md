@@ -47,9 +47,9 @@ An attacker can force NTLM by connecting via IP address instead of hostname, by 
 
 | Step | Time (UTC) | Action | Host | Detail |
 |---|---|---|---|---|
-| 1 | 2026-09-15 20:27:44 | IP-based SMB to localhost | COMPROMISED-HOST-01 | `net use \\127.0.0.1\C$ /user:Administrator Soclab24` -- succeeded. Forces NTLM (no Kerberos SPN for IP addresses). |
+| 1 | 2026-09-15 20:27:44 | IP-based SMB to localhost | COMPROMISED-HOST-01 | `net use \\127.0.0.1\C$ /user:Administrator [REDACTED]` -- succeeded. Forces NTLM (no Kerberos SPN for IP addresses). |
 | 2 | 2026-09-15 20:27:46 | Verify connection | COMPROMISED-HOST-01 | `net use` listing confirms `\\127.0.0.1\C$` active. |
-| 3 | 2026-09-15 20:27:48 | IP-based SMB to self-IP | COMPROMISED-HOST-01 | `net use \\10.10.10.103\IPC$ /user:Administrator Soclab24` -- succeeded. Second NTLM auth generated. |
+| 3 | 2026-09-15 20:27:48 | IP-based SMB to self-IP | COMPROMISED-HOST-01 | `net use \\10.10.10.103\IPC$ /user:Administrator [REDACTED]` -- succeeded. Second NTLM auth generated. |
 | 4 | 2026-09-15 20:28:05 | Cleanup | COMPROMISED-HOST-01 | Both connections deleted. |
 
 **Why IP-based connection forces NTLM:**
@@ -78,7 +78,7 @@ Kerberos authentication requires a Service Principal Name (SPN) lookup: the clie
 
 | Timestamp (UTC) | PID | CommandLine | User |
 |---|---|---|---|
-| 2026-09-15 20:27:48 | 5320 | `net.exe use \\10.10.10.103\IPC$ /user:Administrator Soclab24` | Administrator |
+| 2026-09-15 20:27:48 | 5320 | `net.exe use \\10.10.10.103\IPC$ /user:Administrator [REDACTED]` | Administrator |
 | 2026-09-15 20:27:46 | 1304 | `net.exe use` (connection listing) | Administrator |
 
 ### Investigation
@@ -173,7 +173,7 @@ RuleName: -
 UtcTime: 2026-09-15 20:27:48.385
 ProcessId: 5320
 Image: C:\Windows\System32\net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.103\IPC$ /user:Administrator Soclab24
+CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.103\IPC$ /user:Administrator [REDACTED]
 User: COMPROMISED-01\Administrator
 IntegrityLevel: High
 Hashes: MD5=8A1E71312BD2AAE202652113049CDBD1,SHA256=BB3E638C8B5B6EF80847E364AEEF2796CAD25D3539CF9B41D3820FA48943E777

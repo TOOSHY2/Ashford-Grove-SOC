@@ -67,7 +67,7 @@ TIME (UTC)              PID    IMAGE                  COMMAND LINE (key excerpt)
 23:55:21.209            5684   powershell.exe         -ExecutionPolicy Bypass -File C:\Temp\agc077-sim.ps1
 23:55:23.748            2028   powershell.exe         -NoProfile -NonInteractive -EncodedCommand VwByAGkA...
 23:55:26.228            4092   reg.exe                add HKCU\...\Run /v WindowsUpdateHelper /t REG_SZ /d "powershell.exe -WindowStyle Hidden -EncodedCommand VwByAGkA..."
-23:55:33.868            3984   net.exe                use \\10.10.10.102\IPC$ /user:ashfordgrove\raj.patel Soclab24
+23:55:33.868            3984   net.exe                use \\10.10.10.102\IPC$ /user:ashfordgrove\raj.patel [REDACTED]
 23:56:35.890            4708   wevtutil.exe           cl Security
 ```
 
@@ -131,7 +131,7 @@ EID 13 (RuleName: T1060,RunKey) fires 2.5 seconds after encoded execution, showi
 The LSASS dump attempt (PID 816) was blocked by Protected Process Light -- no memory dump was created. However, the attacker already possessed valid credentials from Phase 1 (credential harvest). The LSASS dump was an attempt to expand credential access beyond the initial set. Cross-reference: same technique as AGC-031 (atomic LSASS dump scenario).
 
 **Step 5 -- Evaluate lateral movement:**
-net.exe attempted IPC$ connection to 10.10.10.102 (WIN-CLIENT-02) using ashfordgrove\raj.patel credentials. Error 64 ("network name no longer available") indicates the target host's SMB service was unreachable. The cleartext password "Soclab24" is exposed in the EID 1 command line -- a credential hygiene finding independent of whether the connection succeeded. Cross-reference: same technique as AGC-043-050 (atomic lateral movement scenarios).
+net.exe attempted IPC$ connection to 10.10.10.102 (WIN-CLIENT-02) using ashfordgrove\raj.patel credentials. Error 64 ("network name no longer available") indicates the target host's SMB service was unreachable. The cleartext password "[REDACTED]" is exposed in the EID 1 command line -- a credential hygiene finding independent of whether the connection succeeded. Cross-reference: same technique as AGC-043-050 (atomic lateral movement scenarios).
 
 **Step 6 -- Map the C2 infrastructure:**
 Three HTTPS connections to 10.10.40.10:443 at ~3-second intervals establish a beacon pattern. The server responded HTTP 200 to all three, confirming C2 infrastructure is active. The same IP served the credential harvest page (port 80) and received exfiltrated data -- a single-server C2 architecture. Cross-reference: same techniques as AGC-051-056 (atomic C2 scenarios).
@@ -253,7 +253,7 @@ TIME (UTC)              PID    PGUID                                        IMAG
 23:55:21.209            5684   {eb65e329-dae9-6aa9-5706-000000001400}        powershell.exe           -ExecutionPolicy Bypass -File agc077-sim.ps1
 23:55:23.748            2028   {eb65e329-daeb-6aa9-5806-000000001400}        powershell.exe           -NoProfile -NonInteractive -EncodedCommand VwByAGkA...
 23:55:26.228            4092   {eb65e329-daee-6aa9-5906-000000001400}        reg.exe                  add HKCU\...\Run /v WindowsUpdateHelper
-23:55:33.868            3984   {eb65e329-daf5-6aa9-5c06-000000001400}        net.exe                  use \\10.10.10.102\IPC$ /user:ashfordgrove\raj.patel Soclab24
+23:55:33.868            3984   {eb65e329-daf5-6aa9-5c06-000000001400}        net.exe                  use \\10.10.10.102\IPC$ /user:ashfordgrove\raj.patel [REDACTED]
 23:56:35.890            4708   {eb65e329-db33-6aa9-5d06-000000001400}        wevtutil.exe             cl Security
 ```
 

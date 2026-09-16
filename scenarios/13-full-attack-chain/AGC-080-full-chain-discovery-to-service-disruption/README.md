@@ -191,12 +191,12 @@ Attempted NTLM authentication to WIN-CLIENT-02 using credentials:
 UtcTime: 2026-09-16 00:27:20.810
 ProcessId: 2400
 Image: C:\Windows\System32\net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\IPC$ /user:wadmin Soclab24
+CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\IPC$ /user:wadmin [REDACTED]
 ```
 
 **Result**: System error 64 -- "The specified network name is no longer available." The connection to WIN-CLIENT-02 timed out. In production, successful PtH would generate Security EID 4624 Type 3 with `LogonProcessName=NtLmSsp` and no corresponding interactive logon evidence -- the diagnostic absence that distinguishes PtH from password-based logon.
 
-**Note**: The cleartext password `Soclab24` is visible in the Sysmon EID 1 command line. In a real credential-dumping scenario, the NTLM hash would be used instead, but the network behavior would be identical.
+**Note**: The cleartext password `[REDACTED]` is visible in the Sysmon EID 1 command line. In a real credential-dumping scenario, the NTLM hash would be used instead, but the network behavior would be identical.
 
 ### Phase 7: Command and Control -- Web Service (T1102.002)
 

@@ -50,7 +50,7 @@
 **Execution:**
 ```powershell
 # Step 1: Mount the share with domain credentials
-net use \\10.10.10.10\Finance /user:ashfordgrove\michael.chen Soclab24
+net use \\10.10.10.10\Finance /user:ashfordgrove\michael.chen [REDACTED]
 
 # Step 2: Bulk recursive copy to local staging
 Copy-Item -Path "\\10.10.10.10\Finance\*" -Destination "C:\Windows\Temp\agc060_collected\" -Recurse
@@ -72,13 +72,13 @@ UtcTime: 2026-09-15 22:37:17.620
 ProcessGuid: {eb65e329-c89d-6aa9-9704-000000001400}
 ProcessId: 3328
 Image: C:\Windows\System32\net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.10\Finance /user:ashfordgrove\michael.chen Soclab24
+CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.10\Finance /user:ashfordgrove\michael.chen [REDACTED]
 User: COMPROMISED-01\Administrator
 IntegrityLevel: High
 Hashes: MD5=8A1E71312BD2AAE202652113049CDBD1
 ```
 
-**Critical finding:** Domain credentials exposed in cleartext in the command line -- `ashfordgrove\michael.chen` with password `Soclab24`. This is a recurring pattern (also seen in credential access scenarios): `net use` with `/user:` and explicit password arguments writes the full credentials into Sysmon EID 1's CommandLine field.
+**Critical finding:** Domain credentials exposed in cleartext in the command line -- `ashfordgrove\michael.chen` with password `[REDACTED]`. This is a recurring pattern (also seen in credential access scenarios): `net use` with `/user:` and explicit password arguments writes the full credentials into Sysmon EID 1's CommandLine field.
 
 **Sysmon EID 1 -- Process Create (PowerShell execution):**
 ```
@@ -157,7 +157,7 @@ UtcTime: 2026-09-15 22:37:17.620
 ProcessGuid: {eb65e329-c89d-6aa9-9704-000000001400}
 ProcessId: 3328
 Image: C:\Windows\System32\net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.10\Finance /user:ashfordgrove\michael.chen Soclab24
+CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.10\Finance /user:ashfordgrove\michael.chen [REDACTED]
 User: COMPROMISED-01\Administrator
 IntegrityLevel: High
 Hashes: MD5=8A1E71312BD2AAE202652113049CDBD1

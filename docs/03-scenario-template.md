@@ -142,7 +142,7 @@ Every scenario folder is **markdown-only**: a single `README.md`, nothing else. 
 
 ## Project-wide MITRE view
 
-Each scenario's own `### MITRE Mapping` table covers the techniques *that scenario* exercises. The **`MITRE-Mapping/attack-navigator-layer.json`** aggregates all 100 scenarios' MITRE coverage into a single importable heatmap for the official [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) — a project-wide view that no single scenario's own table can provide. Import it into the Navigator to see, at a glance, which tactics and techniques the portfolio covers and which are still open.
+Each scenario's own `### MITRE Mapping` table covers the techniques *that scenario* exercises. The **`attack-navigator-layer.json`** at the repository root aggregates all 100 scenarios' MITRE coverage into a single importable heatmap for the official [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) — a project-wide view that no single scenario's own table can provide. Import it into the Navigator to see, at a glance, which tactics and techniques the portfolio covers and which are still open.
 
 ## Chain notation
 
@@ -153,6 +153,8 @@ The **Chain** field on the Card uses this format:
 - `◀ AGC-099 · — (last scenario) ▶` — last scenario.
 
 Each side of the chain is a clickable relative link to the neighbour scenario's `README.md`. The chain lets a reader walk the whole narrative kill chain end-to-end, one scenario at a time, without going back to the index.
+
+**Phase-one note:** The chain field is populated during each scenario's phase-two manual re-implementation. Phase-one (AI-authored) reports do not include chain links — their absence in those reports is expected and not a gap. As each scenario is manually re-executed, the chain field is added with correct relative links to its neighbours.
 
 ## Evidence
 

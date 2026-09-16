@@ -19,7 +19,7 @@
 | Time to Triage | 02:00 (verify source is a workstation not a jump host; check for legitimate remote-admin role) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) as source; target: `WIN-CLIENT-02` (10.10.10.102) |
 | Chain | < AGC-042 (Discovery category) . next AGC-044 > |
-| One-line Summary | RDP lateral movement attempt from compromised workstation to WIN-CLIENT-02: `cmdkey /add:TERMSRV/10.10.10.102 /user:raj.patel /pass:Soclab24` stored credentials (cleartext password in command line), then `mstsc /v:10.10.10.102` launched. Connection did not complete (TCP 3389 unreachable on destination). Sysmon EID 1 captured all 3 events including **cleartext credential in cmdkey command line**. The workstation-to-workstation RDP pattern with pre-stored credentials is a high-confidence lateral movement indicator. |
+| One-line Summary | RDP lateral movement attempt from compromised workstation to WIN-CLIENT-02: `cmdkey /add:TERMSRV/10.10.10.102 /user:raj.patel /pass:[REDACTED]` stored credentials (cleartext password in command line), then `mstsc /v:10.10.10.102` launched. Connection did not complete (TCP 3389 unreachable on destination). Sysmon EID 1 captured all 3 events including **cleartext credential in cmdkey command line**. The workstation-to-workstation RDP pattern with pre-stored credentials is a high-confidence lateral movement indicator. |
 
 ## Attacker Perspective
 
@@ -51,7 +51,7 @@ The credential pre-staging via `cmdkey` is a specific indicator:
 | Step | Time (UTC) | Action | Host | Result |
 |---|---|---|---|---|
 | 1 | 2026-09-15 20:59:25 | TCP test to 10.10.10.102:3389 | COMPROMISED-HOST-01 | CLOSED/TIMEOUT -- RDP port not reachable |
-| 2 | 2026-09-15 20:59:30 | cmdkey /add:TERMSRV/10.10.10.102 /user:raj.patel /pass:Soclab24 | COMPROMISED-HOST-01 | Credential stored successfully |
+| 2 | 2026-09-15 20:59:30 | cmdkey /add:TERMSRV/10.10.10.102 /user:raj.patel /pass:[REDACTED] | COMPROMISED-HOST-01 | Credential stored successfully |
 | 3 | 2026-09-15 20:59:30 | mstsc /v:10.10.10.102 | COMPROMISED-HOST-01 | Launched (PID 1832), hung waiting for GUI, killed after 10s |
 | 4 | 2026-09-15 20:59:40 | cmdkey /delete:TERMSRV/10.10.10.102 | COMPROMISED-HOST-01 | Credential cleaned up |
 
@@ -71,13 +71,13 @@ The credential pre-staging via `cmdkey` is a specific indicator:
 
 | Timestamp (UTC) | Image | CommandLine | PID | User | IntegrityLevel |
 |---|---|---|---|---|---|
-| 2026-09-15 20:59:30 | cmdkey.exe | `cmdkey.exe /add:TERMSRV/10.10.10.102 /user:raj.patel /pass:Soclab24` | 1904 | Administrator | High |
+| 2026-09-15 20:59:30 | cmdkey.exe | `cmdkey.exe /add:TERMSRV/10.10.10.102 /user:raj.patel /pass:[REDACTED]` | 1904 | Administrator | High |
 | 2026-09-15 20:59:30 | mstsc.exe | `mstsc.exe /v:10.10.10.102` | 1832 | Administrator | High |
 | 2026-09-15 20:59:40 | cmdkey.exe | `cmdkey.exe /delete:TERMSRV/10.10.10.102` | 5564 | Administrator | High |
 
 All share `LogonGuid: {eb65e329-b1ac-6aa9-026c-580000000000}`.
 
-**Critical finding:** The `cmdkey /add` command line contains `raj.patel`'s password (`Soclab24`) in cleartext. Sysmon EID 1 logged this credential exposure. This is both an attack indicator AND a credential compromise -- `raj.patel`'s password is now in the security event log.
+**Critical finding:** The `cmdkey /add` command line contains `raj.patel`'s password (`[REDACTED]`) in cleartext. Sysmon EID 1 logged this credential exposure. This is both an attack indicator AND a credential compromise -- `raj.patel`'s password is now in the security event log.
 
 **Sysmon EID 3 (Network Connection):** 0 events -- no outbound TCP connection to port 3389 was established (connection failed before TCP handshake completed).
 
@@ -147,7 +147,7 @@ UtcTime: 2026-09-15 20:59:30.528
 ProcessId: 1904
 Image: C:\Windows\System32\cmdkey.exe
 OriginalFileName: cmdkey.exe
-CommandLine: "C:\WINDOWS\system32\cmdkey.exe" /add:TERMSRV/10.10.10.102 /user:raj.patel /pass:Soclab24
+CommandLine: "C:\WINDOWS\system32\cmdkey.exe" /add:TERMSRV/10.10.10.102 /user:raj.patel /pass:[REDACTED]
 User: COMPROMISED-01\Administrator
 LogonGuid: {eb65e329-b1ac-6aa9-026c-580000000000}
 LogonId: 0x586C02

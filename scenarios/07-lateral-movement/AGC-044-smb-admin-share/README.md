@@ -67,9 +67,9 @@ The pattern of accessing admin shares with explicit credentials (`/user:` flag) 
 
 | Timestamp (UTC) | Image | CommandLine | PID | Cleartext Creds |
 |---|---|---|---|---|
-| 2026-09-15 21:03:11 | net.exe | `net.exe use \\10.10.10.102\C$ /user:raj.patel Soclab24` | 2428 | YES |
-| 2026-09-15 21:03:53 | net.exe | `net.exe use \\10.10.10.102\ADMIN$ /user:raj.patel Soclab24` | 1640 | YES |
-| 2026-09-15 21:04:14 | net.exe | `net.exe use \\10.10.10.102\IPC$ /user:raj.patel Soclab24` | 4352 | YES |
+| 2026-09-15 21:03:11 | net.exe | `net.exe use \\10.10.10.102\C$ /user:raj.patel [REDACTED]` | 2428 | YES |
+| 2026-09-15 21:03:53 | net.exe | `net.exe use \\10.10.10.102\ADMIN$ /user:raj.patel [REDACTED]` | 1640 | YES |
+| 2026-09-15 21:04:14 | net.exe | `net.exe use \\10.10.10.102\IPC$ /user:raj.patel [REDACTED]` | 4352 | YES |
 | 2026-09-15 21:04:56 | net.exe | `net.exe use \\127.0.0.1\C$` | 4928 | No |
 | 2026-09-15 21:04:56 | net.exe | `net.exe use \\127.0.0.1\C$ /delete` | 4288 | No |
 
@@ -145,7 +145,7 @@ UtcTime: 2026-09-15 21:03:11.101
 ProcessId: 2428
 Image: C:\Windows\System32\net.exe
 OriginalFileName: net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\C$ /user:raj.patel Soclab24
+CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\C$ /user:raj.patel [REDACTED]
 User: COMPROMISED-01\Administrator
 LogonGuid: {eb65e329-b28e-6aa9-e913-590000000000}
 LogonId: 0x5913E9
@@ -161,7 +161,7 @@ UtcTime: 2026-09-15 21:03:53.252
 ProcessId: 1640
 Image: C:\Windows\System32\net.exe
 OriginalFileName: net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\ADMIN$ /user:raj.patel Soclab24
+CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\ADMIN$ /user:raj.patel [REDACTED]
 User: COMPROMISED-01\Administrator
 LogonGuid: {eb65e329-b28e-6aa9-e913-590000000000}
 LogonId: 0x5913E9
@@ -177,7 +177,7 @@ UtcTime: 2026-09-15 21:04:14.386
 ProcessId: 4352
 Image: C:\Windows\System32\net.exe
 OriginalFileName: net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\IPC$ /user:raj.patel Soclab24
+CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\IPC$ /user:raj.patel [REDACTED]
 User: COMPROMISED-01\Administrator
 LogonGuid: {eb65e329-b28e-6aa9-e913-590000000000}
 LogonId: 0x5913E9

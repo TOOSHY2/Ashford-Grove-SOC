@@ -64,9 +64,9 @@
 
 | Time (UTC) | Image | CommandLine (abbreviated) | Target |
 |---|---|---|---|
-| 21:27:22 | net.exe | `net use \\10.10.10.102\C$ /user:raj.patel Soclab24` | WIN-CLIENT-02 |
-| 21:28:05 | net.exe | `net use \\10.10.10.10\C$ /user:raj.patel Soclab24` | AD-DC-01 |
-| 21:28:47 | cmdkey.exe | `cmdkey /add:TERMSRV/10.10.10.101 /user:raj.patel /pass:Soclab24` | WIN-CLIENT-01 |
+| 21:27:22 | net.exe | `net use \\10.10.10.102\C$ /user:raj.patel [REDACTED]` | WIN-CLIENT-02 |
+| 21:28:05 | net.exe | `net use \\10.10.10.10\C$ /user:raj.patel [REDACTED]` | AD-DC-01 |
+| 21:28:47 | cmdkey.exe | `cmdkey /add:TERMSRV/10.10.10.101 /user:raj.patel /pass:[REDACTED]` | WIN-CLIENT-01 |
 | 21:28:47 | mstsc.exe | `mstsc /v:10.10.10.101` | WIN-CLIENT-01 |
 | 21:28:52 | cmdkey.exe | `cmdkey /delete:TERMSRV/10.10.10.101` | (cleanup) |
 | 21:28:52 | ssh.exe | `ssh raj.patel@10.10.20.10` | DMZ-LINUX-01 |
@@ -157,7 +157,7 @@ Process Create:
 UtcTime: 2026-09-15 21:27:22.890
 ProcessId: 2820
 Image: C:\Windows\System32\net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\C$ /user:raj.patel Soclab24
+CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\C$ /user:raj.patel [REDACTED]
 User: COMPROMISED-01\Administrator
 IntegrityLevel: High
 ```
@@ -169,7 +169,7 @@ Process Create:
 UtcTime: 2026-09-15 21:28:05.058
 ProcessId: 6104
 Image: C:\Windows\System32\net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.10\C$ /user:raj.patel Soclab24
+CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.10\C$ /user:raj.patel [REDACTED]
 User: COMPROMISED-01\Administrator
 IntegrityLevel: High
 ```
@@ -181,7 +181,7 @@ Process Create:
 UtcTime: 2026-09-15 21:28:47.239
 ProcessId: 2152
 Image: C:\Windows\System32\cmdkey.exe
-CommandLine: "C:\WINDOWS\system32\cmdkey.exe" /add:TERMSRV/10.10.10.101 /user:raj.patel /pass:Soclab24
+CommandLine: "C:\WINDOWS\system32\cmdkey.exe" /add:TERMSRV/10.10.10.101 /user:raj.patel /pass:[REDACTED]
 
 Process Create:
 UtcTime: 2026-09-15 21:28:47.406

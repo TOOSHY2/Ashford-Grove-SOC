@@ -47,7 +47,7 @@
 | Step | Time (UTC) | Action | Host | Detail |
 |---|---|---|---|---|
 | 1 | 2026-09-15 18:17:05 | Click password-reset link | COMPROMISED-HOST-01 | `GET http://10.10.40.10/portal-login` — HTTP 200, credential form with username + password fields |
-| 2 | 2026-09-15 18:17:06 | Submit "current password" | COMPROMISED-HOST-01 | `POST http://10.10.40.10/portal-login` — body: `username=michael.chen&password=Soclab24&current_password=Soclab24&new_password=N3wP4ss2026!` |
+| 2 | 2026-09-15 18:17:06 | Submit "current password" | COMPROMISED-HOST-01 | `POST http://10.10.40.10/portal-login` — body: `username=michael.chen&password=[REDACTED]&current_password=[REDACTED]&new_password=[REDACTED]` |
 | 3 | 2026-09-15 18:17:06 | Server confirms capture | EXT-ATTACKER-SIM | HTTP 200: "Sign-in received. Redirecting..." |
 
 **Cleanup:** No persistent artifacts beyond network logs.
@@ -69,7 +69,7 @@
 ### Investigation
 
 **Step 1 — Outbound POST confirmation:**
-At 18:17:06 UTC, a POST request was sent from 10.10.10.103 to 10.10.40.10/portal-login with URL-encoded form data containing `username=michael.chen`, `password=Soclab24`, `current_password=Soclab24`, and `new_password=N3wP4ss2026!`. The server responded with HTTP 200 and "Sign-in received. Redirecting..." — confirming the credentials were captured.
+At 18:17:06 UTC, a POST request was sent from 10.10.10.103 to 10.10.40.10/portal-login with URL-encoded form data containing `username=michael.chen`, `password=[REDACTED]`, `current_password=[REDACTED]`, and `new_password=[REDACTED]`. The server responded with HTTP 200 and "Sign-in received. Redirecting..." — confirming the credentials were captured.
 
 **Step 2 — Destination verification:**
 The destination `10.10.40.10` does not match any Ashford Grove Capital corporate endpoint. The legitimate password-reset endpoint would be on the domain controller at `ashfordgrove.local` (10.10.10.100), not on an external IP in the 10.10.40.0/24 (DMZ-External) subnet. This is a non-corporate, attacker-controlled destination.

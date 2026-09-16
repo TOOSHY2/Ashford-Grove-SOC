@@ -46,7 +46,7 @@ UtcTime: 2026-09-16 01:20:29
 ProcessId: 1792
 Image: C:\Windows\System32\cmdkey.exe
 CommandLine: "C:\WINDOWS\system32\cmdkey.exe" /add:COMPROMISED-01
-             /user:svc_reporting /pass:SvcR3port2026!
+             /user:svc_reporting /pass:[REDACTED]
 User: COMPROMISED-01\Administrator
 ```
 
@@ -58,7 +58,7 @@ Image: C:\Windows\System32\cmdkey.exe
 CommandLine: "C:\WINDOWS\system32\cmdkey.exe" /delete:COMPROMISED-01
 ```
 
-**Critical finding**: The `cmdkey /add` command exposes the service account password (`SvcR3port2026!`) in cleartext in the Sysmon EID 1 command line field.
+**Critical finding**: The `cmdkey /add` command exposes the service account password (`[REDACTED]`) in cleartext in the Sysmon EID 1 command line field.
 
 ### Step 2: Verify Account Designation
 

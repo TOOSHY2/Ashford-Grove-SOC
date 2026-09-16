@@ -89,8 +89,8 @@ Elevated Token:       No
 | Timestamp (UTC) | Image | CommandLine | PID | Evidence Type |
 |---|---|---|---|---|
 | 2026-09-15 21:19:40 | reg.exe | `reg query HKLM\SAM\SAM\Domains\Account\Users` | 1968 | Hash extraction attempt |
-| 2026-09-15 21:19:40 | net.exe | `net use \\10.10.10.102\C$ /user:wadmin Soclab24` | 3572 | Remote PtH attempt (cleartext cred) |
-| 2026-09-15 21:20:22 | net.exe | `net use \\127.0.0.1\ADMIN$ /user:wadmin Soclab24` | 4884 | Localhost PtH attempt (cleartext cred) |
+| 2026-09-15 21:19:40 | net.exe | `net use \\10.10.10.102\C$ /user:wadmin [REDACTED]` | 3572 | Remote PtH attempt (cleartext cred) |
+| 2026-09-15 21:20:22 | net.exe | `net use \\127.0.0.1\ADMIN$ /user:wadmin [REDACTED]` | 4884 | Localhost PtH attempt (cleartext cred) |
 | 2026-09-15 21:20:25 | cmd.exe | `cmd.exe /c echo AGC-047-pth > C:\Windows\Temp\agc047.txt` | 1492 | WMI-spawned marker write |
 | 2026-09-15 21:20:28 | net.exe | `net use \\127.0.0.1\ADMIN$ /delete` | 1764 | Cleanup |
 | 2026-09-15 21:19:39 | powershell.exe | `powershell.exe -ExecutionPolicy Bypass -File C:\Temp\agc047-sim.ps1` | 5348 | Simulation script |
@@ -174,7 +174,7 @@ UtcTime: 2026-09-15 21:19:40.358
 ProcessId: 3572
 Image: C:\Windows\System32\net.exe
 OriginalFileName: net.exe
-CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\C$ /user:wadmin Soclab24
+CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\C$ /user:wadmin [REDACTED]
 User: COMPROMISED-01\Administrator
 LogonGuid: {eb65e329-b66b-6aa9-f3df-5e0000000000}
 LogonId: 0x5EDFF3
