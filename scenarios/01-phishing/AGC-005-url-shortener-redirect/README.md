@@ -18,7 +18,7 @@
 | Time to Detect | N/A — no automated alert; the shortener URL appears benign in isolation |
 | Time to Triage | 05:00 (from initial link click to full chain reconstruction) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103), `EXT-ATTACKER-SIM` (10.10.40.10) |
-| Chain | ◀ AGC-004 · next AGC-006 ▶ |
+| Chain | ◀ [AGC-004](../AGC-004-qr-code-phish/README.md) · next [AGC-006](../AGC-006-html-attachment-redirect/README.md) ▶ |
 | One-line Summary | Phishing email contains a shortener-style URL (`/go/abc123`) that 302-redirects to the credential-harvesting page — the initial link appears innocent. |
 
 ## Attacker Perspective
@@ -121,4 +121,4 @@ The final destination `10.10.40.10/portal-login` matches AGC-001/002/003/004 —
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

@@ -18,7 +18,7 @@
 | Time to Detect | Immediate — Sysmon EID 1 captures `schtasks.exe` creation/invocation; Task Scheduler EID 110 captures launch |
 | Time to Triage | 02:00 (from alert to task definition review and baseline comparison) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | ◀ AGC-016 · next AGC-018 ▶ |
+| Chain | ◀ [AGC-016](../AGC-016-wmi-process-creation/README.md) · next [AGC-018](../AGC-018-eicar-detection-test/README.md) ▶ |
 | One-line Summary | Unknown scheduled task `AGC017Test` created and triggered, configured to execute `cmd.exe` — not present in any known-good task inventory. Companion to AGC-020 (task persistence focus). |
 
 ## Attacker Perspective
@@ -119,4 +119,4 @@ The task was created by a local admin account (not a domain service account or G
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

@@ -1,4 +1,4 @@
-# AGC-077 -- Full Attack Chain: Credential Harvest to Ransomware
+# AGC-077 — Full Attack Chain: Credential Harvest to Ransomware
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,14 +11,14 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-077` |
-| Category | `13-full-attack-chain` -- Full Attack Chain |
+| Category | `13-full-attack-chain` — Full Attack Chain |
 | MITRE Techniques | `T1566.002` Phishing: Spearphishing Link, `T1059.001` Command and Scripting Interpreter: PowerShell, `T1027` Obfuscated Files or Information, `T1547.001` Boot or Logon Autostart Execution: Registry Run Keys, `T1003.001` OS Credential Dumping: LSASS Memory, `T1021` Remote Services, `T1071.001` Application Layer Protocol: Web Protocols, `T1573` Encrypted Channel, `T1560` Archive Collected Data, `T1041` Exfiltration Over C2 Channel, `T1070.001` Indicator Removal: Clear Windows Event Logs, `T1486` Data Encrypted for Impact |
 | Verdict | True Positive |
 | Confidence | Critical |
 | Time to Detect | Full chain duration: 96 seconds (23:55:21 to 23:57:31 UTC) |
-| Affected Systems | `COMPROMISED-HOST-01` (10.10.10.103) -- primary target; `EXT-ATTACKER-SIM` (10.10.40.10) -- C2/exfil server |
-| Chain | < AGC-076 . next AGC-078 > |
-| One-line Summary | 10-phase full attack chain from spearphishing credential harvest through ransomware impact on COMPROMISED-HOST-01. Credential POST to phishing portal (10.10.40.10), encoded PowerShell execution, Run key persistence (WindowsUpdateHelper), LSASS dump attempt (blocked by PPL), lateral movement attempt (net use -- network error 64), HTTPS C2 beacon (3x HTTP 200), data collection (Compress-Archive 812 bytes), exfiltration (HTTPS+HTTP upload), Security log clear (EID 1102 captured), XOR ransomware (5 files .agc077locked in 109ms). 6 Sysmon EID 1, 1 EID 13, 7 EID 3 events captured. |
+| Affected Systems | `COMPROMISED-HOST-01` (10.10.10.103) — primary target; `EXT-ATTACKER-SIM` (10.10.40.10) — C2/exfil server |
+| Chain | ◀ [AGC-076](../../12-impact-recovery/AGC-076-containment-recovery/README.md) · next [AGC-078](../AGC-078-full-chain-trusted-access-to-gpo-impact/README.md) ▶ |
+| One-line Summary | 10-phase full attack chain from spearphishing credential harvest through ransomware impact on COMPROMISED-HOST-01. Credential POST to phishing portal (10.10.40.10), encoded PowerShell execution, Run key persistence (WindowsUpdateHelper), LSASS dump attempt (blocked by PPL), lateral movement attempt (net use — network error 64), HTTPS C2 beacon (3x HTTP 200), data collection (Compress-Archive 812 bytes), exfiltration (HTTPS+HTTP upload), Security log clear (EID 1102 captured), XOR ransomware (5 files .agc077locked in 109ms). 6 Sysmon EID 1, 1 EID 13, 7 EID 3 events captured. |
 
 ## Attacker Perspective
 
@@ -46,12 +46,12 @@
 | 1. Initial Access | 23:55:21.639 | T1566.002 | HTTP GET + POST to credential harvest page on 10.10.40.10 |
 | 2. Execution | 23:55:23.733 | T1059.001/T1027 | Encoded PowerShell via `-EncodedCommand`, dropped stage2 marker |
 | 3. Persistence | 23:55:26.212 | T1547.001 | `reg.exe add` Run key "WindowsUpdateHelper" with encoded payload |
-| 4. Credential Access | 23:55:28.310 | T1003.001 | `rundll32.exe comsvcs.dll MiniDump` against LSASS PID 816 -- BLOCKED by PPL |
-| 5. Lateral Movement | 23:55:33.861 | T1021 | `net.exe use \\10.10.10.102\IPC$` with harvested creds -- Error 64 |
-| 6. C2 | 23:56:18.087 | T1071.001/T1573 | 3x HTTPS beacon to 10.10.40.10/beacon -- all HTTP 200 |
+| 4. Credential Access | 23:55:28.310 | T1003.001 | `rundll32.exe comsvcs.dll MiniDump` against LSASS PID 816 — BLOCKED by PPL |
+| 5. Lateral Movement | 23:55:33.861 | T1021 | `net.exe use \\10.10.10.102\IPC$` with harvested creds — Error 64 |
+| 6. C2 | 23:56:18.087 | T1071.001/T1573 | 3x HTTPS beacon to 10.10.40.10/beacon — all HTTP 200 |
 | 7. Collection | 23:56:29.189 | T1560 | `Compress-Archive` 5 finance docs to agc077-staged.zip (812 bytes) |
 | 8. Exfiltration | 23:56:33.707 | T1041 | HTTPS + HTTP upload of staged.zip to 10.10.40.10/upload |
-| 9. Defense Evasion | 23:56:35.805 | T1070.001 | `wevtutil.exe cl Security` -- log cleared, EID 1102 generated |
+| 9. Defense Evasion | 23:56:35.805 | T1070.001 | `wevtutil.exe cl Security` — log cleared, EID 1102 generated |
 | 10. Impact | 23:56:41.007 | T1486 | XOR encryption (key 0x42) of 5 files to .agc077locked (109ms) |
 
 **Result:** 8 of 10 phases succeeded. Phase 4 (LSASS dump) blocked by Protected Process Light. Phase 5 (lateral movement) failed due to network routing (error 64). Both failures are expected lab constraints documented in prior atomic scenarios.
@@ -60,7 +60,7 @@
 
 ### Detection
 
-**Sysmon EID 1 -- Process Creation (6 events):**
+**Sysmon EID 1 — Process Creation (6 events):**
 
 ```
 TIME (UTC)              PID    IMAGE                  COMMAND LINE (key excerpt)
@@ -72,21 +72,21 @@ TIME (UTC)              PID    IMAGE                  COMMAND LINE (key excerpt)
 ```
 
 **Critical detection indicators in EID 1:**
-1. **EncodedCommand** in powershell.exe -- obfuscated execution (T1027)
-2. **reg.exe add...Run** -- persistence installation (T1547.001)
-3. **net.exe use...IPC$** with cleartext credentials -- lateral movement with credential exposure
-4. **wevtutil.exe cl Security** -- anti-forensics (T1070.001)
+1. **EncodedCommand** in powershell.exe — obfuscated execution (T1027)
+2. **reg.exe add...Run** — persistence installation (T1547.001)
+3. **net.exe use...IPC$** with cleartext credentials — lateral movement with credential exposure
+4. **wevtutil.exe cl Security** — anti-forensics (T1070.001)
 
-**Sysmon EID 13 -- Registry Value Set (1 event):**
+**Sysmon EID 13 — Registry Value Set (1 event):**
 
 ```
 TIME (UTC)              RULE           TARGET OBJECT                                              DETAILS
 23:55:26.279            T1060,RunKey   HKU\.DEFAULT\...\Run\WindowsUpdateHelper                   powershell.exe -WindowStyle Hidden -EncodedCommand VwByAGkA...
 ```
 
-SwiftOnSecurity Sysmon config correctly tagged this as T1060 (legacy ID for Run key persistence). The value contains an encoded PowerShell payload -- a high-fidelity persistence indicator.
+SwiftOnSecurity Sysmon config correctly tagged this as T1060 (legacy ID for Run key persistence). The value contains an encoded PowerShell payload — a high-fidelity persistence indicator.
 
-**Sysmon EID 3 -- Network Connection (7 events):**
+**Sysmon EID 3 — Network Connection (7 events):**
 
 ```
 TIME (UTC)              SRC PORT    DST IP:PORT          PROCESS
@@ -101,7 +101,7 @@ TIME (UTC)              SRC PORT    DST IP:PORT          PROCESS
 
 The network telemetry reveals the complete C2 lifecycle: initial phishing callback, periodic HTTPS beacons at ~3-second intervals, and data exfiltration over the same channel.
 
-**Windows Security EID 1102 -- Audit Log Cleared (1 event):**
+**Windows Security EID 1102 — Audit Log Cleared (1 event):**
 
 ```
 TIME (UTC)              SUBJECT SID                                    ACCOUNT
@@ -118,38 +118,38 @@ This event survives the log clearing because Windows generates it AFTER the clea
 
 ### Investigation
 
-**Step 1 -- Identify the initial compromise vector:**
+**Step 1 — Identify the initial compromise vector:**
 EID 3 shows the first connection to 10.10.40.10:80 at 23:55:10.773 UTC from powershell.exe (PID 5684). The HTTP POST to the credential harvest page submitted michael.chen@ashfordgrove.local credentials. This matches the spearphishing link pattern from AGC-001 (atomic phishing scenario).
 
-**Step 2 -- Trace the execution chain:**
+**Step 2 — Trace the execution chain:**
 Within 5 seconds of credential submission, a child powershell.exe (PID 2028) launched with `-EncodedCommand`. Decoding the Base64 reveals a payload that drops a marker file to `C:\Windows\Temp\agc077-stage2.txt`. This confirms code execution from the compromised session.
 
-**Step 3 -- Identify persistence:**
+**Step 3 — Identify persistence:**
 EID 13 (RuleName: T1060,RunKey) fires 2.5 seconds after encoded execution, showing reg.exe (PID 4092) writing "WindowsUpdateHelper" to the Run key with an encoded PowerShell payload. This ensures the attacker's code survives reboot. Cross-reference: same technique as AGC-019 (atomic Run key scenario).
 
-**Step 4 -- Assess credential access attempt:**
-The LSASS dump attempt (PID 816) was blocked by Protected Process Light -- no memory dump was created. However, the attacker already possessed valid credentials from Phase 1 (credential harvest). The LSASS dump was an attempt to expand credential access beyond the initial set. Cross-reference: same technique as AGC-031 (atomic LSASS dump scenario).
+**Step 4 — Assess credential access attempt:**
+The LSASS dump attempt (PID 816) was blocked by Protected Process Light — no memory dump was created. However, the attacker already possessed valid credentials from Phase 1 (credential harvest). The LSASS dump was an attempt to expand credential access beyond the initial set. Cross-reference: same technique as AGC-031 (atomic LSASS dump scenario).
 
-**Step 5 -- Evaluate lateral movement:**
-net.exe attempted IPC$ connection to 10.10.10.102 (WIN-CLIENT-02) using ashfordgrove\raj.patel credentials. Error 64 ("network name no longer available") indicates the target host's SMB service was unreachable. The cleartext password "[REDACTED]" is exposed in the EID 1 command line -- a credential hygiene finding independent of whether the connection succeeded. Cross-reference: same technique as AGC-043-050 (atomic lateral movement scenarios).
+**Step 5 — Evaluate lateral movement:**
+net.exe attempted IPC$ connection to 10.10.10.102 (WIN-CLIENT-02) using ashfordgrove\raj.patel credentials. Error 64 ("network name no longer available") indicates the target host's SMB service was unreachable. The cleartext password "[REDACTED]" is exposed in the EID 1 command line — a credential hygiene finding independent of whether the connection succeeded. Cross-reference: same technique as AGC-043-050 (atomic lateral movement scenarios).
 
-**Step 6 -- Map the C2 infrastructure:**
-Three HTTPS connections to 10.10.40.10:443 at ~3-second intervals establish a beacon pattern. The server responded HTTP 200 to all three, confirming C2 infrastructure is active. The same IP served the credential harvest page (port 80) and received exfiltrated data -- a single-server C2 architecture. Cross-reference: same techniques as AGC-051-056 (atomic C2 scenarios).
+**Step 6 — Map the C2 infrastructure:**
+Three HTTPS connections to 10.10.40.10:443 at ~3-second intervals establish a beacon pattern. The server responded HTTP 200 to all three, confirming C2 infrastructure is active. The same IP served the credential harvest page (port 80) and received exfiltrated data — a single-server C2 architecture. Cross-reference: same techniques as AGC-051-056 (atomic C2 scenarios).
 
-**Step 7 -- Assess data loss:**
+**Step 7 — Assess data loss:**
 Compress-Archive created an 812-byte ZIP file from 5 synthetic finance documents. The archive was successfully uploaded via both HTTPS (port 443) and HTTP (port 80) to 10.10.40.10. Data exfiltration over the C2 channel is confirmed. Cross-reference: same techniques as AGC-057-066 (atomic collection/exfiltration scenarios).
 
-**Step 8 -- Evaluate anti-forensics:**
-wevtutil.exe cleared the Security event log at 23:56:35.890 UTC. EID 1102 confirms the clear. The Sysmon log (separate channel) was NOT cleared -- all Sysmon evidence survives. Cross-reference: same technique as AGC-067 (atomic log clearing scenario).
+**Step 8 — Evaluate anti-forensics:**
+wevtutil.exe cleared the Security event log at 23:56:35.890 UTC. EID 1102 confirms the clear. The Sysmon log (separate channel) was NOT cleared — all Sysmon evidence survives. Cross-reference: same technique as AGC-067 (atomic log clearing scenario).
 
-**Step 9 -- Assess impact:**
+**Step 9 — Assess impact:**
 5 files were XOR-encrypted (key 0x42) and renamed to .agc077locked in 109ms. No Sysmon EID 11 evidence exists (EXE/DLL-only filter). The ransomware phase is detectable only via the parent powershell.exe EID 1 event. Cross-reference: same technique as AGC-072 (atomic ransomware scenario).
 
 ### Report
 
-**Verdict: True Positive** -- Complete multi-phase intrusion from initial access through ransomware impact.
+**Verdict: True Positive** — Complete multi-phase intrusion from initial access through ransomware impact.
 
-**Confidence: Critical** -- 14 Sysmon events across 3 event types + 1 Windows Security event provide comprehensive telemetry across 8 of 10 attack phases. The chain demonstrates:
+**Confidence: Critical** — 14 Sysmon events across 3 event types + 1 Windows Security event provide telemetry across 8 of 10 attack phases. The chain demonstrates:
 
 1. Every phase generated at least one detection event (EID 1 process creation as minimum baseline)
 2. The persistence phase triggered the highest-fidelity alert (EID 13 with T1060 RuleName tag)
@@ -164,12 +164,29 @@ wevtutil.exe cleared the Security event log at 23:56:35.890 UTC. EID 1102 confir
 3. **Enable EID 10 for LSASS protection monitoring:** Even when PPL blocks the dump, the access attempt should generate an alert.
 4. **Enable EID 11 for non-EXE/DLL files in sensitive directories:** The ransomware and collection phases were invisible at the file level.
 
+### MITRE Mapping
+
+| Tactic | Technique ID | Technique Name | Evidence | Confidence |
+|---|---|---|---|---|
+| Initial Access (TA0001) | T1566.002 | Phishing: Spearphishing Link | HTTP GET+POST to credential harvest page on 10.10.40.10. EID 3 captures both connections. 1446-byte phishing page served. | Critical |
+| Execution (TA0002) | T1059.001 | Command and Scripting Interpreter: PowerShell | powershell.exe -EncodedCommand (PID 2028). Decoded payload drops marker file. EID 1 captures full encoded command. | Critical |
+| Execution (TA0002) | T1027 | Obfuscated Files or Information | Base64-encoded PowerShell command conceals payload. EncodedCommand parameter is primary indicator. | Critical |
+| Persistence (TA0003) | T1547.001 | Boot or Logon Autostart Execution: Registry Run Keys | reg.exe adds "WindowsUpdateHelper" to HKCU Run key. EID 1 + EID 13 (tagged T1060,RunKey). | Critical |
+| Credential Access (TA0006) | T1003.001 | OS Credential Dumping: LSASS Memory | rundll32.exe comsvcs.dll MiniDump targeting LSASS PID 816. Blocked by PPL. EID 1 captures attempt. | High |
+| Lateral Movement (TA0008) | T1021 | Remote Services | net.exe use \\10.10.10.102\IPC$ with cleartext credentials. Error 64. EID 1 captures command with password. | High |
+| Command and Control (TA0011) | T1071.001 | Application Layer Protocol: Web Protocols | 3x HTTPS beacon to 10.10.40.10:443 at 3s intervals. All returned HTTP 200. EID 3 captures full beacon timeline. | Critical |
+| Command and Control (TA0011) | T1573 | Encrypted Channel | HTTPS (TLS) used for C2 beacon and exfiltration. Certificate validation bypassed in client. | Critical |
+| Collection (TA0009) | T1560 | Archive Collected Data | Compress-Archive created 812-byte ZIP from 5 finance documents. No Sysmon evidence (in-process cmdlet). | High |
+| Exfiltration (TA0010) | T1041 | Exfiltration Over C2 Channel | agc077-staged.zip uploaded via HTTPS+HTTP to 10.10.40.10. EID 3 captures both upload connections. | Critical |
+| Defense Evasion (TA0005) | T1070.001 | Indicator Removal: Clear Windows Event Logs | wevtutil.exe cl Security. EID 1 + EID 1102 (audit log cleared). Sysmon log preserved. | Critical |
+| Impact (TA0040) | T1486 | Data Encrypted for Impact | 5 files XOR-encrypted (key 0x42) to .agc077locked in 109ms. No EID 11 (EXE/DLL-only filter). | Critical |
+
 ## Attacker vs Analyst Timeline
 
 | Time (UTC) | Attacker Phase | What Attacker Did | What Analyst Sees (Detection Layer) |
 |---|---|---|---|
 | 23:55:10.773 | Initial Access | HTTP GET/POST to credential harvest page | EID 3: powershell.exe -> 10.10.40.10:80 (2 connections) |
-| 23:55:21.209 | -- | Main script execution begins | EID 1: powershell.exe -ExecutionPolicy Bypass -File agc077-sim.ps1 |
+| 23:55:21.209 | — | Main script execution begins | EID 1: powershell.exe -ExecutionPolicy Bypass -File agc077-sim.ps1 |
 | 23:55:23.748 | Execution | Launched encoded PowerShell child process | EID 1: powershell.exe -EncodedCommand (OBFUSCATION INDICATOR) |
 | 23:55:26.228 | Persistence | Wrote Run key "WindowsUpdateHelper" | EID 1: reg.exe add...Run + EID 13: T1060,RunKey (HIGH FIDELITY) |
 | 23:55:28.310 | Credential Access | Attempted LSASS memory dump | EID 1: rundll32.exe comsvcs.dll MiniDump (BLOCKED by PPL) |
@@ -180,7 +197,7 @@ wevtutil.exe cleared the Security event log at 23:56:35.890 UTC. EID 1102 confir
 | 23:56:35.890 | Defense Evasion | Cleared Security event log | EID 1: wevtutil.exe cl Security + EID 1102 (SELF-DEFEATING) |
 | 23:56:41.007 | Impact | XOR-encrypted 5 files to .agc077locked | NO FILE DETECTION (EID 11 EXE/DLL-only gap) |
 
-**Analysis:** The attacker's most critical gap is the 3-minute window between persistence installation (23:55:26) and impact (23:56:41). An automated response to the EID 13 T1060/RunKey alert could have isolated the host within seconds, preventing C2 establishment, data collection, exfiltration, and ransomware deployment. The attacker's log clearing was tactically counterproductive: it generated EID 1102 (alerting on the anti-forensics itself) while the Sysmon log -- containing all the damaging evidence -- remained intact on a separate event channel.
+**Analysis:** The attacker's most critical gap is the 3-minute window between persistence installation (23:55:26) and impact (23:56:41). An automated response to the EID 13 T1060/RunKey alert could have isolated the host within seconds, preventing C2 establishment, data collection, exfiltration, and ransomware deployment. The attacker's log clearing was tactically counterproductive: it generated EID 1102 (alerting on the anti-forensics itself) while the Sysmon log — containing all the damaging evidence — remained intact on a separate event channel.
 
 ## Mock Escalation
 
@@ -224,26 +241,9 @@ RECOMMENDED ACTIONS:
 8. HARDEN: Enable Sysmon EID 10 and expand EID 11 rules
 ```
 
-### MITRE Mapping
-
-| Tactic | Technique ID | Technique Name | Evidence | Confidence |
-|---|---|---|---|---|
-| Initial Access (TA0001) | T1566.002 | Phishing: Spearphishing Link | HTTP GET+POST to credential harvest page on 10.10.40.10. EID 3 captures both connections. 1446-byte phishing page served. | Critical |
-| Execution (TA0002) | T1059.001 | Command and Scripting Interpreter: PowerShell | powershell.exe -EncodedCommand (PID 2028). Decoded payload drops marker file. EID 1 captures full encoded command. | Critical |
-| Execution (TA0002) | T1027 | Obfuscated Files or Information | Base64-encoded PowerShell command conceals payload. EncodedCommand parameter is primary indicator. | Critical |
-| Persistence (TA0003) | T1547.001 | Boot or Logon Autostart Execution: Registry Run Keys | reg.exe adds "WindowsUpdateHelper" to HKCU Run key. EID 1 + EID 13 (tagged T1060,RunKey). | Critical |
-| Credential Access (TA0006) | T1003.001 | OS Credential Dumping: LSASS Memory | rundll32.exe comsvcs.dll MiniDump targeting LSASS PID 816. Blocked by PPL. EID 1 captures attempt. | High |
-| Lateral Movement (TA0008) | T1021 | Remote Services | net.exe use \\10.10.10.102\IPC$ with cleartext credentials. Error 64. EID 1 captures command with password. | High |
-| Command and Control (TA0011) | T1071.001 | Application Layer Protocol: Web Protocols | 3x HTTPS beacon to 10.10.40.10:443 at 3s intervals. All returned HTTP 200. EID 3 captures full beacon timeline. | Critical |
-| Command and Control (TA0011) | T1573 | Encrypted Channel | HTTPS (TLS) used for C2 beacon and exfiltration. Certificate validation bypassed in client. | Critical |
-| Collection (TA0009) | T1560 | Archive Collected Data | Compress-Archive created 812-byte ZIP from 5 finance documents. No Sysmon evidence (in-process cmdlet). | High |
-| Exfiltration (TA0010) | T1041 | Exfiltration Over C2 Channel | agc077-staged.zip uploaded via HTTPS+HTTP to 10.10.40.10. EID 3 captures both upload connections. | Critical |
-| Defense Evasion (TA0005) | T1070.001 | Indicator Removal: Clear Windows Event Logs | wevtutil.exe cl Security. EID 1 + EID 1102 (audit log cleared). Sysmon log preserved. | Critical |
-| Impact (TA0040) | T1486 | Data Encrypted for Impact | 5 files XOR-encrypted (key 0x42) to .agc077locked in 109ms. No EID 11 (EXE/DLL-only filter). | Critical |
-
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### Process creation timeline (Sysmon EID 1)
 

@@ -1,8 +1,6 @@
 # Scenario Index
 
-All 100 scenarios (AGC-001 -- AGC-100), by ID. Each verdict and confidence
-level was determined through live investigation against production-grade
-telemetry in the Ashford Grove Capital lab environment.
+All 100 scenarios (AGC-001 – AGC-100), by ID. Verdict and confidence are copied verbatim from each scenario's Card; the Card is the source of truth.
 
 | ID | Category | Scenario | Verdict | Confidence |
 |---|---|---|---|:--:|
@@ -59,7 +57,7 @@ telemetry in the Ashford Grove Capital lab environment.
 | `AGC-051` | Command & Control | [`AGC-051-https-beacon`](08-command-control/AGC-051-https-beacon/README.md) | True Positive | High |
 | `AGC-052` | Command & Control | [`AGC-052-dns-beacon`](08-command-control/AGC-052-dns-beacon/README.md) | True Positive | High |
 | `AGC-053` | Command & Control | [`AGC-053-uncommon-port-c2`](08-command-control/AGC-053-uncommon-port-c2/README.md) | True Positive | High |
-| `AGC-054` | Command & Control | [`AGC-054-rare-destination-domain`](08-command-control/AGC-054-rare-destination-domain/README.md) | True Positive | Medium |
+| `AGC-054` | Command & Control | [`AGC-054-rare-destination-domain`](08-command-control/AGC-054-rare-destination-domain/README.md) | True Positive (conditional) | Medium |
 | `AGC-055` | Command & Control | [`AGC-055-powershell-outbound`](08-command-control/AGC-055-powershell-outbound/README.md) | True Positive | High |
 | `AGC-056` | Command & Control | [`AGC-056-c2-process-tree`](08-command-control/AGC-056-c2-process-tree/README.md) | True Positive | Critical |
 | `AGC-057` | Collection | [`AGC-057-bulk-archive-creation`](09-collection/AGC-057-bulk-archive-creation/README.md) | True Positive | High |
@@ -81,7 +79,7 @@ telemetry in the Ashford Grove Capital lab environment.
 | `AGC-073` | Impact & Recovery | [`AGC-073-critical-service-disruption`](12-impact-recovery/AGC-073-critical-service-disruption/README.md) | True Positive | High |
 | `AGC-074` | Impact & Recovery | [`AGC-074-dmz-website-defacement`](12-impact-recovery/AGC-074-dmz-website-defacement/README.md) | True Positive | Critical |
 | `AGC-075` | Impact & Recovery | [`AGC-075-high-impact-gpo-change`](12-impact-recovery/AGC-075-high-impact-gpo-change/README.md) | True Positive | Critical |
-| `AGC-076` | Impact & Recovery | [`AGC-076-containment-recovery`](12-impact-recovery/AGC-076-containment-recovery/README.md) | Containment Validated | High |
+| `AGC-076` | Impact & Recovery | [`AGC-076-containment-recovery`](12-impact-recovery/AGC-076-containment-recovery/README.md) | Recovery Complete | High |
 | `AGC-077` | Full Attack Chain | [`AGC-077-full-chain-credential-to-ransomware`](13-full-attack-chain/AGC-077-full-chain-credential-to-ransomware/README.md) | True Positive | Critical |
 | `AGC-078` | Full Attack Chain | [`AGC-078-full-chain-trusted-access-to-gpo-impact`](13-full-attack-chain/AGC-078-full-chain-trusted-access-to-gpo-impact/README.md) | True Positive | Critical |
 | `AGC-079` | Full Attack Chain | [`AGC-079-full-chain-dmz-pivot-to-defacement`](13-full-attack-chain/AGC-079-full-chain-dmz-pivot-to-defacement/README.md) | True Positive | High |
@@ -94,44 +92,43 @@ telemetry in the Ashford Grove Capital lab environment.
 | `AGC-086` | False Positive Triage | [`AGC-086-regulatory-submission`](14-false-positive/AGC-086-regulatory-submission/README.md) | False Positive / Benign | High |
 | `AGC-087` | False Positive Triage | [`AGC-087-portscan-vuln-scanner`](14-false-positive/AGC-087-portscan-vuln-scanner/README.md) | False Positive / Benign | High |
 | `AGC-088` | False Positive Triage | [`AGC-088-log-clearing-retention`](14-false-positive/AGC-088-log-clearing-retention/README.md) | False Positive / Benign | High |
-| `AGC-089` | Proactive Threat Hunting | [`AGC-089-hunt-wmi-persistence`](15-threat-hunting/AGC-089-hunt-wmi-persistence/README.md) | Hunt Complete -- No Malicious Finding | High |
-| `AGC-090` | Proactive Threat Hunting | [`AGC-090-hunt-lolbin-parent-child`](15-threat-hunting/AGC-090-hunt-lolbin-parent-child/README.md) | Hunt Complete -- Prior Scenarios Confirmed | High |
-| `AGC-091` | Proactive Threat Hunting | [`AGC-091-hunt-beacon-statistics`](15-threat-hunting/AGC-091-hunt-beacon-statistics/README.md) | Hunt Complete -- No Finding (Lab Constraint) | Medium |
-| `AGC-092` | Proactive Threat Hunting | [`AGC-092-hunt-logon-time-patterns`](15-threat-hunting/AGC-092-hunt-logon-time-patterns/README.md) | Hunt Complete -- No Human Accounts | Medium |
-| `AGC-093` | Proactive Threat Hunting | [`AGC-093-hunt-dns-entropy`](15-threat-hunting/AGC-093-hunt-dns-entropy/README.md) | Hunt Complete -- No Finding (Lab Constraint) | Medium |
-| `AGC-094` | Proactive Threat Hunting | [`AGC-094-hunt-offhours-scheduled-tasks`](15-threat-hunting/AGC-094-hunt-offhours-scheduled-tasks/README.md) | Hunt Complete -- Prior Scenarios Confirmed | High |
-| `AGC-095` | Insider Threat | [`AGC-095-unusual-file-access`](16-insider-threat/AGC-095-unusual-file-access/README.md) | Confirmed Policy Violation -- Escalate | High |
-| `AGC-096` | Insider Threat | [`AGC-096-bulk-download-resignation`](16-insider-threat/AGC-096-bulk-download-resignation/README.md) | Confirmed Anomaly -- Coordinate HR/Legal | High |
+| `AGC-089` | Proactive Threat Hunting | [`AGC-089-hunt-wmi-persistence`](15-threat-hunting/AGC-089-hunt-wmi-persistence/README.md) | Hypothesis Confirmed (Benign) | — |
+| `AGC-090` | Proactive Threat Hunting | [`AGC-090-hunt-lolbin-parent-child`](15-threat-hunting/AGC-090-hunt-lolbin-parent-child/README.md) | Hypothesis Confirmed (Residual Scenario Artifacts) | — |
+| `AGC-091` | Proactive Threat Hunting | [`AGC-091-hunt-beacon-statistics`](15-threat-hunting/AGC-091-hunt-beacon-statistics/README.md) | Hypothesis Refuted (No Active Beaconing Detected) | — |
+| `AGC-092` | Proactive Threat Hunting | [`AGC-092-hunt-logon-time-patterns`](15-threat-hunting/AGC-092-hunt-logon-time-patterns/README.md) | Hypothesis Refuted (Insufficient Baseline Data) | — |
+| `AGC-093` | Proactive Threat Hunting | [`AGC-093-hunt-dns-entropy`](15-threat-hunting/AGC-093-hunt-dns-entropy/README.md) | Hypothesis Refuted (Insufficient DNS Log Access) | — |
+| `AGC-094` | Proactive Threat Hunting | [`AGC-094-hunt-offhours-scheduled-tasks`](15-threat-hunting/AGC-094-hunt-offhours-scheduled-tasks/README.md) | Hypothesis Confirmed (Residual Scenario Artifacts) | — |
+| `AGC-095` | Insider Threat | [`AGC-095-unusual-file-access`](16-insider-threat/AGC-095-unusual-file-access/README.md) | Confirmed Policy Violation — Escalate to Manager/HR | High |
+| `AGC-096` | Insider Threat | [`AGC-096-bulk-download-resignation`](16-insider-threat/AGC-096-bulk-download-resignation/README.md) | Confirmed Anomaly — Coordinate Security/HR/Legal | High |
 | `AGC-097` | Insider Threat | [`AGC-097-personal-cloud-upload`](16-insider-threat/AGC-097-personal-cloud-upload/README.md) | Confirmed Policy Violation | High |
-| `AGC-098` | Insider Threat | [`AGC-098-service-account-interactive`](16-insider-threat/AGC-098-service-account-interactive/README.md) | Confirmed Policy Violation | High |
-| `AGC-099` | Insider Threat | [`AGC-099-afterhours-no-ticket`](16-insider-threat/AGC-099-afterhours-no-ticket/README.md) | Confirmed Anomaly | Medium |
-| `AGC-100` | Insider Threat | [`AGC-100-revoked-resource-access`](16-insider-threat/AGC-100-revoked-resource-access/README.md) | Access Control Working | High |
+| `AGC-098` | Insider Threat | [`AGC-098-service-account-interactive`](16-insider-threat/AGC-098-service-account-interactive/README.md) | Confirmed Policy Violation — Identify Human Operator | High |
+| `AGC-099` | Insider Threat | [`AGC-099-afterhours-no-ticket`](16-insider-threat/AGC-099-afterhours-no-ticket/README.md) | Confirmed Anomaly — Contact Employee/Manager | Medium |
+| `AGC-100` | Insider Threat | [`AGC-100-revoked-resource-access`](16-insider-threat/AGC-100-revoked-resource-access/README.md) | Access Control Working — Single Explainable Attempt | High |
 
 ---
 
-## Verdict Distribution
+## Verdict distribution
 
-| Verdict | Count |
-|---|---:|
-| True Positive | 72 |
-| True Positive (Probable) | 2 |
-| True Positive (conceptual) | 1 |
-| False Positive / Benign | 8 |
-| Hunt Complete | 6 |
-| Insider Threat (Confirmed) | 6 |
-| Pipeline Pass | 1 |
-| Triage Complete | 1 |
-| Containment Validated | 1 |
-| Access Control Working | 1 |
-| **Total** | **100** |
+| Verdict family | Count | Scenarios |
+|---|---:|---|
+| True Positive | 73 | AGC-001 – AGC-080 (73) |
+| True Positive — qualified (Probable / conceptual / conditional) | 4 | AGC-009, AGC-034, AGC-036, AGC-054 |
+| False Positive / Benign | 8 | AGC-081 – AGC-088 (8) |
+| Hunt — hypothesis confirmed | 3 | AGC-089, AGC-090, AGC-094 |
+| Hunt — hypothesis refuted (data unavailable in lab) | 3 | AGC-091, AGC-092, AGC-093 |
+| Insider — confirmed policy violation / anomaly | 5 | AGC-095, AGC-096, AGC-097, AGC-098, AGC-099 |
+| Access Control Working | 1 | AGC-100 |
+| Pipeline Pass | 1 | AGC-018 |
+| Triage Complete | 1 | AGC-010 |
+| Recovery Complete | 1 | AGC-076 |
+| **Total** | **100** | |
 
-## Confidence Distribution
+## Confidence distribution
 
 | Level | Count |
 |---|---:|
-| Critical | 18 |
+| Critical | 21 |
 | High | 60 |
-| Medium | 14 |
-| **Total** | **92** |
-
-*8 scenarios use non-standard verdict types where the Critical/High/Medium scale does not apply directly (Triage Complete, Pipeline Pass, Containment Validated, Access Control Working, Hunt Complete with lab constraints).*
+| Medium | 13 |
+| Not rated — threat hunts report a hypothesis outcome, not a confidence level | 6 |
+| **Total** | **100** |

@@ -18,7 +18,7 @@
 | Time to Detect | Immediate — Sysmon EID 1 captures child process with ParentImage = WmiPrvSE.exe |
 | Time to Triage | 02:00 (from alert to WMI-Activity correlation and child-process assessment) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | ◀ AGC-015 · next AGC-017 ▶ |
+| Chain | ◀ [AGC-015](../AGC-015-signed-binary-proxy/README.md) · next [AGC-017](../AGC-017-task-triggered-execution/README.md) ▶ |
 | One-line Summary | WMI `Win32_Process.Create` used to spawn `cmd.exe` through `WmiPrvSE.exe`, a process-creation method that bypasses standard parent-child relationships. |
 
 ## Attacker Perspective
@@ -112,4 +112,4 @@ No enterprise management tools (SCCM, SCOM, or custom WMI scripts) are deployed 
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

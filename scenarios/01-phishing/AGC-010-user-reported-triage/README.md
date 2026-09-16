@@ -18,16 +18,18 @@
 | Time to Detect | N/A — detection source is user report, not SIEM alert |
 | Time to Triage | ~02:00 (from report receipt to scope/impact/containment confirmation) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) — recipient of the reported email |
-| Chain | ◀ AGC-009 · next AGC-011 (Execution category) ▶ |
+| Chain | ◀ [AGC-009](../AGC-009-oauth-consent-phish/README.md) · next [AGC-011](../../02-execution/AGC-011-browser-spawns-script/README.md) (Execution category) ▶ |
 | One-line Summary | Triage workflow: user reports an unclicked phishing email (AGC-002 lookalike domain campaign); SOC confirms no click occurred, determines campaign scope, and contains the threat. |
 
 ## Attacker Perspective
 
-### What This Is
+### Tradecraft
+
+#### What this is
 
 This scenario is **not** a new attack technique. It is a **triage workflow** that begins from a user's phishing report, not from a SIEM alert. The reported email is from the AGC-002 lookalike-domain campaign (`compliance@ashf0rdgrove.com` — note the zero replacing 'o' in the domain).
 
-### Why This Scenario Exists
+#### Why this scenario exists
 
 User-reported phishing is one of the most valuable detection sources in a SOC. It surfaces threats that bypass technical controls (email gateway, URL reputation, sandbox detonation). The workflow validates three things:
 
@@ -135,4 +137,4 @@ This email is from the same campaign documented in AGC-002 (lookalike domain). T
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

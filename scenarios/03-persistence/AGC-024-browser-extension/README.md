@@ -1,4 +1,4 @@
-# AGC-024 -- Malicious Browser-Extension Persistence
+# AGC-024 — Malicious Browser-Extension Persistence
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,34 +11,34 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-024` |
-| Category | `03-persistence` -- Persistence |
+| Category | `03-persistence` — Persistence |
 | MITRE Technique | `T1176` Browser Extensions |
 | Verdict | True Positive |
 | Confidence | Medium |
-| Time to Detect | Manual only -- no automated Wazuh/Sysmon detection path in this lab configuration |
+| Time to Detect | Manual only — no automated Wazuh/Sysmon detection path in this lab configuration |
 | Time to Triage | N/A (requires manual browser inspection per endpoint) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | < AGC-023 . next AGC-025 (Privilege Escalation category) > |
-| One-line Summary | Simulated malicious browser extension with broad permissions (all URLs, cookies, webRequest) deployed. **Primary finding: complete detection gap** -- no automated monitoring for browser extension persistence in this environment. |
+| Chain | ◀ [AGC-023](../AGC-023-new-local-admin/README.md) · next [AGC-025](../../04-privilege-escalation/AGC-025-privileged-group-add/README.md) (Privilege Escalation category) ▶ |
+| One-line Summary | Simulated malicious browser extension with broad permissions (all URLs, cookies, webRequest) deployed. **Primary finding: complete detection gap** — no automated monitoring for browser extension persistence in this environment. |
 
 ## Attacker Perspective
 
 ### Tradecraft
 
 **What:** The attacker deploys a browser extension (Chrome, Edge, or Firefox) with broad permissions that allow it to:
-- **Intercept all web traffic** (`webRequest` + `<all_urls>`) -- read/modify HTTP requests and responses, steal session tokens, inject content.
-- **Access cookies** (`cookies`) -- steal authentication cookies for any domain.
-- **Monitor tabs** (`tabs`) -- track browsing activity, detect when the user visits banking/corporate portals.
-- **Persist across sessions** -- browser extensions survive browser restarts, system reboots, and even password changes.
+- **Intercept all web traffic** (`webRequest` + `<all_urls>`) — read/modify HTTP requests and responses, steal session tokens, inject content.
+- **Access cookies** (`cookies`) — steal authentication cookies for any domain.
+- **Monitor tabs** (`tabs`) — track browsing activity, detect when the user visits banking/corporate portals.
+- **Persist across sessions** — browser extensions survive browser restarts, system reboots, and even password changes.
 
 The extension uses a benign-sounding name ("Helper Extension") and requests permissions that many legitimate extensions also require, making it difficult to distinguish from authorized tools.
 
 This provides:
 
-1. **Session-level persistence** -- the extension runs in the browser's context, with access to all web sessions the user has open, including SSO tokens and financial portals.
-2. **Credential harvesting** -- the extension can read form data, inject fake login pages, or steal cookies without triggering endpoint detection.
-3. **Cross-site access** -- `<all_urls>` permission means the extension can operate on every website, not just specific domains.
-4. **Detection blind spot** -- standard endpoint security tools (Sysmon, Wazuh, most EDR) do not monitor browser extension installations or permissions.
+1. **Session-level persistence** — the extension runs in the browser's context, with access to all web sessions the user has open, including SSO tokens and financial portals.
+2. **Credential harvesting** — the extension can read form data, inject fake login pages, or steal cookies without triggering endpoint detection.
+3. **Cross-site access** — `<all_urls>` permission means the extension can operate on every website, not just specific domains.
+4. **Detection blind spot** — standard endpoint security tools (Sysmon, Wazuh, most EDR) do not monitor browser extension installations or permissions.
 
 **Why at this lifecycle stage:** After establishing system-level persistence (services, scheduled tasks, WMI), the attacker targets the browser for application-level persistence. This is especially valuable because it provides direct access to web-based corporate resources (email, SaaS portals, financial systems) without needing to intercept encrypted network traffic.
 
@@ -83,16 +83,16 @@ This provides:
 
 ### Investigation
 
-**Step 1 -- Confirm detection coverage:**
+**Step 1 — Confirm detection coverage:**
 This is the most important step for this scenario. Neither Sysmon nor Wazuh provide automated detection for browser extension installations. The SwiftOnSecurity Sysmon config does not include rules to specifically flag writes to browser extension directories (`%LOCALAPPDATA%\Google\Chrome\User Data\*\Extensions\` or equivalent Edge/Firefox paths).
 
-**Step 2 -- Manual browser inspection required:**
+**Step 2 — Manual browser inspection required:**
 Without automated detection, identifying malicious browser extensions requires manual endpoint inspection:
 - Navigate to `chrome://extensions` (Chrome) or `edge://extensions` (Edge) and review installed extensions.
-- For each unknown extension, examine the manifest permissions -- `<all_urls>`, `webRequest`, `cookies`, `webRequestBlocking` are high-risk permissions.
-- Check if the extension is from the official store or loaded as "unpacked" (developer mode) -- unpacked extensions bypass store review.
+- For each unknown extension, examine the manifest permissions — `<all_urls>`, `webRequest`, `cookies`, `webRequestBlocking` are high-risk permissions.
+- Check if the extension is from the official store or loaded as "unpacked" (developer mode) — unpacked extensions bypass store review.
 
-**Step 3 -- Filesystem forensics (alternative):**
+**Step 3 — Filesystem forensics (alternative):**
 If browser GUI is unavailable, inspect extension directories on disk:
 - Chrome: `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Extensions\`
 - Edge: `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Extensions\`
@@ -100,7 +100,7 @@ If browser GUI is unavailable, inspect extension directories on disk:
 
 Each extension directory contains a `manifest.json` that reveals the extension's requested permissions. Parse these programmatically across the fleet as a compensating control.
 
-**Step 4 -- Cross-reference with social engineering:**
+**Step 4 — Cross-reference with social engineering:**
 Malicious browser extensions are typically delivered via:
 - Fake "install required extension" prompts on compromised or phishing websites.
 - Malicious OAuth consent flows (see AGC-009).
@@ -108,14 +108,14 @@ Malicious browser extensions are typically delivered via:
 
 ### Report
 
-**Verdict: True Positive** -- A simulated malicious browser extension with broad permissions was deployed on the endpoint.
+**Verdict: True Positive** — A simulated malicious browser extension with broad permissions was deployed on the endpoint.
 
-**Confidence: Medium** -- The Medium confidence rating reflects the detection methodology, not the analysis quality:
+**Confidence: Medium** — The Medium confidence rating reflects the detection methodology, not the analysis quality:
 - The extension artifacts were created and verified on disk.
 - Manifest permissions (`<all_urls>`, `webRequest`, `cookies`) are clearly excessive for an unknown extension.
-- However, detection relied entirely on manual inspection -- there is no automated alerting path, so confidence in fleet-wide detection coverage is inherently lower.
+- However, detection relied entirely on manual inspection — there is no automated alerting path, so confidence in fleet-wide detection coverage is inherently lower.
 
-**Primary finding -- Detection gap:**
+**Primary finding — Detection gap:**
 Browser extension persistence is a blind spot in this SOC infrastructure. This gap is actionable:
 1. **No Sysmon rule** monitors writes to browser extension directories.
 2. **No Wazuh decoder/rule** parses browser extension events.
@@ -130,9 +130,9 @@ Browser extension persistence is a blind spot in this SOC infrastructure. This g
      <TargetFilename condition="contains">manifest.json</TargetFilename>
    </FileCreate>
    ```
-3. **Deploy browser management** -- use Chrome Enterprise policies or Edge Group Policy to enforce an extension allowlist and prevent unpacked extension loading.
-4. **Fleet-wide audit** -- script a one-time scan of all endpoints' browser extension directories, parsing `manifest.json` files for high-risk permissions.
-5. **User awareness** -- train users to recognize fake "install extension" prompts.
+3. **Deploy browser management** — use Chrome Enterprise policies or Edge Group Policy to enforce an extension allowlist and prevent unpacked extension loading.
+4. **Fleet-wide audit** — script a one-time scan of all endpoints' browser extension directories, parsing `manifest.json` files for high-risk permissions.
+5. **User awareness** — train users to recognize fake "install extension" prompts.
 
 ### MITRE Mapping
 
@@ -142,4 +142,4 @@ Browser extension persistence is a blind spot in this SOC infrastructure. This g
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

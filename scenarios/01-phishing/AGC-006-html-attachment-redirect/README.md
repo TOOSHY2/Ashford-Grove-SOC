@@ -18,7 +18,7 @@
 | Time to Detect | N/A — no automated alert; Sysmon EID 11 captured the file write but no rule correlates it with the redirect |
 | Time to Triage | 04:00 (from attachment save to redirect chain confirmation) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103), `EXT-ATTACKER-SIM` (10.10.40.10) |
-| Chain | ◀ AGC-005 · next AGC-007 ▶ |
+| Chain | ◀ [AGC-005](../AGC-005-url-shortener-redirect/README.md) · next [AGC-007](../AGC-007-macro-lure-document/README.md) ▶ |
 | One-line Summary | HTML email attachment with meta-refresh auto-redirects the victim's browser to the credential-harvesting page when opened locally. |
 
 ## Attacker Perspective
@@ -118,4 +118,4 @@ The redirect target `10.10.40.10/portal-login` is the same credential-harvesting
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

@@ -1,4 +1,4 @@
-# AGC-057 -- Bulk Archive Creation (Staging for Exfiltration)
+# AGC-057 — Bulk Archive Creation (Staging for Exfiltration)
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,15 +11,15 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-057` |
-| Category | `09-collection` -- Collection |
+| Category | `09-collection` — Collection |
 | MITRE Technique | `T1560.001` Archive Collected Data: Archive via Utility |
 | Verdict | True Positive |
 | Confidence | High |
-| Time to Detect | Sysmon EID 1 (PowerShell with Compress-Archive cmdlet) -- note: Sysmon EID 11 does NOT capture .zip creation under SwiftOnSecurity config |
+| Time to Detect | Sysmon EID 1 (PowerShell with Compress-Archive cmdlet) — note: Sysmon EID 11 does NOT capture .zip creation under SwiftOnSecurity config |
 | Time to Triage | 03:00 (verify archive location is temp/staging, check source file breadth, correlate with prior enumeration activity) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | < AGC-056 (C2 category) . next AGC-058 > |
-| One-line Summary | 8 sensitive Finance documents (salary data, board minutes, M&A NDA, banking credentials, tax returns, executive compensation) archived into `C:\Windows\Temp\staged.zip` (1,775 bytes) using PowerShell `Compress-Archive`. The archive location (`C:\Windows\Temp`) is a staging path, not a user workspace -- legitimate archiving targets user document folders. Sysmon EID 11 did NOT capture the .zip creation because SwiftOnSecurity config filters EID 11 to EXE/DLL file types only -- a critical detection gap for collection/exfiltration staging. Detection relies on EID 1 (PowerShell process with -ExecutionPolicy Bypass) and PowerShell Script Block Logging (EID 4104) for the Compress-Archive cmdlet. |
+| Chain | ◀ [AGC-056](../../08-command-control/AGC-056-c2-process-tree/README.md) (C2 category) · next [AGC-058](../AGC-058-screenshot-collection/README.md) ▶ |
+| One-line Summary | 8 sensitive Finance documents (salary data, board minutes, M&A NDA, banking credentials, tax returns, executive compensation) archived into `C:\Windows\Temp\staged.zip` (1,775 bytes) using PowerShell `Compress-Archive`. The archive location (`C:\Windows\Temp`) is a staging path, not a user workspace — legitimate archiving targets user document folders. Sysmon EID 11 did NOT capture the .zip creation because SwiftOnSecurity config filters EID 11 to EXE/DLL file types only — a critical detection gap for collection/exfiltration staging. Detection relies on EID 1 (PowerShell process with -ExecutionPolicy Bypass) and PowerShell Script Block Logging (EID 4104) for the Compress-Archive cmdlet. |
 
 ## Attacker Perspective
 
@@ -29,11 +29,11 @@
 1. **Reduces transfer volume:** Compression minimizes the data to exfiltrate, reducing network exposure time
 2. **Single operation:** One file transfer is less noticeable than dozens of individual file downloads
 3. **Staging location:** Writing to `C:\Windows\Temp` (or `%TEMP%`) keeps the archive out of user-visible directories like Documents or Desktop
-4. **Built-in tools:** `Compress-Archive` is a native PowerShell cmdlet -- no external tools needed (living-off-the-land)
+4. **Built-in tools:** `Compress-Archive` is a native PowerShell cmdlet — no external tools needed (living-off-the-land)
 
 **Why the archive location matters:**
-- `C:\Windows\Temp` -- system temp, writable by elevated processes, rarely monitored by users, automatically cleaned
-- vs. `C:\Users\michael.chen\Documents\archive.zip` -- visible in user's file browser, normal archiving behavior
+- `C:\Windows\Temp` — system temp, writable by elevated processes, rarely monitored by users, automatically cleaned
+- vs. `C:\Users\michael.chen\Documents\archive.zip` — visible in user's file browser, normal archiving behavior
 - The choice of staging location distinguishes malicious collection from routine user activity
 
 ### Simulation
@@ -69,9 +69,9 @@ Compress-Archive -Path "C:\Shares\Finance\*" -DestinationPath "C:\Windows\Temp\s
 
 ### Detection
 
-**Sysmon EID 11 -- File Create: 0 events (DETECTION GAP)**
+**Sysmon EID 11 — File Create: 0 events (DETECTION GAP)**
 
-Sysmon EID 11 did NOT capture the creation of `staged.zip`. This is because the SwiftOnSecurity Sysmon configuration filters EID 11 to only capture file creation events matching the `EXE` or `DLL` RuleName pattern -- archive files (.zip, .7z, .rar) are excluded.
+Sysmon EID 11 did NOT capture the creation of `staged.zip`. This is because the SwiftOnSecurity Sysmon configuration filters EID 11 to only capture file creation events matching the `EXE` or `DLL` RuleName pattern — archive files (.zip, .7z, .rar) are excluded.
 
 **Detection gap impact:**
 ```
@@ -87,7 +87,7 @@ File Extension | EID 11 Captured | RuleName Match
 
 This means that archive-based staging for exfiltration is invisible to the default Sysmon EID 11 configuration. Only supplementary detection methods catch this activity.
 
-**Sysmon EID 1 -- Process Create (primary detection):**
+**Sysmon EID 1 — Process Create (primary detection):**
 ```
 Process Create:
 UtcTime: 2026-09-15 22:21:06.999
@@ -105,24 +105,24 @@ User: COMPROMISED-01\Administrator
 
 ### Investigation
 
-**Step 1 -- Archive location analysis:**
-`C:\Windows\Temp\staged.zip` -- staging indicators:
+**Step 1 — Archive location analysis:**
+`C:\Windows\Temp\staged.zip` — staging indicators:
 - `C:\Windows\Temp` is a system-level temp directory, not a user workspace
 - The filename "staged" implies intentional staging (in real attacks, names would be less obvious)
 - Legitimate user archiving typically targets `Documents`, `Desktop`, or project-specific folders
 
-**Step 2 -- Source file breadth analysis:**
+**Step 2 — Source file breadth analysis:**
 8 files from `C:\Shares\Finance\` spanning:
 - Revenue reports, salary data, board minutes, M&A NDAs, banking credentials, tax returns, vendor payments, executive compensation
 - This breadth (financial + PII + legal + credentials) is inconsistent with legitimate "archive this project folder" behavior
 - Legitimate archiving typically targets a single project or topic; collection across sensitivity categories suggests opportunistic data gathering
 
-**Step 3 -- Cross-reference with prior activity:**
+**Step 3 — Cross-reference with prior activity:**
 Correlate with AGC-041 (share enumeration) if present in the same timeline:
 - Enumeration of available shares -> selection of Finance share -> archive of contents = complete collection chain
 - The sequence maps to T1135 (Network Share Discovery) -> T1560.001 (Archive Collected Data)
 
-**Step 4 -- Detection gap assessment:**
+**Step 4 — Detection gap assessment:**
 The fact that Sysmon EID 11 missed this archive creation is a critical finding:
 - An attacker could create staging archives in temp directories without triggering any file-creation alert
 - Detection relies entirely on PowerShell logging (EID 1 CommandLine or EID 4104 Script Block)
@@ -130,21 +130,21 @@ The fact that Sysmon EID 11 missed this archive creation is a critical finding:
 
 ### Report
 
-**Verdict: True Positive** -- Bulk archive creation staging sensitive data for exfiltration.
+**Verdict: True Positive** — Bulk archive creation staging sensitive data for exfiltration.
 
-**Confidence: High** -- Calibrated assessment:
-1. Archive created in system temp directory (`C:\Windows\Temp`) -- staging location, not user workspace.
-2. Source files span multiple sensitivity categories (financial, PII, legal, credentials) -- inconsistent with legitimate archiving.
-3. 8 files from a single share archived in one operation -- bulk collection pattern.
-4. PowerShell with -ExecutionPolicy Bypass -- deliberate policy override.
+**Confidence: High** — Calibrated assessment:
+1. Archive created in system temp directory (`C:\Windows\Temp`) — staging location, not user workspace.
+2. Source files span multiple sensitivity categories (financial, PII, legal, credentials) — inconsistent with legitimate archiving.
+3. 8 files from a single share archived in one operation — bulk collection pattern.
+4. PowerShell with -ExecutionPolicy Bypass — deliberate policy override.
 5. Critical detection gap: Sysmon EID 11 does not capture .zip file creation under default config.
 
 **Response recommendation:**
-1. **Isolate the host** before the archive can be exfiltrated -- if caught at this stage, exfiltration can be prevented.
-2. **Identify archive contents** to assess data exposure scope -- the 8 files here contain salary data, credentials, and M&A information.
+1. **Isolate the host** before the archive can be exfiltrated — if caught at this stage, exfiltration can be prevented.
+2. **Identify archive contents** to assess data exposure scope — the 8 files here contain salary data, credentials, and M&A information.
 3. **Add archive extensions to Sysmon EID 11:** Include `.zip|.7z|.rar|.tar|.gz` in the TargetFilename filter to close the detection gap.
-4. **Enable PowerShell Script Block Logging** (EID 4104) -- this captures `Compress-Archive` with full source/destination paths even when EID 11 misses the file creation.
-5. **Monitor C:\Windows\Temp for new files** -- this directory should have minimal legitimate new file creation from user-context processes.
+4. **Enable PowerShell Script Block Logging** (EID 4104) — this captures `Compress-Archive` with full source/destination paths even when EID 11 misses the file creation.
+5. **Monitor C:\Windows\Temp for new files** — this directory should have minimal legitimate new file creation from user-context processes.
 
 ### MITRE Mapping
 
@@ -154,7 +154,7 @@ The fact that Sysmon EID 11 missed this archive creation is a critical finding:
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### Archive creation summary
 

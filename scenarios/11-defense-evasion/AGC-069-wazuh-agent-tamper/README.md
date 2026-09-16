@@ -1,4 +1,4 @@
-# AGC-069 -- Wazuh Agent Tampering (Silenced Telemetry)
+# AGC-069 — Wazuh Agent Tampering (Silenced Telemetry)
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,15 +11,15 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-069` |
-| Category | `11-defense-evasion` -- Defense Evasion |
+| Category | `11-defense-evasion` — Defense Evasion |
 | MITRE Technique | `T1562.001` Impair Defenses: Disable or Modify Tools |
 | Verdict | True Positive |
 | Confidence | Critical |
 | Time to Detect | Wazuh manager agent-status check (absence of telemetry is the signal) |
 | Time to Triage | 03:00 (verify agent state, assess silence window, check pre-disconnect activity) |
 | Affected Systems | `COMPROMISED-HOST-01` (10.10.10.103) |
-| Chain | < AGC-068 . next AGC-070 > |
-| One-line Summary | Wazuh monitoring agent stopped via `net stop WazuhSvc` under Administrator context, creating a 15-second telemetry blackout during which the SIEM received no events from COMPROMISED-HOST-01. The agent status transitioned from Active to Disconnected on the Wazuh manager. Three Sysmon EID 1 events captured the stop command (powershell.exe, net.exe, net1.exe). The key insight: the absence of telemetry is itself the alert -- the Wazuh manager detects the disconnection even though the compromised host cannot report it. This is the SIEM-layer equivalent of AGC-068's Defender disable, targeting centralized monitoring rather than local AV. |
+| Chain | ◀ [AGC-068](../AGC-068-defender-disabled/README.md) · next [AGC-070](../AGC-070-staged-artifact-deletion/README.md) ▶ |
+| One-line Summary | Wazuh monitoring agent stopped via `net stop WazuhSvc` under Administrator context, creating a 15-second telemetry blackout during which the SIEM received no events from COMPROMISED-HOST-01. The agent status transitioned from Active to Disconnected on the Wazuh manager. Three Sysmon EID 1 events captured the stop command (powershell.exe, net.exe, net1.exe). The key insight: the absence of telemetry is itself the alert — the Wazuh manager detects the disconnection even though the compromised host cannot report it. This is the SIEM-layer equivalent of AGC-068's Defender disable, targeting centralized monitoring rather than local AV. |
 
 ## Attacker Perspective
 
@@ -28,7 +28,7 @@
 **What:** Stop the Wazuh monitoring agent to prevent security events from being forwarded to the centralized SIEM. Unlike log clearing (AGC-067), which destroys historical evidence, agent tampering prevents future evidence from being collected during the silence window.
 
 **Why an Attacker Uses It Here:**
-- Stopping the agent creates a monitoring blackout -- any activity during this window generates no SIEM alerts
+- Stopping the agent creates a monitoring blackout — any activity during this window generates no SIEM alerts
 - Combined with AGC-067 (Security log clearing), this eliminates both historical and real-time detection
 - Combined with AGC-068 (Defender disable attempt), this is a systematic effort to disable all defensive layers
 - The attacker can perform additional malicious actions during the silence window with reduced risk of detection
@@ -53,7 +53,7 @@ net stop WazuhSvc
 
 ### Detection
 
-**Sysmon EID 1 -- net.exe service stop command:**
+**Sysmon EID 1 — net.exe service stop command:**
 ```
 Process Create:
 UtcTime: 2026-09-15 23:17:59.407
@@ -66,7 +66,7 @@ IntegrityLevel: High
 LogonId: 0x74B2AC
 ```
 
-**Sysmon EID 1 -- net1.exe (child process):**
+**Sysmon EID 1 — net1.exe (child process):**
 ```
 Process Create:
 UtcTime: 2026-09-15 23:17:59.440
@@ -79,7 +79,7 @@ IntegrityLevel: High
 LogonId: 0x74B2AC
 ```
 
-**Sysmon EID 1 -- PowerShell orchestration:**
+**Sysmon EID 1 — PowerShell orchestration:**
 ```
 Process Create:
 UtcTime: 2026-09-15 23:17:58.682
@@ -90,7 +90,7 @@ CommandLine: powershell.exe -ExecutionPolicy Bypass -File C:\Temp\agc069-sim.ps1
 User: COMPROMISED-01\Administrator
 ```
 
-**Wazuh Manager -- Agent status transition:**
+**Wazuh Manager — Agent status transition:**
 The Wazuh manager observed agent status change from Active to Disconnected when the agent stopped sending keep-alive messages. This is the primary detection mechanism for agent tampering.
 
 **Agent silence window:**
@@ -102,36 +102,36 @@ Silence duration: ~47 seconds (15-second intentional window + service start time
 
 ### Investigation
 
-**Step 1 -- Absence detection pattern:**
-Unlike event-based detection (where the presence of an event triggers the alert), agent tampering detection relies on absence -- the Wazuh manager notices that a previously active agent has stopped communicating. This requires:
+**Step 1 — Absence detection pattern:**
+Unlike event-based detection (where the presence of an event triggers the alert), agent tampering detection relies on absence — the Wazuh manager notices that a previously active agent has stopped communicating. This requires:
 - Periodic agent health checks on the manager
 - Alerting on unexpected state transitions (Active to Disconnected)
 - Distinguishing between network issues and intentional service stops
 
-**Step 2 -- Pre-disconnect event analysis:**
-The last events forwarded before the agent went silent include all activity from prior scenarios. Any investigation should examine the final events forwarded to the SIEM before the disconnection -- they may reveal the preparatory activity that preceded the tampering (e.g., AGC-067 log clearing, AGC-068 Defender disable).
+**Step 2 — Pre-disconnect event analysis:**
+The last events forwarded before the agent went silent include all activity from prior scenarios. Any investigation should examine the final events forwarded to the SIEM before the disconnection — they may reveal the preparatory activity that preceded the tampering (e.g., AGC-067 log clearing, AGC-068 Defender disable).
 
-**Step 3 -- Silence window risk assessment:**
+**Step 3 — Silence window risk assessment:**
 During the 47-second silence window:
 - No Security events were forwarded to the SIEM
 - No Sysmon events were forwarded (though still logged locally on the endpoint)
 - No file integrity monitoring (FIM) events were forwarded
 - Any malicious activity performed during this window would only be visible in local logs, which the attacker may have also cleared (AGC-067)
 
-**Step 4 -- Systematic defense evasion pattern:**
+**Step 4 — Systematic defense evasion pattern:**
 This is the third defense evasion technique in sequence:
 ```
 AGC-067: Security log clearing     (destroy historical evidence)
 AGC-068: Defender disable          (remove local AV detection)
 AGC-069: Wazuh agent stop          (blind centralized monitoring)
 ```
-Together, these three actions represent a comprehensive attempt to eliminate all detection and forensic capabilities on the compromised host.
+Together, these three actions represent a coordinated attempt to eliminate all detection and forensic capabilities on the compromised host.
 
 ### Report
 
-**Verdict: True Positive** -- Deliberate SIEM agent tampering to create a monitoring blackout.
+**Verdict: True Positive** — Deliberate SIEM agent tampering to create a monitoring blackout.
 
-**Confidence: Critical** -- The evidence chain is unambiguous:
+**Confidence: Critical** — The evidence chain is unambiguous:
 1. `net stop WazuhSvc` explicitly targets the monitoring agent by service name
 2. The command was executed from a confirmed compromised host (active C2 since AGC-051)
 3. This follows two other defense evasion techniques in sequence (AGC-067, AGC-068)
@@ -139,11 +139,11 @@ Together, these three actions represent a comprehensive attempt to eliminate all
 5. There is no legitimate reason for the compromised account to stop the Wazuh agent
 
 **Response recommendation:**
-1. **Treat the silence window as an assumed-compromise period** -- any activity during those 47 seconds must be forensically reconstructed from local logs (if they survived AGC-067)
-2. **Investigate the host through an independent channel** -- do not rely on the silenced agent; use a separate management interface or physical access
-3. **Deploy agent self-protection** -- configure Wazuh agent as a protected service (Windows PPL or service ACL restrictions) to prevent non-SYSTEM accounts from stopping it
-4. **Implement agent health monitoring** -- automated alerting when any agent transitions from Active to Disconnected outside of scheduled maintenance windows
-5. **Correlate with AGC-067 and AGC-068** -- the three-technique defense evasion pattern confirms the attacker is in the cleanup phase
+1. **Treat the silence window as an assumed-compromise period** — any activity during those 47 seconds must be forensically reconstructed from local logs (if they survived AGC-067)
+2. **Investigate the host through an independent channel** — do not rely on the silenced agent; use a separate management interface or physical access
+3. **Deploy agent self-protection** — configure Wazuh agent as a protected service (Windows PPL or service ACL restrictions) to prevent non-SYSTEM accounts from stopping it
+4. **Implement agent health monitoring** — automated alerting when any agent transitions from Active to Disconnected outside of scheduled maintenance windows
+5. **Correlate with AGC-067 and AGC-068** — the three-technique defense evasion pattern confirms the attacker is in the cleanup phase
 
 ### MITRE Mapping
 
@@ -153,7 +153,7 @@ Together, these three actions represent a comprehensive attempt to eliminate all
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### Agent service state transition
 

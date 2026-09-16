@@ -1,4 +1,4 @@
-# AGC-049 -- One Account Authenticating to Many Hosts
+# AGC-049 — One Account Authenticating to Many Hosts
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,14 +11,14 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-049` |
-| Category | `07-lateral-movement` -- Lateral Movement |
+| Category | `07-lateral-movement` — Lateral Movement |
 | MITRE Technique | `T1021` Remote Services (velocity + mechanism diversity) |
 | Verdict | True Positive |
 | Confidence | Critical |
-| Time to Detect | Requires SIEM-level correlation -- no single host log reveals the pattern; requires aggregating EID 4624 events across 3+ destination hosts by account identity within a sliding window |
+| Time to Detect | Requires SIEM-level correlation — no single host log reveals the pattern; requires aggregating EID 4624 events across 3+ destination hosts by account identity within a sliding window |
 | Time to Triage | 05:00 (establish baseline host-count for the flagged account; compare against normal behavior) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) as source; targets: `WIN-CLIENT-02` (10.10.10.102), `AD-DC-01` (10.10.10.10), `WIN-CLIENT-01` (10.10.10.101), `DMZ-LINUX-01` (10.10.20.10), localhost (127.0.0.1) |
-| Chain | < AGC-048 . next AGC-050 > |
+| Chain | ◀ [AGC-048](../AGC-048-ssh-pivot-to-dmz/README.md) · next [AGC-050](../AGC-050-east-west-port-scan/README.md) ▶ |
 | One-line Summary | Same account (`raj.patel`) authenticated to 4 distinct hosts using 4 different protocols (SMB, RDP, SSH, WMI) within 96 seconds. 8 Sysmon EID 1 events captured: 2x net.exe (SMB to 10.10.10.102 + 10.10.10.10 with cleartext password), cmdkey + mstsc (RDP to 10.10.10.101 with cleartext password), ssh.exe (SSH to 10.10.20.10 cross-zone), WMI cmd.exe. The combination of velocity (4 hosts in <2 min) and mechanism diversity (4 protocols) has no legitimate explanation for a standard user account. This is active lateral movement in progress. |
 
 ## Attacker Perspective
@@ -30,7 +30,7 @@
 2. Identify which protocols are available on each target
 3. Establish access across the environment before detection and credential rotation
 
-**Why this is a SIEM-level detection:** No single host's event log reveals this pattern. Each destination host sees only ONE logon event. The attacker's pattern -- same account, many hosts, short window -- is only visible when events from ALL hosts are aggregated in a SIEM (Wazuh). This is a key reason why centralized log collection is essential for lateral movement detection.
+**Why this is a SIEM-level detection:** No single host's event log reveals this pattern. Each destination host sees only ONE logon event. The attacker's pattern — same account, many hosts, short window — is only visible when events from ALL hosts are aggregated in a SIEM (Wazuh). This is a key reason why centralized log collection is essential for lateral movement detection.
 
 **Why at this lifecycle stage:** This scenario represents the culmination of the lateral movement category. After testing individual protocols (AGC-043 RDP, AGC-044 SMB, AGC-045 WinRM, AGC-046 WMI, AGC-047 PtH, AGC-048 SSH), the attacker deploys all of them in a rapid sweep to maximize access before detection.
 
@@ -74,14 +74,14 @@
 
 **Behavioral indicators:**
 1. **Velocity:** 5 authentication attempts to 4+ distinct hosts in 96 seconds
-2. **Mechanism diversity:** SMB, RDP, SSH, WMI -- four different protocols
+2. **Mechanism diversity:** SMB, RDP, SSH, WMI — four different protocols
 3. **Cross-zone reach:** SSH to DMZ (10.10.20.10) from LAN workstation
 4. **Credential reuse:** Same `raj.patel` account across all attempts
 5. **Cleartext credentials:** 3 events contain plaintext password in command line
 
 ### Investigation
 
-**Step 1 -- SIEM-level cross-host correlation:**
+**Step 1 — SIEM-level cross-host correlation:**
 This detection requires aggregating Security EID 4624 events across all destination hosts, grouped by account name within a sliding time window (15-30 minutes). The query pattern:
 - Group by: `Account Name` + `Account Domain`
 - Count: distinct `Source Network Address` (or destination hostname)
@@ -90,7 +90,7 @@ This detection requires aggregating Security EID 4624 events across all destinat
 
 A standard user account (`raj.patel` is IT-Support, not a Domain Admin) touching 4+ hosts in 96 seconds far exceeds any legitimate baseline.
 
-**Step 2 -- Mechanism diversity analysis:**
+**Step 2 — Mechanism diversity analysis:**
 Pull the logon types and authentication packages for each 4624 event:
 - Type 3 + NtLmSsp = SMB/WMI network logon
 - Type 10 + Negotiate = RDP interactive logon
@@ -98,26 +98,26 @@ Pull the logon types and authentication packages for each 4624 event:
 
 Mixed mechanisms in a tight window have essentially zero false positive rate for standard user accounts. IT automation tools use ONE consistent protocol (SCCM uses WMI, Ansible uses WinRM, etc.), not a rotating mix.
 
-**Step 3 -- Establish account baseline:**
+**Step 3 — Establish account baseline:**
 Before classifying as anomalous, check the account's normal behavior:
 - Is `raj.patel` an IT-Support role that routinely touches multiple hosts?
 - Even if yes, does the baseline include 4 protocols in 96 seconds?
 - In this case: raj.patel is IT-Support (see AGC-043/044) but the velocity + mechanism diversity far exceeds any support workflow
 
-**Step 4 -- Active incident determination:**
-Multi-host auth with mixed mechanisms in a tight window indicates **active lateral movement in progress** -- the attacker is currently expanding access. This is NOT a historical finding; it requires immediate P1 response:
-- Isolate ALL affected hosts simultaneously (not sequentially -- sequential isolation gives the attacker time to move further)
+**Step 4 — Active incident determination:**
+Multi-host auth with mixed mechanisms in a tight window indicates **active lateral movement in progress** — the attacker is currently expanding access. This is NOT a historical finding; it requires immediate P1 response:
+- Isolate ALL affected hosts simultaneously (not sequentially — sequential isolation gives the attacker time to move further)
 - Rotate the compromised credential immediately
 - Begin incident response timeline analysis across all touched hosts
 
 ### Report
 
-**Verdict: True Positive** -- Active lateral movement campaign using `raj.patel` credentials across multiple hosts and protocols.
+**Verdict: True Positive** — Active lateral movement campaign using `raj.patel` credentials across multiple hosts and protocols.
 
-**Confidence: Critical** -- Calibrated assessment:
-1. 4 distinct target hosts authenticated to within 96 seconds -- far beyond any legitimate workflow speed.
-2. 4 different authentication protocols (SMB, RDP, SSH, WMI) -- no legitimate tool or workflow uses this diversity.
-3. Cross-zone SSH attempt (LAN -> DMZ) -- standard user accounts never SSH to DMZ hosts.
+**Confidence: Critical** — Calibrated assessment:
+1. 4 distinct target hosts authenticated to within 96 seconds — far beyond any legitimate workflow speed.
+2. 4 different authentication protocols (SMB, RDP, SSH, WMI) — no legitimate tool or workflow uses this diversity.
+3. Cross-zone SSH attempt (LAN -> DMZ) — standard user accounts never SSH to DMZ hosts.
 4. Credential reuse pattern matches credential access findings from AGC-031 through AGC-036.
 5. The combination of velocity + mechanism diversity + cross-zone reach has ZERO legitimate false positive scenarios for a standard user account.
 
@@ -136,7 +136,7 @@ Multi-host auth with mixed mechanisms in a tight window indicates **active later
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### Multi-host authentication timeline
 

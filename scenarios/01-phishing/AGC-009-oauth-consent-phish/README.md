@@ -18,7 +18,7 @@
 | Time to Detect | N/A — lab cannot produce real OAuth consent telemetry; detection requires cloud IdP audit logs |
 | Time to Triage | Conceptual — real-world triage requires IdP-integrated SOC |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103), `EXT-ATTACKER-SIM` (10.10.40.10) |
-| Chain | ◀ AGC-008 · next AGC-010 ▶ |
+| Chain | ◀ [AGC-008](../AGC-008-password-reset-lure/README.md) · next [AGC-010](../AGC-010-user-reported-triage/README.md) ▶ |
 | One-line Summary | Simulated OAuth consent phishing — victim clicks "Allow" on a fake consent screen granting read-email/read-files permissions to an attacker-controlled app. |
 
 ## Attacker Perspective
@@ -107,4 +107,4 @@ If the SOC's response to a compromised account stops at "reset the password and 
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

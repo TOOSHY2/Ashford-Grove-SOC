@@ -18,7 +18,7 @@
 | Time to Detect | Immediate — Sysmon EID 1 captures parent-child chain |
 | Time to Triage | 01:00 (from event to full command-line analysis) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | ◀ AGC-011 · next AGC-013 ▶ |
+| Chain | ◀ [AGC-011](../AGC-011-browser-spawns-script/README.md) · next [AGC-013](../AGC-013-encoded-powershell/README.md) ▶ |
 | One-line Summary | Office application (WINWORD.EXE) spawns powershell.exe child — macro-driven code execution pattern with zero legitimate justification. |
 
 ## Attacker Perspective
@@ -115,4 +115,4 @@ Sysmon records `OriginalFileName: Cmd.Exe` in the PE header for the WINWORD.EXE 
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

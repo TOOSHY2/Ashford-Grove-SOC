@@ -5,7 +5,7 @@ This document describes the structure every scenario `README.md` in this reposit
 - [`templates/standard-scenario-readme.md`](templates/standard-scenario-readme.md) — for the 96 regular scenarios.
 - [`templates/full-chain-scenario-readme.md`](templates/full-chain-scenario-readme.md) — for the 4 Full Attack-Chain scenarios (AGC-077 through AGC-080).
 
-[AGC-001](../scenarios/01-phishing/AGC-001-spoofed-display-name/README.md) will be the reference implementation of the standard structure once it is published; until then, the two blank skeletons above are the authoritative definition of the format.
+[AGC-001](../scenarios/01-phishing/AGC-001-spoofed-display-name/README.md) is the reference implementation of the standard structure; [AGC-077](../scenarios/13-full-attack-chain/AGC-077-full-chain-credential-to-ransomware/README.md) is the reference for the full-chain variant.
 
 ## Why two perspectives
 
@@ -25,7 +25,21 @@ Every scenario `README.md` is organised in this order:
    - `### Report`
    - `### MITRE Mapping`
 
+Every scenario ends with a short `## Evidence` section that states whether screenshot evidence exists for that scenario yet (see [Evidence](#evidence)).
+
 Full Attack-Chain scenarios (AGC-077 through AGC-080) add two additional top-level sections after MITRE Mapping — see [Full Attack-Chain scenarios](#full-attack-chain-scenarios-agc-077agc-080).
+
+### Structural variants
+
+Three kinds of scenario legitimately omit part of the standard shape. The omission is the point, not a gap:
+
+| Variant | Scenarios | What changes | Why |
+|---|---|---|---|
+| **Threat hunt** | AGC-089 – AGC-094 | No `## Attacker Perspective`. `### Detection` becomes `### Hypothesis`; `### Investigation` holds `#### Methodology`, `#### Results`, and triage | A hunt starts from a hypothesis, not from a simulated action or an alert |
+| **False positive / benign** | AGC-081 – AGC-088 | `### Tradecraft` omitted; `### Report` carries a `#### Discriminating evidence (benign vs malicious)` table | There is no adversary technique to explain — the activity is legitimate, and the deliverable is how it was told apart from its malicious twin |
+| **Recovery closure** | AGC-076 | No `## Attacker Perspective`; `### Investigation` holds the affected-host inventory and recovery validation, `### Report` holds lessons learned | Incident-response closure for AGC-001 – AGC-075; nothing is attacked |
+
+AGC-018 (EICAR pipeline test) and AGC-079 / AGC-080 keep the full shape but document why the "attacker" side is a validation test or a phased chain rather than a single technique.
 
 ### `## Card`
 
@@ -152,9 +166,7 @@ The **Chain** field on the Card uses this format:
 - `◀ — (first scenario) · next AGC-002 ▶` — first scenario.
 - `◀ AGC-099 · — (last scenario) ▶` — last scenario.
 
-Each side of the chain is a clickable relative link to the neighbour scenario's `README.md`. The chain lets a reader walk the whole narrative kill chain end-to-end, one scenario at a time, without going back to the index.
-
-**Phase-one note:** The chain field is populated during each scenario's phase-two manual re-implementation. Phase-one (AI-authored) reports do not include chain links — their absence in those reports is expected and not a gap. As each scenario is manually re-executed, the chain field is added with correct relative links to its neighbours.
+Each side of the chain is a clickable relative link to the neighbour scenario's `README.md`. The chain lets a reader walk the whole narrative kill chain end-to-end, one scenario at a time, without going back to the index. A short parenthetical after an ID marks a category boundary, e.g. `next AGC-019 (Persistence category) ▶`. AGC-076 closes the main narrative and points forward to the first full-chain capstone; AGC-077 – AGC-080 link to each other as `related:` rather than `next`, because each is a standalone incident.
 
 ## Evidence
 
@@ -166,7 +178,11 @@ All evidence is **textual and embedded directly** in the report sections (Detect
 - Security Onion / Zeek / Suricata log entries
 - File contents and header analysis
 
-Screenshots are not captured as part of the automated execution pipeline. If an analyst later adds manual screenshots, they follow numbered naming (`01-*.png`, `02-*.png`) in a `screenshots/` subfolder and are embedded inline in the relevant subsection.
+Phase one (the AI-executed reference pass) captured no screenshots, so every scenario's `## Evidence` section currently reads:
+
+> Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
+
+When a scenario is re-executed by hand, its screenshots go in a `screenshots/` subfolder next to the `README.md`, numbered in reference order (`01-*.png`, `02-*.png`), each embedded inline in the subsection it evidences with a caption saying what to look at. The folder is created only when the first image lands — an empty `screenshots/` folder is never committed.
 
 ## Starting a new scenario
 

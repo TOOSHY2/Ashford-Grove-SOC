@@ -1,4 +1,4 @@
-# AGC-076 -- Containment, Snapshot Recovery & Validation
+# AGC-076 — Containment, Snapshot Recovery & Validation
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,16 +11,20 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-076` |
-| Category | `12-impact-recovery` -- Impact & Recovery |
-| MITRE Technique | None (Incident Response -- NIST 800-61 Containment/Eradication/Recovery) |
+| Category | `12-impact-recovery` — Impact & Recovery |
+| MITRE Technique | None (Incident Response — NIST 800-61 Containment/Eradication/Recovery) |
 | Verdict | Recovery Complete |
 | Confidence | High |
 | Time to Recover | Full validation cycle completed |
 | Affected Systems | `COMPROMISED-HOST-01`, `AD-DC-01`, `EXT-ATTACKER-SIM`, `WIN-CLIENT-02` |
-| Chain | < AGC-075 . next -- (closes main narrative; see AGC-077 for first Full-Chain capstone) > |
+| Chain | ◀ [AGC-075](../AGC-075-high-impact-gpo-change/README.md) · next — (closes main narrative; see [AGC-077](../../13-full-attack-chain/AGC-077-full-chain-credential-to-ransomware/README.md) for first Full-Chain capstone) ▶ |
 | One-line Summary | Incident response closure for the full AGC-001-075 attack narrative. Validated security service states across all affected hosts: Wazuh agent Running, Windows Defender RealTimeProtection True, Sysmon Running. Persistence artifact check confirmed clean (only legitimate Run keys: SecurityHealth, VBoxTray). Local Administrators group contains only expected members (Administrator, Domain Admins, wadmin). Print Spooler restored to Running after AGC-073 disruption. Network connections baseline shows only expected DC communication (10.10.10.10 RPC). This scenario closes the main narrative arc and hands off to Full Attack Chain capstones (AGC-077-080). |
 
-## Scenario Context
+## SOC Perspective
+
+### Investigation
+
+#### Scenario context
 
 This is NOT an attack scenario. AGC-076 is the SOC incident response workflow that closes the main attack narrative spanning AGC-001 through AGC-075. It validates that the environment can be returned to a clean state after the full attack chain simulation.
 
@@ -30,21 +34,21 @@ Everything from AGC-077 onward stands outside this continuous story:
 - AGC-089-094: Proactive Threat Hunting (hypothesis-driven hunts)
 - AGC-095-100: Insider Threat (baseline-deviation scenarios)
 
-## Affected Host Inventory
+#### Affected host inventory
 
 Compiled from AGC-001-075 execution logs:
 
 | Host | Role in Narrative | Key Scenarios |
 |---|---|---|
-| COMPROMISED-HOST-01 (10.10.10.103) | Primary target -- 60+ scenarios executed | AGC-001 through AGC-072 (phishing through ransomware) |
-| AD-DC-01 (10.10.10.10) | Domain controller -- GPO modification | AGC-075 (GPO change), AGC-037-042 (AD discovery) |
+| COMPROMISED-HOST-01 (10.10.10.103) | Primary target — 60+ scenarios executed | AGC-001 through AGC-072 (phishing through ransomware) |
+| AD-DC-01 (10.10.10.10) | Domain controller — GPO modification | AGC-075 (GPO change), AGC-037-042 (AD discovery) |
 | EXT-ATTACKER-SIM (10.10.40.10) | Attacker infrastructure + DMZ substitute | AGC-074 (defacement), AGC-051-056 (C2), phishing infrastructure |
 | WIN-CLIENT-02 (10.10.10.102) | Lateral movement target | AGC-043-050 (lateral movement attempts) |
 | DMZ-LINUX-01 (10.10.20.10) | DMZ web server (GA broken) | AGC-074 target (executed on substitute) |
 
-## Recovery Validation
+#### Recovery validation
 
-### Step 1 -- Security Service States (COMPROMISED-HOST-01)
+##### Step 1 — Security Service States (COMPROMISED-HOST-01)
 
 ```
 SERVICE                  STATUS      EXPECTED    MATCH
@@ -57,7 +61,7 @@ Print Spooler            Running     Running     YES (restored after AGC-073)
 
 All security monitoring services are operational. The Wazuh agent that was stopped in AGC-069 (telemetry silencing) has been restored. Windows Defender that AGC-068 attempted to disable remains active (Tamper Protection prevented the original change).
 
-### Step 2 -- Persistence Artifact Check
+##### Step 2 — Persistence Artifact Check
 
 **Registry Run keys (HKLM\...\Run):**
 ```
@@ -66,7 +70,7 @@ VBoxTray = C:\WINDOWS\system32\VBoxTray.exe                     [LEGITIMATE - Vi
 ```
 No rogue persistence entries from the attack narrative.
 
-**Registry Run keys (HKCU\...\Run):** Empty -- no user-level persistence.
+**Registry Run keys (HKCU\...\Run):** Empty — no user-level persistence.
 
 **Scheduled tasks (non-Microsoft):**
 ```
@@ -84,7 +88,7 @@ wadmin                      [EXPECTED - lab admin account]
 ```
 No rogue accounts added during AGC-025-030 (privilege escalation scenarios).
 
-### Step 3 -- Network Baseline
+##### Step 3 — Network Baseline
 
 ```
 Active connections (ESTABLISHED):
@@ -94,14 +98,14 @@ TCP  10.10.10.103:65173  ->  10.10.10.10:49668  (DC RPC dynamic port)
 
 Only expected domain controller communication. No C2 callbacks (AGC-051-056 C2 channels were simulation-only and did not establish persistent connections). No anomalous outbound connections.
 
-### Step 4 -- AD Domain State (AD-DC-01)
+##### Step 4 — AD Domain State (AD-DC-01)
 
 The GPO modification from AGC-075 was reverted during that scenario's execution:
-- Default Domain Policy: UserVersion reverted (AD:2/SysVol:2 -- both set and revert incremented)
+- Default Domain Policy: UserVersion reverted (AD:2/SysVol:2 — both set and revert incremented)
 - ASHFORDGROVE-PowerShell-Logging GPO: untouched (verified not modified per safety constraint)
 - No rogue GPOs created during the narrative
 
-### Step 5 -- Recovery Procedure (Documented, Not Executed)
+##### Step 5 — Recovery Procedure (Documented, Not Executed)
 
 The full snapshot recovery procedure is documented but NOT executed during this validation, as the lab VMs must remain in their current state for AGC-077-100. In a production incident:
 
@@ -124,9 +128,9 @@ The full snapshot recovery procedure is documented but NOT executed during this 
 5. MONITOR: Watch for recurrence indicators for 24-72 hours
 ```
 
-## Lessons Learned (AGC-001-075 Narrative Summary)
+### Report
 
-### Detection Gaps Identified
+#### Detection Gaps Identified
 
 | Gap | Scenarios | Impact | Recommendation |
 |---|---|---|---|
@@ -139,14 +143,14 @@ The full snapshot recovery procedure is documented but NOT executed during this 
 | EID 5136 not captured for GPO changes | AGC-075 | Directory service modifications invisible | Enable DS Access auditing |
 | Wazuh indexer unreachable | AGC-067+ | Central SIEM correlation unavailable | Investigate Wazuh service health |
 
-### Effective Detection Layers
+#### Effective Detection Layers
 
 | Layer | Reliability | Key Scenarios |
 |---|---|---|
 | Sysmon EID 1 (Process Create) | Consistently captured across all scenarios | Every Windows scenario |
 | Sysmon EID 13 (Registry Value Set) | Reliable for persistence detection | AGC-019-024 |
 | Sysmon EID 22 (DNS Query) | Reliable for C2/exfil domain tracking | AGC-051-056 |
-| Sysmon EID 3 (Network Connect) | Partial -- SwiftOnSecurity filtering | AGC-051-056, AGC-062-066 |
+| Sysmon EID 3 (Network Connect) | Partial — SwiftOnSecurity filtering | AGC-051-056, AGC-062-066 |
 | Windows Security EID 1102 | Sole survivor of log clearing | AGC-067 |
 | Windows Tamper Protection | Blocked Defender disable attempt | AGC-068 |
 
@@ -154,11 +158,11 @@ The full snapshot recovery procedure is documented but NOT executed during this 
 
 | Tactic | Technique ID | Technique Name | Evidence | Confidence |
 |---|---|---|---|---|
-| -- (Incident Response) | No ATT&CK technique | NIST 800-61: Containment, Eradication, Recovery | All security services validated Running. No persistence artifacts. Clean network baseline. AD state consistent. Recovery procedure documented. | High |
+| — (Incident Response) | No ATT&CK technique | NIST 800-61: Containment, Eradication, Recovery | All security services validated Running. No persistence artifacts. Clean network baseline. AD state consistent. Recovery procedure documented. | High |
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### Validation summary
 

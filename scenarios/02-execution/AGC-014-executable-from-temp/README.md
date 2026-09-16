@@ -18,7 +18,7 @@
 | Time to Detect | Immediate — Sysmon EID 11 (File Create, RuleName: EXE) captures placement; EID 1 captures execution |
 | Time to Triage | 02:00 (from alert to signature verification and behavior assessment) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | ◀ AGC-013 · next AGC-015 ▶ |
+| Chain | ◀ [AGC-013](../AGC-013-encoded-powershell/README.md) · next [AGC-015](../AGC-015-signed-binary-proxy/README.md) ▶ |
 | One-line Summary | Executable file placed and launched from user's `AppData\Local\Temp` directory — common malware staging location. |
 
 ## Attacker Perspective
@@ -110,4 +110,4 @@ The dropper process was `powershell.exe` (PID 2436) — in this simulation, the 
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

@@ -1,4 +1,4 @@
-# AGC-072 -- Ransomware Simulation (Safe XOR + Rename)
+# AGC-072 — Ransomware Simulation (Safe XOR + Rename)
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,15 +11,15 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-072` |
-| Category | `12-impact-recovery` -- Impact & Recovery |
+| Category | `12-impact-recovery` — Impact & Recovery |
 | MITRE Technique | `T1486` Data Encrypted for Impact |
 | Verdict | True Positive |
 | Confidence | Critical |
 | Time to Detect | Sysmon EID 1 (powershell.exe executing encryption script) |
 | Time to Triage | 03:00 (rapid file transformation burst, clear ransomware behavioral pattern) |
 | Affected Systems | `COMPROMISED-HOST-01` (10.10.10.103) |
-| Chain | < AGC-071 . next AGC-073 > |
-| One-line Summary | Ransomware behavioral simulation: 10 synthetic financial documents (3KB each) XOR-encrypted with static key (0x42) and renamed to `.agc072locked` extension in under 200 milliseconds. Sysmon EID 11 captured only the script file copy (not the `.agc072locked` files) due to SwiftOnSecurity EXE/DLL-only file creation filter -- a critical detection gap for ransomware file transformation artifacts. Sysmon EID 1 captured the orchestrating PowerShell process with full command line. No live malware used; reversible XOR with known key. |
+| Chain | ◀ [AGC-071](../../11-defense-evasion/AGC-071-obfuscated-command-line/README.md) · next [AGC-073](../AGC-073-critical-service-disruption/README.md) ▶ |
+| One-line Summary | Ransomware behavioral simulation: 10 synthetic financial documents (3KB each) XOR-encrypted with static key (0x42) and renamed to `.agc072locked` extension in under 200 milliseconds. Sysmon EID 11 captured only the script file copy (not the `.agc072locked` files) due to SwiftOnSecurity EXE/DLL-only file creation filter — a critical detection gap for ransomware file transformation artifacts. Sysmon EID 1 captured the orchestrating PowerShell process with full command line. No live malware used; reversible XOR with known key. |
 
 ## Attacker Perspective
 
@@ -34,9 +34,9 @@
 - The `.agc072locked` extension serves as the ransom note equivalent, signaling compromise to the victim
 
 **Simulation Safety:**
-- XOR cipher with known key (0x42) -- trivially reversible, not cryptographically secure
-- Synthetic test files only -- no real data at risk
-- Isolated test directory (`C:\Windows\Temp\agc072_test_data`) -- no system files touched
+- XOR cipher with known key (0x42) — trivially reversible, not cryptographically secure
+- Synthetic test files only — no real data at risk
+- Isolated test directory (`C:\Windows\Temp\agc072_test_data`) — no system files touched
 - Automatic cleanup after evidence collection
 
 ### Simulation
@@ -76,7 +76,7 @@ Get-ChildItem "$testDir\*" | ForEach-Object {
 
 ### Detection
 
-**Sysmon EID 1 -- Orchestrating PowerShell process:**
+**Sysmon EID 1 — Orchestrating PowerShell process:**
 ```
 Process Create:
 UtcTime: 2026-09-15 23:27:18.750
@@ -90,7 +90,7 @@ IntegrityLevel: High
 ParentImage: C:\Windows\System32\VBoxService.exe
 ```
 
-**Sysmon EID 11 -- File creation (script copy only):**
+**Sysmon EID 11 — File creation (script copy only):**
 ```
 File created:
 UtcTime: 2026-09-15 23:27:17.218
@@ -100,7 +100,7 @@ Image: C:\Windows\System32\VBoxService.exe
 TargetFilename: C:\Temp\agc072-sim.ps1
 ```
 
-**DETECTION GAP -- EID 11 NOT triggered for .agc072locked files:**
+**DETECTION GAP — EID 11 NOT triggered for .agc072locked files:**
 The SwiftOnSecurity Sysmon configuration filters EID 11 (FileCreate) to only capture EXE and DLL extensions (`RuleName: EXE` / `RuleName: DLL`). The 10 `.agc072locked` files created during the ransomware simulation did NOT generate EID 11 events. This is a significant detection gap: ransomware file transformations that use non-executable extensions are invisible to this Sysmon configuration's file creation monitoring.
 
 **Ransomware execution timeline (from simulation output):**
@@ -121,20 +121,20 @@ The SwiftOnSecurity Sysmon configuration filters EID 11 (FileCreate) to only cap
 
 ### Investigation
 
-**Step 1 -- Identify the ransomware behavioral pattern:**
+**Step 1 — Identify the ransomware behavioral pattern:**
 The EID 1 event shows PowerShell executing `agc072-sim.ps1` under Administrator context from `C:\Temp\`. Key ransomware indicators:
 - Script execution from a staging directory (not a standard application path)
 - Administrator privileges (required for system-wide encryption)
-- Parent process is VBoxService.exe (guestcontrol execution -- in production, this would typically be a compromised application or exploit chain)
+- Parent process is VBoxService.exe (guestcontrol execution — in production, this would typically be a compromised application or exploit chain)
 - The `-ExecutionPolicy Bypass` flag indicates deliberate policy circumvention
 
-**Step 2 -- Assess the encryption burst:**
-10 files transformed in 199 milliseconds -- this rapid-fire pattern is characteristic of ransomware:
+**Step 2 — Assess the encryption burst:**
+10 files transformed in 199 milliseconds — this rapid-fire pattern is characteristic of ransomware:
 - Real ransomware like LockBit 3.0 can encrypt thousands of files per second using multi-threaded I/O
 - The burst pattern (many file operations in sub-second intervals) is detectable by behavioral analytics even when individual file operations are not logged
 - The consistent `.agc072locked` extension rename is a ransomware hallmark (cf. `.encrypted`, `.locked`, `.crypt`)
 
-**Step 3 -- Evaluate detection coverage gaps:**
+**Step 3 — Evaluate detection coverage gaps:**
 
 | Detection Layer | Status | Notes |
 |---|---|---|
@@ -145,14 +145,14 @@ The EID 1 event shows PowerShell executing `agc072-sim.ps1` under Administrator 
 | Windows Defender | ALLOWED | XOR is not a known malware signature |
 | Wazuh SIEM | PARTIAL | Would alert on EID 1 if rule exists for script execution |
 
-**Step 4 -- Cross-reference with attack chain:**
+**Step 4 — Cross-reference with attack chain:**
 This is the culmination of the full kill chain simulated across AGC-001 through AGC-071. The ransomware execution represents the "impact" phase where all prior tradecraft (initial access, persistence, privilege escalation, lateral movement, defense evasion) converges into the attacker's ultimate objective: denying the victim access to their data for extortion.
 
 ### Report
 
-**Verdict: True Positive** -- Ransomware behavioral pattern: bulk file encryption with extension rename.
+**Verdict: True Positive** — Ransomware behavioral pattern: bulk file encryption with extension rename.
 
-**Confidence: Critical** -- Despite the simulation using safe XOR encryption:
+**Confidence: Critical** — Despite the simulation using safe XOR encryption:
 1. The behavioral pattern (rapid bulk encryption + extension rename) is unambiguous ransomware activity
 2. The orchestrating process was captured by Sysmon EID 1 with full command line
 3. 10 financial documents encrypted in under 200ms demonstrates the speed of real ransomware
@@ -160,12 +160,12 @@ This is the culmination of the full kill chain simulated across AGC-001 through 
 5. Administrator-context execution from a staging directory matches real-world ransomware deployment
 
 **Response recommendation:**
-1. **Expand Sysmon EID 11 filtering** to capture file creation for common ransomware extensions (`.locked`, `.encrypted`, `.crypt`, and any anomalous new extensions appearing in burst patterns) -- the current EXE/DLL-only filter misses the entire ransomware file transformation
-2. **Enable Sysmon EID 23 or EID 26** (FileDelete / FileDeleteDetected) to capture original file deletion during encryption -- this provides a second detection opportunity
+1. **Expand Sysmon EID 11 filtering** to capture file creation for common ransomware extensions (`.locked`, `.encrypted`, `.crypt`, and any anomalous new extensions appearing in burst patterns) — the current EXE/DLL-only filter misses the entire ransomware file transformation
+2. **Enable Sysmon EID 23 or EID 26** (FileDelete / FileDeleteDetected) to capture original file deletion during encryption — this provides a second detection opportunity
 3. **Implement behavioral analytics** for rapid file I/O bursts: 10+ file operations within 1 second to the same directory should trigger a high-severity alert regardless of file extension
-4. **Deploy canary files** (honeypot documents) in sensitive directories -- any modification of these files triggers an immediate alert, independent of Sysmon configuration
-5. **Network isolation** upon ransomware detection -- automated host quarantine to prevent lateral spread of encryption
-6. **Verify backup integrity** -- ransomware operators often target backup systems before encrypting primary data; ensure offline/immutable backups exist
+4. **Deploy canary files** (honeypot documents) in sensitive directories — any modification of these files triggers an immediate alert, independent of Sysmon configuration
+5. **Network isolation** upon ransomware detection — automated host quarantine to prevent lateral spread of encryption
+6. **Verify backup integrity** — ransomware operators often target backup systems before encrypting primary data; ensure offline/immutable backups exist
 
 ### MITRE Mapping
 
@@ -175,7 +175,7 @@ This is the culmination of the full kill chain simulated across AGC-001 through 
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### File transformation summary
 

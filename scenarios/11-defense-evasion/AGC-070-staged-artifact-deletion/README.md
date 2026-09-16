@@ -1,4 +1,4 @@
-# AGC-070 -- Staged-Artifact Deletion (Cleanup)
+# AGC-070 — Staged-Artifact Deletion (Cleanup)
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,15 +11,15 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-070` |
-| Category | `11-defense-evasion` -- Defense Evasion |
+| Category | `11-defense-evasion` — Defense Evasion |
 | MITRE Technique | `T1070.004` Indicator Removal: File Deletion |
 | Verdict | True Positive |
 | Confidence | High |
 | Time to Detect | Sysmon EID 1 (cmd.exe with `del /f /q staged.zip` in command line) |
 | Time to Triage | 05:00 (correlate deleted file with prior staging/exfiltration events) |
 | Affected Systems | `COMPROMISED-HOST-01` (10.10.10.103) |
-| Chain | < AGC-069 . next AGC-071 > |
-| One-line Summary | Deletion of staged archive (`staged.zip`, 858 bytes) and staging directory from `C:\Windows\Temp\` -- cleanup of artifacts left behind by the collection (AGC-057) and exfiltration (AGC-062/066) phases. The deletion itself was captured via Sysmon EID 1 (cmd.exe process with `del /f /q` command line). Sysmon EID 23 (FileDelete) and EID 26 (FileDeleteDetected) were NOT enabled in the SwiftOnSecurity configuration, representing a detection gap: the deletion process is visible but the specific file deletion event is not directly logged. This is the final phase of the attacker's collection-to-cleanup lifecycle. |
+| Chain | ◀ [AGC-069](../AGC-069-wazuh-agent-tamper/README.md) · next [AGC-071](../AGC-071-obfuscated-command-line/README.md) ▶ |
+| One-line Summary | Deletion of staged archive (`staged.zip`, 858 bytes) and staging directory from `C:\Windows\Temp\` — cleanup of artifacts left behind by the collection (AGC-057) and exfiltration (AGC-062/066) phases. The deletion itself was captured via Sysmon EID 1 (cmd.exe process with `del /f /q` command line). Sysmon EID 23 (FileDelete) and EID 26 (FileDeleteDetected) were NOT enabled in the SwiftOnSecurity configuration, representing a detection gap: the deletion process is visible but the specific file deletion event is not directly logged. This is the final phase of the attacker's collection-to-cleanup lifecycle. |
 
 ## Attacker Perspective
 
@@ -59,7 +59,7 @@ del /f /q C:\Windows\Temp\staged.zip
 
 ### Detection
 
-**Sysmon EID 1 -- cmd.exe deletion command:**
+**Sysmon EID 1 — cmd.exe deletion command:**
 ```
 Process Create:
 UtcTime: 2026-09-15 23:21:17.056
@@ -73,12 +73,12 @@ LogonId: 0x7B14ED
 ```
 
 **Sysmon EID 23 (FileDelete): 0 events**
-File deletion logging (EID 23) is NOT enabled in the SwiftOnSecurity Sysmon configuration. This is a significant detection gap -- the deletion action is only visible through the cmd.exe process creation, not through a dedicated file deletion event.
+File deletion logging (EID 23) is NOT enabled in the SwiftOnSecurity Sysmon configuration. This is a significant detection gap — the deletion action is only visible through the cmd.exe process creation, not through a dedicated file deletion event.
 
 **Sysmon EID 26 (FileDeleteDetected): 0 events**
 Also not enabled in the current Sysmon configuration.
 
-**Sysmon EID 1 -- PowerShell orchestration:**
+**Sysmon EID 1 — PowerShell orchestration:**
 ```
 Process Create:
 UtcTime: 2026-09-15 23:21:12.388
@@ -91,19 +91,19 @@ User: COMPROMISED-01\Administrator
 
 ### Investigation
 
-**Step 1 -- Correlate deleted file with prior staging:**
+**Step 1 — Correlate deleted file with prior staging:**
 The deleted file (`C:\Windows\Temp\staged.zip`) matches the artifact naming and location from:
 - **AGC-057**: Compress-Archive created staged archives in `C:\Windows\Temp\`
 - **AGC-066**: Unified archive-exfil operation used `C:\Windows\Temp\agc066_staged.zip`
 The deletion targets the remnant of these operations, confirming the attacker is cleaning up after a completed exfiltration campaign.
 
-**Step 2 -- Detection gap assessment:**
+**Step 2 — Detection gap assessment:**
 Without Sysmon EID 23/26, the investigation must rely on:
 - **EID 1 command-line analysis:** `del /f /q` with a specific file path in `C:\Windows\Temp\`
 - **Absence correlation:** File was known to exist (created by AGC-057/066 operations, captured by EID 11 where applicable) but is now absent on the filesystem
 - **Timeline proximity:** Deletion occurred shortly after defense evasion activities (AGC-067/068/069)
 
-**Step 3 -- Collection-to-cleanup lifecycle:**
+**Step 3 — Collection-to-cleanup lifecycle:**
 ```
 Collection:     AGC-057 (archive), AGC-058 (screenshots), AGC-059 (browser data)
 Staging:        AGC-061 (AD export), AGC-064 (USB staging), AGC-065 (SMB staging)
@@ -113,14 +113,14 @@ Cleanup:        AGC-070 (artifact deletion) <-- this scenario
 ```
 The artifact deletion is the final phase, confirming the attacker has completed their mission and is now systematically removing evidence.
 
-**Step 4 -- Sysmon configuration recommendation:**
+**Step 4 — Sysmon configuration recommendation:**
 Enable EID 23 (FileDelete) and/or EID 26 (FileDeleteDetected) in the Sysmon configuration to capture file deletion events directly. Without these, file deletion detection depends entirely on command-line analysis of process creation events, which can miss deletion performed through Windows Explorer or API calls without a visible process.
 
 ### Report
 
-**Verdict: True Positive** -- Deliberate deletion of exfiltration staging artifacts.
+**Verdict: True Positive** — Deliberate deletion of exfiltration staging artifacts.
 
-**Confidence: High** (not Critical because the deletion itself is a secondary indicator -- the primary damage was the exfiltration):
+**Confidence: High** (not Critical because the deletion itself is a secondary indicator — the primary damage was the exfiltration):
 1. Deleted file matches known staging artifact from prior collection scenarios
 2. Deletion performed from confirmed compromised host with active C2
 3. Follows the established defense evasion sequence (AGC-067/068/069)
@@ -128,10 +128,10 @@ Enable EID 23 (FileDelete) and/or EID 26 (FileDeleteDetected) in the Sysmon conf
 5. Administrator context on the compromised host
 
 **Response recommendation:**
-1. **Focus forensic effort on the exfiltration**, not the cleanup -- the damage was done when the data left the network (AGC-062/063/066), not when the staging files were deleted
+1. **Focus forensic effort on the exfiltration**, not the cleanup — the damage was done when the data left the network (AGC-062/063/066), not when the staging files were deleted
 2. **Enable Sysmon EID 23/26** in the configuration to capture future file deletion events directly, closing the detection gap
-3. **Check for additional remnant files** in `C:\Windows\Temp\` and other staging directories -- the attacker may have missed some artifacts
-4. **Review Sysmon EID 11 history** for file creation events in `C:\Windows\Temp\` -- these may reveal files that were staged and subsequently deleted without EID 23 logging
+3. **Check for additional remnant files** in `C:\Windows\Temp\` and other staging directories — the attacker may have missed some artifacts
+4. **Review Sysmon EID 11 history** for file creation events in `C:\Windows\Temp\` — these may reveal files that were staged and subsequently deleted without EID 23 logging
 5. **Correlate the cleanup timeline** with the exfiltration timeline to establish the complete attack lifecycle
 
 ### MITRE Mapping
@@ -142,7 +142,7 @@ Enable EID 23 (FileDelete) and/or EID 26 (FileDeleteDetected) in the Sysmon conf
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### Artifact lifecycle (creation to deletion)
 

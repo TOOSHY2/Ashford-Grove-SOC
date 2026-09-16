@@ -1,4 +1,4 @@
-# AGC-075 -- High-Impact Group Policy Change
+# AGC-075 — High-Impact Group Policy Change
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,15 +11,15 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-075` |
-| Category | `12-impact-recovery` -- Impact & Recovery |
+| Category | `12-impact-recovery` — Impact & Recovery |
 | MITRE Technique | `T1484.001` Domain Policy Modification: Group Policy Modification |
 | Verdict | True Positive |
 | Confidence | Critical |
 | Time to Detect | GPO metadata (ModificationTime and UserVersion increment on Default Domain Policy) |
 | Time to Triage | 05:00 (GPO change review, scope assessment, revert) |
-| Affected Systems | `AD-DC-01` (10.10.10.10) -- domain-wide scope via Default Domain Policy |
-| Chain | < AGC-074 . next AGC-076 > |
-| One-line Summary | Domain-wide Group Policy modification via `Set-GPRegistryValue` on AD-DC-01: Default Domain Policy (ID 31b2f340-016d-11d2-945f-00c04fb984f9) modified to set ScreenSaveTimeOut=1 under HKCU Desktop policy key. GPO UserVersion incremented from AD:0/SysVol:0 to AD:1/SysVol:1. ModificationTime updated to 2026-09-15 16:45:22 UTC. EID 5136 (directory service object modification) NOT captured -- directory-service access auditing may not be enabled for GPO container objects on this DC. Change reverted (UserVersion AD:2/SysVol:2). This atomic technique is reused by AGC-078 as the impact phase of its attack chain. |
+| Affected Systems | `AD-DC-01` (10.10.10.10) — domain-wide scope via Default Domain Policy |
+| Chain | ◀ [AGC-074](../AGC-074-dmz-website-defacement/README.md) · next [AGC-076](../AGC-076-containment-recovery/README.md) ▶ |
+| One-line Summary | Domain-wide Group Policy modification via `Set-GPRegistryValue` on AD-DC-01: Default Domain Policy (ID 31b2f340-016d-11d2-945f-00c04fb984f9) modified to set ScreenSaveTimeOut=1 under HKCU Desktop policy key. GPO UserVersion incremented from AD:0/SysVol:0 to AD:1/SysVol:1. ModificationTime updated to 2026-09-15 16:45:22 UTC. EID 5136 (directory service object modification) NOT captured — directory-service access auditing may not be enabled for GPO container objects on this DC. Change reverted (UserVersion AD:2/SysVol:2). This atomic technique is reused by AGC-078 as the impact phase of its attack chain. |
 
 ## Attacker Perspective
 
@@ -31,7 +31,7 @@
 - **Domain-wide impact from a single change:** Modifying the Default Domain Policy affects every domain-joined workstation and server in the ashfordgrove.local domain
 - **Legitimate administration tool:** GPO changes are routine IT operations, making malicious modifications harder to distinguish from authorized changes
 - **Persistence potential:** GPO-pushed settings reapply automatically every 90 minutes (default refresh), so even if an admin manually fixes a host, the GPO reapplies the malicious setting
-- **Security weakening:** An attacker could disable Windows Firewall, relax password policies, disable audit logging, or push malicious scripts via GPO -- far more impactful than host-level changes
+- **Security weakening:** An attacker could disable Windows Firewall, relax password policies, disable audit logging, or push malicious scripts via GPO — far more impactful than host-level changes
 - **Requires Domain Admin or equivalent:** Successfully modifying GPOs proves the attacker has achieved the highest level of Active Directory compromise
 
 **Scope of this simulation:** The ScreenSaveTimeOut setting is deliberately low-impact (cosmetic screen saver timing), chosen to demonstrate the technique without disrupting lab infrastructure that other scenarios depend on. In a real attack, the GPO modification would target security-critical settings.
@@ -81,31 +81,31 @@ AFTER REVERT (Remove-GPRegistryValue):
   UserVersion: AD Version: 2, SysVol Version: 2
 ```
 
-**DETECTION GAP -- EID 5136 not captured:**
+**DETECTION GAP — EID 5136 not captured:**
 Windows Security Event ID 5136 (A directory service object was modified) was NOT observed within 5 minutes of the GPO modification. This indicates that directory-service access auditing (specifically "Audit Directory Service Changes" under Advanced Audit Policy) may not be enabled for Group Policy container objects on this domain controller. Without EID 5136, GPO modifications are invisible to security event monitoring.
 
-**Alternative detection -- GPO version tracking:**
+**Alternative detection — GPO version tracking:**
 The GPO UserVersion increment (0 -> 1 -> 2) and ModificationTime changes provide forensic evidence of modification, but these require periodic polling of GPO metadata rather than event-driven alerting.
 
 ### Investigation
 
-**Step 1 -- Identify the GPO change:**
+**Step 1 — Identify the GPO change:**
 The `Set-GPRegistryValue` command modified the Default Domain Policy, which has domain-wide scope. The registry key path (`HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop`) targets User Configuration, meaning the change applies to every domain user's desktop settings at next Group Policy refresh.
 
-**Step 2 -- Assess the modified setting:**
+**Step 2 — Assess the modified setting:**
 ScreenSaveTimeOut=1 (1 second) is a cosmetic setting in this simulation. In a real attack scenario, the same technique could modify:
 - `HKLM\Software\Policies\Microsoft\Windows Defender\DisableAntiSpyware` (disable Defender domain-wide)
 - `HKLM\Software\Policies\Microsoft\Windows\EventLog\Security\MaxSize` (reduce security log size to enable faster rotation and evidence destruction)
 - `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` (push persistence to all users)
 - Windows Firewall policies (disable network filtering domain-wide)
 
-**Step 3 -- Verify authorization:**
+**Step 3 — Verify authorization:**
 The modification was executed from the Administrator account (Domain Admin) on AD-DC-01. Key questions for a real investigation:
 - Was a change management ticket filed for this GPO modification?
 - Is this account authorized for GPO changes, and was the change within their documented scope?
 - Were other GPOs modified in the same time window?
 
-**Step 4 -- Assess domain-wide scope:**
+**Step 4 — Assess domain-wide scope:**
 The Default Domain Policy (ID 31b2f340-016d-11d2-945f-00c04fb984f9) is linked at the domain root, meaning it applies to all OUs unless blocked. In ashfordgrove.local, this affects:
 - WIN-CLIENT-01 (sarah.jenkins)
 - WIN-CLIENT-02 (raj.patel)
@@ -114,9 +114,9 @@ The Default Domain Policy (ID 31b2f340-016d-11d2-945f-00c04fb984f9) is linked at
 
 ### Report
 
-**Verdict: True Positive** -- Unauthorized domain-wide Group Policy modification.
+**Verdict: True Positive** — Unauthorized domain-wide Group Policy modification.
 
-**Confidence: Critical** -- Despite the low-impact setting chosen for simulation safety:
+**Confidence: Critical** — Despite the low-impact setting chosen for simulation safety:
 1. The GPO modification was confirmed via metadata changes (ModificationTime, UserVersion increment)
 2. The Default Domain Policy has the broadest possible scope in the domain
 3. The technique (Set-GPRegistryValue) can modify any registry-based policy setting
@@ -125,10 +125,10 @@ The Default Domain Policy (ID 31b2f340-016d-11d2-945f-00c04fb984f9) is linked at
 6. EID 5136 not captured represents a significant audit gap for the most impactful AD modification category
 
 **Response recommendation:**
-1. **Enable directory-service access auditing** for Group Policy container objects immediately -- without EID 5136, GPO modifications are invisible to SIEM
-2. **Audit all recent GPO modifications** across all domain GPOs, not just the one detected -- an attacker with GPO write access likely made multiple changes
+1. **Enable directory-service access auditing** for Group Policy container objects immediately — without EID 5136, GPO modifications are invisible to SIEM
+2. **Audit all recent GPO modifications** across all domain GPOs, not just the one detected — an attacker with GPO write access likely made multiple changes
 3. **Implement GPO change monitoring** via periodic `Get-GPO -All` version comparison, as a compensating control until EID 5136 auditing is enabled
-4. **Review GPO delegation** -- restrict Group Policy modification rights to a minimal set of monitored service accounts; consider implementing Privileged Access Workstations (PAWs) for GPO management
+4. **Review GPO delegation** — restrict Group Policy modification rights to a minimal set of monitored service accounts; consider implementing Privileged Access Workstations (PAWs) for GPO management
 5. **Force immediate Group Policy refresh** (`gpupdate /force`) on all domain hosts after reverting malicious changes, to ensure the reverted settings propagate before the next automatic refresh cycle
 6. **Consider GPO backup/versioning** via `Backup-GPO` scheduled tasks, enabling point-in-time recovery of any GPO to a known-good state
 
@@ -140,7 +140,7 @@ The Default Domain Policy (ID 31b2f340-016d-11d2-945f-00c04fb984f9) is linked at
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### GPO modification timeline
 

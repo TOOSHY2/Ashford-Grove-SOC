@@ -1,4 +1,4 @@
-# AGC-040 -- Service and Process Discovery
+# AGC-040 — Service and Process Discovery
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,14 +11,14 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-040` |
-| Category | `06-discovery` -- Discovery |
+| Category | `06-discovery` — Discovery |
 | MITRE Technique | `T1057` Process Discovery / `T1007` System Service Discovery |
 | Verdict | True Positive |
 | Confidence | Medium |
-| Time to Detect | Immediate -- Sysmon EID 1 captures `tasklist.exe` and `sc.exe` process creation |
+| Time to Detect | Immediate — Sysmon EID 1 captures `tasklist.exe` and `sc.exe` process creation |
 | Time to Triage | 03:00 (cross-reference with subsequent defense evasion attempts targeting discovered security processes) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | < AGC-039 . next AGC-041 > |
+| Chain | ◀ [AGC-039](../AGC-039-group-enumeration/README.md) · next [AGC-041](../AGC-041-network-share-enum/README.md) ▶ |
 | One-line Summary | Service and process enumeration burst: `tasklist`, `tasklist /svc`, `sc query`, `Get-Process`, `Get-Service` from Administrator context in 2 seconds. Discovered security stack: WinDefend (NOT_STOPPABLE), Sysmon64 (STOPPABLE), WazuhSvc (STOPPABLE). Intelligence gathered feeds directly into defense evasion planning. |
 
 ## Attacker Perspective
@@ -26,11 +26,11 @@
 ### Tradecraft
 
 **What:** Process and service discovery maps what is running on the compromised host, with particular interest in:
-- **Security tools** -- antivirus (MsMpEng/WinDefend), EDR (Sysmon), SIEM agents (Wazuh) -- to plan defense evasion
-- **Administrative services** -- remote management, backup agents -- for persistence opportunities
-- **Service stop-ability** -- `sc query` reveals which services are STOPPABLE vs. NOT_STOPPABLE, directly informing whether a service can be disabled
+- **Security tools** — antivirus (MsMpEng/WinDefend), EDR (Sysmon), SIEM agents (Wazuh) — to plan defense evasion
+- **Administrative services** — remote management, backup agents — for persistence opportunities
+- **Service stop-ability** — `sc query` reveals which services are STOPPABLE vs. NOT_STOPPABLE, directly informing whether a service can be disabled
 
-The attacker is not just listing processes for awareness -- they are performing security tool reconnaissance to plan their next move. The output of this discovery directly feeds the defense evasion phase (AGC-067+).
+The attacker is not just listing processes for awareness — they are performing security tool reconnaissance to plan their next move. The output of this discovery directly feeds the defense evasion phase (AGC-067+).
 
 **Why at this lifecycle stage:** After mapping the host (AGC-037), domain (AGC-038), and privileged accounts (AGC-039), the attacker now needs to understand what defenses are active. This is the final discovery step before transitioning to either lateral movement or defense evasion. The key question: "What is watching me, and can I turn it off?"
 
@@ -54,8 +54,8 @@ The attacker is not just listing processes for awareness -- they are performing 
 | Service | Status | Stoppable | Attacker Implication |
 |---|---|---|---|
 | WinDefend (Defender AV) | Running | NO | Cannot be stopped via `sc stop`; requires tampering via registry/policy |
-| Sysmon64 | Running | YES | Can be stopped or unloaded -- high-value defense evasion target |
-| WazuhSvc (SIEM agent) | Running | YES | Can be stopped -- would blind the SOC to further activity |
+| Sysmon64 | Running | YES | Can be stopped or unloaded — high-value defense evasion target |
+| WazuhSvc (SIEM agent) | Running | YES | Can be stopped — would blind the SOC to further activity |
 | SecurityHealthService | Running | NO | Cannot be stopped via `sc stop` |
 | mpssvc (Defender Firewall) | Running | N/A | Firewall rules can be modified without stopping the service |
 
@@ -65,7 +65,7 @@ The attacker is not just listing processes for awareness -- they are performing 
 
 ### Detection
 
-**Sysmon EID 1 -- Process Create (3 events in 2 seconds):**
+**Sysmon EID 1 — Process Create (3 events in 2 seconds):**
 
 | Timestamp (UTC) | Image | CommandLine | PID | User | IntegrityLevel |
 |---|---|---|---|---|---|
@@ -75,37 +75,37 @@ The attacker is not just listing processes for awareness -- they are performing 
 
 All share `LogonGuid: {eb65e329-ae90-6aa9-4e8a-560000000000}`, confirming single session.
 
-Note: `Get-Process` and `Get-Service` are PowerShell cmdlets that execute in-process -- they do not spawn separate executables and therefore do not generate Sysmon EID 1 events. PowerShell script-block logging (EID 4104) would capture these, but the key detection remains the external tool invocations.
+Note: `Get-Process` and `Get-Service` are PowerShell cmdlets that execute in-process — they do not spawn separate executables and therefore do not generate Sysmon EID 1 events. PowerShell script-block logging (EID 4104) would capture these, but the key detection remains the external tool invocations.
 
 ### Investigation
 
-**Step 1 -- Assess the cluster pattern:**
+**Step 1 — Assess the cluster pattern:**
 Three process/service enumeration commands from the same session within 2 seconds. Like AGC-037, the pattern (count + diversity + timing) is the indicator. However, `tasklist` and `sc query` are common administrative and troubleshooting tools, so this pattern overlaps significantly with legitimate IT activity.
 
-**Step 2 -- Forward correlation with defense evasion (critical):**
+**Step 2 — Forward correlation with defense evasion (critical):**
 The real value of this detection is what comes AFTER it. If process/service discovery is followed by:
-- `sc stop Sysmon64` or `sc stop WazuhSvc` -- direct defense evasion
+- `sc stop Sysmon64` or `sc stop WazuhSvc` — direct defense evasion
 - Registry modifications to disable Defender (`Set-MpPreference -DisableRealtimeMonitoring $true`)
 - Process termination of security tools (`taskkill /f /im sysmon64.exe`)
 - Sysmon driver unload (`fltmc unload SysmonDrv`)
 
 ...then the discovery + evasion combination is far stronger than either alone. Check the same LogonGuid for any of these actions within the next 5-10 minutes.
 
-**Step 3 -- Account context:**
+**Step 3 — Account context:**
 Administrator (RID-500) on a workstation. While `tasklist` is commonly used for troubleshooting, the combination with `sc query` and `tasklist /svc` specifically maps the service-to-process relationship, which is more diagnostic of attacker tradecraft than routine troubleshooting.
 
-**Step 4 -- Detection reuse:**
+**Step 4 — Detection reuse:**
 This reuses the AGC-037 burst detection pattern: aggregate Sysmon EID 1 by LogonGuid, count process/service enumeration tools (`tasklist`, `sc.exe`, `wmic process`) within a sliding window. The detection is low-value in isolation but becomes high-value when correlated with subsequent defense evasion activity.
 
 ### Report
 
-**Verdict: True Positive** -- Process and service enumeration was executed from a compromised workstation by the Administrator account, as part of a documented discovery chain.
+**Verdict: True Positive** — Process and service enumeration was executed from a compromised workstation by the Administrator account, as part of a documented discovery chain.
 
-**Confidence: Medium** -- Calibrated assessment:
-1. `tasklist` and `sc query` are inherently dual-use -- they are standard troubleshooting commands run daily by IT staff. No single command is suspicious in isolation.
+**Confidence: Medium** — Calibrated assessment:
+1. `tasklist` and `sc query` are inherently dual-use — they are standard troubleshooting commands run daily by IT staff. No single command is suspicious in isolation.
 2. The burst pattern from the same session as AGC-037/038/039 provides chain context that elevates the signal.
 3. Confidence stays Medium because the same pattern is commonly generated by legitimate system administration. Elevation to High/Critical requires confirmed correlation with a subsequent defense evasion action targeting a security process discovered in this enumeration.
-4. The specific intelligence gathered (Sysmon64=STOPPABLE, WazuhSvc=STOPPABLE) is directly actionable for defense evasion -- if either service is subsequently stopped, this discovery becomes a confirmed precursor.
+4. The specific intelligence gathered (Sysmon64=STOPPABLE, WazuhSvc=STOPPABLE) is directly actionable for defense evasion — if either service is subsequently stopped, this discovery becomes a confirmed precursor.
 
 **Response recommendation:**
 1. **Correlate forward:** Check for any defense evasion activity (service stops, process kills, registry changes) targeting WinDefend, Sysmon64, WazuhSvc, or SecurityHealthService from the same session within 10 minutes.
@@ -122,7 +122,7 @@ This reuses the AGC-037 burst detection pattern: aggregate Sysmon EID 1 by Logon
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### Security processes discovered (tasklist)
 

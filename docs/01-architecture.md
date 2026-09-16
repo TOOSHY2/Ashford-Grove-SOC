@@ -1,5 +1,44 @@
 # Architecture
 
+Ten virtual machines across four network zones, each zone on its own dedicated OPNsense interface. The attacker is architecturally outside the perimeter; the only path in is a single logged rule from the phishing victim.
+
+## Topology
+
+```
+╔════════════════════════════════════════════════════════════════════╗
+║              UNTRUSTED   ·   OUTSIDE THE PERIMETER                 ║
+║                                                                    ║
+║   EXT-ATTACKER-SIM      10.10.40.10      Kali Linux                ║
+║   phishing sink · credential portal · DNS · C2 sink                ║
+╚══════════════════════════════════╤═════════════════════════════════╝
+                                   │
+              a single logged rule crosses the perimeter
+            COMPROMISED-HOST-01   →   SMTP · HTTP/S · DNS
+                                   │
+                                   ▼
+                ┌────────────────────────────────────┐
+                │            OPNsense-FW             │
+                │ default-deny  ·  all flows logged  │
+                └────────────────────────────────────┘
+                                   │
+           ┌───────────────────────┴───────────────────────┐
+           │                       │                       │
+┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐
+│ LAN-NET            │  │ DMZ-NET            │  │ SOC-NET            │
+│ 10.10.10.0/24      │  │ 10.10.20.0/24      │  │ 10.10.30.0/24      │
+│ TRUSTED            │  │ EXPOSED            │  │ MONITORING         │
+├────────────────────┤  ├────────────────────┤  ├────────────────────┤
+│ AD-DC-01           │  │ DMZ-LINUX-01       │  │ WAZUH-SIEM-01      │
+│ WIN-CLIENT-01 / 02 │  │ nginx · SSH        │  │ SECURITY-ONION-01  │
+│ COMPROMISED-HOST-01│  │ auditd             │  │ Zeek · Suricata    │
+│ MGMT-GUI-TEMP      │  │                    │  │                    │
+└────────────────────┘  └────────────────────┘  └────────────────────┘
+
+Legend   ═══ untrusted boundary   ─── zone boundary   → the one permitted inbound-to-attacker flow
+```
+
+The root [`README.md`](../README.md) renders the same topology as a Mermaid diagram.
+
 ## Zones
 | Zone | Subnet | Gateway | Trust |
 |---|---|---|---|

@@ -1,4 +1,4 @@
-# AGC-036 -- NTLM Authentication Anomaly
+# AGC-036 — NTLM Authentication Anomaly
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,16 +11,16 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-036` |
-| Category | `05-credential-access` -- Credential Access |
-| MITRE Technique | `T1557.001` Adversary-in-the-Middle: LLMNR/NBT-NS Poisoning and SMB Relay (candidate -- see Investigation) |
+| Category | `05-credential-access` — Credential Access |
+| MITRE Technique | `T1557.001` Adversary-in-the-Middle: LLMNR/NBT-NS Poisoning and SMB Relay (candidate — see Investigation) |
 | Verdict | True Positive (Probable) |
 | Confidence | Medium |
-| Time to Detect | Immediate -- Security EID 4624 with `AuthenticationPackageName: NTLM` and null Logon GUID |
+| Time to Detect | Immediate — Security EID 4624 with `AuthenticationPackageName: NTLM` and null Logon GUID |
 | Time to Triage | 05:00 (must determine WHY NTLM was used instead of Kerberos before escalating) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | < AGC-035 . next AGC-037 (Discovery category) > |
+| Chain | ◀ [AGC-035](../AGC-035-password-spray/README.md) · next [AGC-037](../../06-discovery/AGC-037-system-user-discovery/README.md) (Discovery category) ▶ |
 | FP Twin | AGC-084 (benign DNS pattern producing similar NTLM traffic) |
-| One-line Summary | NTLM authentication observed via IP-based SMB connection on a domain-joined host. EID 4624 confirms Logon Type 3 with `NTLM V2` package and null Logon GUID (`{00000000-...}`). Root cause identified as IP-based connection bypassing Kerberos SPN lookup. Benign explanation confirmed -- confidence remains Medium. |
+| One-line Summary | NTLM authentication observed via IP-based SMB connection on a domain-joined host. EID 4624 confirms Logon Type 3 with `NTLM V2` package and null Logon GUID (`{00000000-...}`). Root cause identified as IP-based connection bypassing Kerberos SPN lookup. Benign explanation confirmed — confidence remains Medium. |
 
 ## Attacker Perspective
 
@@ -41,15 +41,15 @@ An attacker can force NTLM by connecting via IP address instead of hostname, by 
 
 **Pre-conditions:**
 - `COMPROMISED-HOST-01` running, Administrator context.
-- Domain trust broken (discovered AGC-025) -- all authentication on this host is already NTLM-only.
+- Domain trust broken (discovered AGC-025) — all authentication on this host is already NTLM-only.
 
 **Steps executed (all timestamps UTC):**
 
 | Step | Time (UTC) | Action | Host | Detail |
 |---|---|---|---|---|
-| 1 | 2026-09-15 20:27:44 | IP-based SMB to localhost | COMPROMISED-HOST-01 | `net use \\127.0.0.1\C$ /user:Administrator [REDACTED]` -- succeeded. Forces NTLM (no Kerberos SPN for IP addresses). |
+| 1 | 2026-09-15 20:27:44 | IP-based SMB to localhost | COMPROMISED-HOST-01 | `net use \\127.0.0.1\C$ /user:Administrator [REDACTED]` — succeeded. Forces NTLM (no Kerberos SPN for IP addresses). |
 | 2 | 2026-09-15 20:27:46 | Verify connection | COMPROMISED-HOST-01 | `net use` listing confirms `\\127.0.0.1\C$` active. |
-| 3 | 2026-09-15 20:27:48 | IP-based SMB to self-IP | COMPROMISED-HOST-01 | `net use \\10.10.10.103\IPC$ /user:Administrator [REDACTED]` -- succeeded. Second NTLM auth generated. |
+| 3 | 2026-09-15 20:27:48 | IP-based SMB to self-IP | COMPROMISED-HOST-01 | `net use \\10.10.10.103\IPC$ /user:Administrator [REDACTED]` — succeeded. Second NTLM auth generated. |
 | 4 | 2026-09-15 20:28:05 | Cleanup | COMPROMISED-HOST-01 | Both connections deleted. |
 
 **Why IP-based connection forces NTLM:**
@@ -61,7 +61,7 @@ Kerberos authentication requires a Service Principal Name (SPN) lookup: the clie
 
 ### Detection
 
-**Security EID 4624 -- Successful Logon via NTLM (2 events):**
+**Security EID 4624 — Successful Logon via NTLM (2 events):**
 
 | Timestamp (UTC) | EID | Account | Source IP | Logon Type | Auth Package | NTLM Version | Logon GUID | Elevated |
 |---|---|---|---|---|---|---|---|---|
@@ -70,11 +70,11 @@ Kerberos authentication requires a Service Principal Name (SPN) lookup: the clie
 
 **Key NTLM indicators in EID 4624:**
 - `Authentication Package: NTLM` (not `Kerberos`)
-- `Package Name (NTLM only): NTLM V2` -- NTLM V2 is more secure than V1 but still vulnerable to relay
-- `Logon GUID: {00000000-0000-0000-0000-000000000000}` -- null GUID confirms no Kerberos ticket was used
-- `Key Length: 128` -- session key length for NTLM V2
+- `Package Name (NTLM only): NTLM V2` — NTLM V2 is more secure than V1 but still vulnerable to relay
+- `Logon GUID: {00000000-0000-0000-0000-000000000000}` — null GUID confirms no Kerberos ticket was used
+- `Key Length: 128` — session key length for NTLM V2
 
-**Sysmon EID 1 -- Process Create:**
+**Sysmon EID 1 — Process Create:**
 
 | Timestamp (UTC) | PID | CommandLine | User |
 |---|---|---|---|
@@ -83,43 +83,43 @@ Kerberos authentication requires a Service Principal Name (SPN) lookup: the clie
 
 ### Investigation
 
-**Step 1 -- Identify NTLM usage between domain-joined hosts:**
+**Step 1 — Identify NTLM usage between domain-joined hosts:**
 EID 4624 shows `AuthenticationPackageName: NTLM` for network logon (Type 3) from COMPROMISED-01. Both the source and destination are the same domain-joined host (COMPROMISED-HOST-01, member of `ASHFORDGROVE` domain). In a healthy domain environment, Kerberos should be the primary authentication protocol. NTLM usage between Kerberos-capable hosts is an anomaly that warrants investigation.
 
-**Step 2 -- Determine WHY NTLM was used (critical step):**
+**Step 2 — Determine WHY NTLM was used (critical step):**
 The connection was made by IP address (`\\127.0.0.1\C$` and `\\10.10.10.103\IPC$`), not by hostname. IP-based connections bypass Kerberos SPN lookup because Kerberos requires a hostname to construct the SPN (`cifs/hostname.domain.local`). This is the most common and well-understood benign cause of NTLM fallback.
 
-Additional contributing factor: the domain trust relationship is broken on COMPROMISED-HOST-01 (discovered in AGC-025). Even if the connection had used a hostname, Kerberos would fail because the host cannot reach the KDC (AD-DC-01 is unreachable -- confirmed in AGC-035).
+Additional contributing factor: the domain trust relationship is broken on COMPROMISED-HOST-01 (discovered in AGC-025). Even if the connection had used a hostname, Kerberos would fail because the host cannot reach the KDC (AD-DC-01 is unreachable — confirmed in AGC-035).
 
 **Benign explanation confirmed:** IP-based connection + broken domain trust. This is NOT an active NTLM relay attack. The NTLM fallback is expected behavior given the network conditions.
 
-**Step 3 -- Why confidence remains Medium (not escalated):**
+**Step 3 — Why confidence remains Medium (not escalated):**
 Per the investigation methodology: NTLM authentication anomalies have a substantial benign interpretation space. This scenario demonstrates a clear benign cause (IP-based connection). Escalating to High/Critical without first excluding benign explanations is exactly the kind of over-classification that leads to alert fatigue.
 
 However, the Medium confidence is warranted because:
 - NTLM V2 IS vulnerable to offline cracking and relay attacks, regardless of why it was used
 - A real attacker could intentionally use IP-based connections to force NTLM as a precondition for relay
-- The fact that a benign explanation exists does not eliminate the risk -- it lowers the priority
+- The fact that a benign explanation exists does not eliminate the risk — it lowers the priority
 
-**Step 4 -- Comparison with FP twin AGC-084:**
+**Step 4 — Comparison with FP twin AGC-084:**
 AGC-084 (False Positive Triage) will present a benign DNS pattern that also produces NTLM traffic. The key difference: AGC-084's NTLM usage is entirely expected and requires no action, while AGC-036's NTLM usage is technically explained but still represents a security weakness worth addressing at the policy level.
 
 ### Report
 
-**Verdict: True Positive (Probable)** -- NTLM authentication occurred on a domain-joined host where Kerberos should be available. The immediate cause is benign (IP-based connection), but the underlying condition (NTLM enabled and usable) represents a genuine attack surface.
+**Verdict: True Positive (Probable)** — NTLM authentication occurred on a domain-joined host where Kerberos should be available. The immediate cause is benign (IP-based connection), but the underlying condition (NTLM enabled and usable) represents a genuine attack surface.
 
-**Confidence: Medium** -- Calibrated assessment:
+**Confidence: Medium** — Calibrated assessment:
 1. NTLM usage confirmed via EID 4624 with null Logon GUID.
 2. Benign root cause identified: IP-based SMB connection bypasses Kerberos SPN lookup.
 3. No evidence of NTLM relay or credential capture.
 4. The risk is the NTLM attack surface, not this specific event.
 
 **Response recommendation:**
-1. **Investigate connection context** before escalating -- verify whether the NTLM usage has a benign explanation (IP-based connection, legacy application, DNS failure). Confirmed here.
-2. **Do not escalate without excluding benign causes** -- NTLM anomalies are high-volume, and over-classification causes alert fatigue that hides real relay attacks.
-3. **Monitor for network-level relay indicators** -- if no benign cause is found, correlate with network traffic (Security Onion) for SMB relay patterns: multiple SMB sessions from the same source to different targets, or an intermediary host relaying authentication.
+1. **Investigate connection context** before escalating — verify whether the NTLM usage has a benign explanation (IP-based connection, legacy application, DNS failure). Confirmed here.
+2. **Do not escalate without excluding benign causes** — NTLM anomalies are high-volume, and over-classification causes alert fatigue that hides real relay attacks.
+3. **Monitor for network-level relay indicators** — if no benign cause is found, correlate with network traffic (Security Onion) for SMB relay patterns: multiple SMB sessions from the same source to different targets, or an intermediary host relaying authentication.
 4. **Policy recommendation (long-term):** Consider restricting NTLM at the domain level via Group Policy (`Network security: Restrict NTLM: NTLM authentication in this domain`). Audit first, then block. Hosts with a documented need for NTLM can be exempted.
-5. **Fix the domain trust** -- the broken trust on COMPROMISED-HOST-01 forces ALL authentication to NTLM, creating a persistent attack surface. Run `nltest /sc_reset:ashfordgrove.local` or rejoin the domain.
+5. **Fix the domain trust** — the broken trust on COMPROMISED-HOST-01 forces ALL authentication to NTLM, creating a persistent attack surface. Run `nltest /sc_reset:ashfordgrove.local` or rejoin the domain.
 
 ### MITRE Mapping
 
@@ -129,7 +129,7 @@ AGC-084 (False Positive Triage) will present a benign DNS pattern that also prod
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### Raw EID 4624 (NTLM auth via IP)
 

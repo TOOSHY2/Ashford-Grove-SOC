@@ -18,12 +18,14 @@
 | Time to Detect | ~14 seconds (file write to Defender EID 1116 detection event) |
 | Time to Remediate | ~19 seconds (file write to Defender EID 1117 remediation event) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | ◀ AGC-017 · next AGC-019 (Persistence category) ▶ |
+| Chain | ◀ [AGC-017](../AGC-017-task-triggered-execution/README.md) · next [AGC-019](../../03-persistence/AGC-019-registry-run-key/README.md) (Persistence category) ▶ |
 | One-line Summary | EICAR test file validates the endpoint detection pipeline: Defender detected and quarantined the EICAR string, confirming real-time protection is functional. |
 
-## Purpose
+## Attacker Perspective
 
-### What This Is
+### Tradecraft
+
+#### What this is
 
 This is **not** an attack technique simulation. AGC-018 is a **pipeline validation test** using the industry-standard EICAR Anti-Virus Test File (a 68-byte string recognized by all AV engines as a test detection). The purpose is to confirm that the detection chain works end-to-end:
 
@@ -33,7 +35,7 @@ This is **not** an attack technique simulation. AGC-018 is a **pipeline validati
 
 If either layer fails, every prior "no alert triggered, therefore benign" conclusion in this engagement is unreliable until the pipeline is repaired.
 
-### Why This Scenario Exists
+#### Why this scenario exists
 
 False negatives can occur silently. A detection pipeline that appears functional may have a broken component (disabled RTP, stale signatures, agent disconnection, log forwarding failure) that only surfaces when tested. Running EICAR as a controlled positive provides a known-good test signal through the entire chain.
 
@@ -122,4 +124,4 @@ N/A — EICAR is a standardized antivirus test file, not an adversary technique.
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

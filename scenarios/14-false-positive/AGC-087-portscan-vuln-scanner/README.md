@@ -1,17 +1,4 @@
-# AGC-087: Internal Port Scan -- Scheduled Vulnerability Scanner (False Positive)
-
-## Scenario Overview
-
-| Field              | Value                                                        |
-|--------------------|--------------------------------------------------------------|
-| **Scenario ID**    | AGC-087                                                      |
-| **Title**          | Internal Port Scan: Scheduled Vulnerability Assessment       |
-| **Category**       | False Positive Triage (14-false-positive)                    |
-| **Severity**       | Medium (alert trigger)                                       |
-| **MITRE Techniques** | T1046 (observed, not malicious)                            |
-| **Verdict**        | False Positive / Benign                                      |
-| **Confidence**     | High                                                         |
-| **Malicious Twin** | AGC-050 (Lateral Movement via Network Scanning)              |
+# AGC-087 — Internal Port Scan: Scheduled Vulnerability Scanner (False Positive)
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -19,21 +6,37 @@
 > analysis, investigation steps, and conclusions in this report
 > were performed by AI, not by a human analyst.
 
-**Navigation:** [< AGC-086](../../14-false-positive/AGC-086-regulatory-submission/README.md) | [AGC-088 >](../../14-false-positive/AGC-088-log-clearing-retention/README.md)
+## Card
 
-## Alert / Trigger
+| Field | Value |
+|---|---|
+| ID | `AGC-087` |
+| Title | Internal Port Scan: Scheduled Vulnerability Assessment |
+| Category | `14-false-positive` — False Positive Triage |
+| Severity | Medium (alert trigger) |
+| MITRE Technique | T1046 (observed, not malicious) |
+| Verdict | False Positive / Benign |
+| Confidence | High |
+| Malicious Twin | AGC-050 (Lateral Movement via Network Scanning) |
+| Chain | ◀ [AGC-086](../AGC-086-regulatory-submission/README.md) · next [AGC-088](../AGC-088-log-clearing-retention/README.md) ▶ |
 
-Network IDS alert: sequential port scan detected from 10.10.10.20 (MGMT-GUI-TEMP) targeting multiple LAN-NET hosts across common service ports (22, 80, 443, 445, 3389, 5985). The scan pattern and port set match signatures for lateral movement reconnaissance (AGC-050). The triage question: is this an attacker mapping the network, or a scheduled vulnerability assessment?
+## Attacker Perspective
 
-## Simulation Summary
+### Simulation
 
 Executed a port scan from MGMT-GUI-TEMP (10.10.10.20, the documented internal vulnerability scanner host) targeting 3 LAN-NET hosts (10.10.10.100, 10.10.10.101, 10.10.10.102) across 6 standard vulnerability assessment ports. All 18 connection attempts returned closed/filtered. The scan ran as a bash script using `/dev/tcp` probes.
 
 **Execution window**: 00:56:13 - 00:56:44 UTC on MGMT-GUI-TEMP (10.10.10.20)
 
-## Investigation
+## SOC Perspective
 
-### Step 1: Identify the Scan Source
+### Detection
+
+Network IDS alert: sequential port scan detected from 10.10.10.20 (MGMT-GUI-TEMP) targeting multiple LAN-NET hosts across common service ports (22, 80, 443, 445, 3389, 5985). The scan pattern and port set match signatures for lateral movement reconnaissance (AGC-050). The triage question: is this an attacker mapping the network, or a scheduled vulnerability assessment?
+
+### Investigation
+
+#### Step 1: Identify the Scan Source
 
 **Scan origin (from MGMT-GUI-TEMP output):**
 ```
@@ -46,7 +49,7 @@ Owner: Security Team
 
 The source IP (10.10.10.20) is the management workstation designated as the internal vulnerability scanner. This host is documented in the SOC asset inventory as the authorized scanning platform.
 
-### Step 2: Verify Scan Pattern
+#### Step 2: Verify Scan Pattern
 
 **Connection log (18 probes, all closed/filtered):**
 ```
@@ -70,7 +73,7 @@ The source IP (10.10.10.20) is the management workstation designated as the inte
 [00:56:42] 10.10.10.102:5985 closed/filtered
 ```
 
-### Step 3: Scan Characteristics Analysis
+#### Step 3: Scan Characteristics Analysis
 
 | Characteristic | Observed | Expected (Scheduled) |
 |---------------|----------|---------------------|
@@ -81,7 +84,7 @@ The source IP (10.10.10.20) is the management workstation designated as the inte
 | **Timing** | ~2 seconds between probes | Non-aggressive, rate-limited |
 | **Duration** | 31 seconds total | Expected for 18 probes at 2s interval |
 
-### Step 4: Cross-Reference Scanner Documentation
+#### Step 4: Cross-Reference Scanner Documentation
 
 Vulnerability scanner registry:
 ```
@@ -95,7 +98,15 @@ Target Scope: LAN-NET (10.10.10.0/24)
 Firewall Exception: FW-SCAN-001
 ```
 
-## Discriminating Evidence (Benign vs Malicious)
+### Report
+
+**Verdict: False Positive / Benign** — The port scan originates from the documented internal vulnerability scanner (MGMT-GUI-TEMP, 10.10.10.20) running its scheduled monthly assessment. The source host, port set, target scope, and scan pattern all match the scanner registry entry approved by the Security Team Lead. The rate-limited, sequential probing pattern is characteristic of authorized vulnerability assessment, not attacker reconnaissance.
+
+**Recommendation**: Close as Benign. Ensure the scanner registry (host, schedule, port profile, target scope) is documented in the SOC's asset inventory so future monthly scans are automatically suppressed or auto-closed.
+
+**Cross-reference**: The malicious twin of this scenario is **AGC-050**, where a port scan represents unauthorized network reconnaissance by an attacker performing lateral movement discovery from a compromised host.
+
+#### Discriminating evidence (benign vs malicious)
 
 | Factor | AGC-087 (Benign) | AGC-050 (Malicious) |
 |--------|-------------------|---------------------|
@@ -107,18 +118,14 @@ Firewall Exception: FW-SCAN-001
 | **Pattern** | Sequential host-by-host (predictable) | Random or SYN-only stealth scan |
 | **Context** | From management VLAN | From user endpoint or DMZ |
 
-## MITRE ATT&CK Mapping
+### MITRE Mapping
 
 No malicious technique applies:
 
 | Technique ID | Name | Tactic | Disposition |
 |-------------|------|--------|-------------|
-| T1046 | Network Service Discovery | Discovery | **Observed, Benign** -- Sequential port scan from documented vulnerability scanner (MGMT-GUI-TEMP, 10.10.10.20) to LAN-NET hosts. Fixed 6-port assessment set, rate-limited, matches scanner registry and schedule. |
+| T1046 | Network Service Discovery | Discovery | **Observed, Benign** — Sequential port scan from documented vulnerability scanner (MGMT-GUI-TEMP, 10.10.10.20) to LAN-NET hosts. Fixed 6-port assessment set, rate-limited, matches scanner registry and schedule. |
 
-## Conclusion
+## Evidence
 
-**Verdict: False Positive / Benign** -- The port scan originates from the documented internal vulnerability scanner (MGMT-GUI-TEMP, 10.10.10.20) running its scheduled monthly assessment. The source host, port set, target scope, and scan pattern all match the scanner registry entry approved by the Security Team Lead. The rate-limited, sequential probing pattern is characteristic of authorized vulnerability assessment, not attacker reconnaissance.
-
-**Recommendation**: Close as Benign. Ensure the scanner registry (host, schedule, port profile, target scope) is documented in the SOC's asset inventory so future monthly scans are automatically suppressed or auto-closed.
-
-**Cross-reference**: The malicious twin of this scenario is **AGC-050**, where a port scan represents unauthorized network reconnaissance by an attacker performing lateral movement discovery from a compromised host.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

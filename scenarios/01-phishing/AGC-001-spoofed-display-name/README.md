@@ -18,7 +18,7 @@
 | Time to Detect | N/A — no automated alert; detection via manual email-header inspection |
 | Time to Triage | 04:00 (from email inspection to verdict) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103), `EXT-ATTACKER-SIM` (10.10.40.10) |
-| Chain | ◀ — (first scenario) · next AGC-002 ▶ |
+| Chain | ◀ — (first scenario) · next [AGC-002](../AGC-002-lookalike-domain/README.md) ▶ |
 | One-line Summary | Spoofed "IT Support" display name delivers credential-harvesting link to an employee workstation. |
 
 ## Attacker Perspective
@@ -143,4 +143,4 @@ Connection from 10.10.10.103 (COMPROMISED-HOST-01) to 10.10.40.10 (EXT-ATTACKER-
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

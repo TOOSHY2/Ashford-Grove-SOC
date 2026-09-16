@@ -18,7 +18,7 @@
 | Time to Detect | Immediate — Sysmon EID 1 captures the parent-child chain in real time |
 | Time to Triage | 01:30 (from event to parent-child confirmation) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | ◀ AGC-010 (Phishing category) · next AGC-012 ▶ |
+| Chain | ◀ [AGC-010](../../01-phishing/AGC-010-user-reported-triage/README.md) (Phishing category) · next [AGC-012](../AGC-012-office-spawns-powershell/README.md) ▶ |
 | One-line Summary | Browser-class process (mshta.exe) spawns cmd.exe child — classic drive-by or exploit-chain detection pattern. |
 
 ## Attacker Perspective
@@ -114,4 +114,4 @@ The vbscript: protocol variant (PID 2932 at 18:30:41) demonstrates a fileless ex
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

@@ -18,7 +18,7 @@
 | Time to Detect | Immediate — Sysmon EID 1 captures the `-EncodedCommand` flag and Base64 blob |
 | Time to Triage | 02:00 (from event to decoded command analysis) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | ◀ AGC-012 · next AGC-014 ▶ |
+| Chain | ◀ [AGC-012](../AGC-012-office-spawns-powershell/README.md) · next [AGC-014](../AGC-014-executable-from-temp/README.md) ▶ |
 | One-line Summary | PowerShell executed with `-EncodedCommand` flag carrying Base64-encoded payload — classic obfuscation technique to evade command-line inspection. |
 
 ## Attacker Perspective
@@ -125,4 +125,4 @@ AGC-081 documents the false-positive variant where the decoded command is a beni
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

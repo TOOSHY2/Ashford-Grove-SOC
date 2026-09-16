@@ -18,7 +18,7 @@
 | Time to Detect | N/A — no automated phishing alert fired |
 | Time to Triage | 05:00 (from email header inspection to verdict) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103), `EXT-ATTACKER-SIM` (10.10.40.10) |
-| Chain | ◀ AGC-001 · next AGC-003 ▶ |
+| Chain | ◀ [AGC-001](../AGC-001-spoofed-display-name/README.md) · next [AGC-003](../AGC-003-credential-harvest-link/README.md) ▶ |
 | One-line Summary | Lookalike domain `ashfordgr0ve.local` (zero for 'o') delivers credential-harvesting link to an employee. |
 
 ## Attacker Perspective
@@ -147,4 +147,4 @@ AGC-001 used display-name spoofing (`IT Support` display name, `ashford-grove-su
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

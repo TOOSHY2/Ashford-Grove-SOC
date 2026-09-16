@@ -1,4 +1,4 @@
-# AGC-034 -- Kerberos Ticket Enumeration / Export
+# AGC-034 — Kerberos Ticket Enumeration / Export
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,15 +11,15 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-034` |
-| Category | `05-credential-access` -- Credential Access |
+| Category | `05-credential-access` — Credential Access |
 | MITRE Technique | `T1558` Steal or Forge Kerberos Tickets |
 | Verdict | True Positive (Probable) |
 | Confidence | Medium |
-| Time to Detect | Immediate -- Sysmon EID 1 captures `klist.exe` execution; signal is weak in isolation |
+| Time to Detect | Immediate — Sysmon EID 1 captures `klist.exe` execution; signal is weak in isolation |
 | Time to Triage | 05:00 (value is in correlation with subsequent anomalous authentication events, not in the enumeration itself) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | < AGC-033 . next AGC-035 > |
-| One-line Summary | `klist` and `klist sessions` executed by Administrator to enumerate cached Kerberos tickets and active logon sessions. Zero Kerberos tickets found (domain trust broken -- all authentication is NTLM). Sysmon EID 1 captured both commands. Signal is weak alone; investigative value is in downstream correlation. |
+| Chain | ◀ [AGC-033](../AGC-033-browser-credential-store/README.md) · next [AGC-035](../AGC-035-password-spray/README.md) ▶ |
+| One-line Summary | `klist` and `klist sessions` executed by Administrator to enumerate cached Kerberos tickets and active logon sessions. Zero Kerberos tickets found (domain trust broken — all authentication is NTLM). Sysmon EID 1 captured both commands. Signal is weak alone; investigative value is in downstream correlation. |
 
 ## Attacker Perspective
 
@@ -50,7 +50,7 @@ The full attack chain (not simulated in this isolated scenario):
 
 | Step | Time (UTC) | Action | Host | Detail |
 |---|---|---|---|---|
-| 1 | 2026-09-15 20:07:28 | klist | COMPROMISED-HOST-01 | Cached Tickets: (0) -- no Kerberos tickets in current session |
+| 1 | 2026-09-15 20:07:28 | klist | COMPROMISED-HOST-01 | Cached Tickets: (0) — no Kerberos tickets in current session |
 | 2 | 2026-09-15 20:07:28 | klist sessions | COMPROMISED-HOST-01 | 13 active sessions enumerated. All Administrator sessions use NTLM (not Kerberos). Machine account (ASHFORDGROVE\COMPROMISED-01$) uses Negotiate. |
 
 **Key finding:** Zero Kerberos tickets are cached because the domain trust relationship for COMPROMISED-HOST-01 is broken (discovered in AGC-025). All authentication falls back to NTLM. No Security EID 4768 (TGT requests) or 4769 (TGS requests) were found, confirming no Kerberos activity on this host.
@@ -70,10 +70,10 @@ The full attack chain (not simulated in this isolated scenario):
 
 ### Investigation
 
-**Step 1 -- Assess the signal strength honestly:**
+**Step 1 — Assess the signal strength honestly:**
 `klist` is a standard Windows diagnostic tool. Administrators use it routinely to troubleshoot Kerberos authentication, check ticket expiration, and verify service principal names. **Running klist alone is NOT a strong indicator of compromise.** This must be stated explicitly to avoid alert fatigue from overreacting to benign activity.
 
-**Step 2 -- Correlation is where the value lies:**
+**Step 2 — Correlation is where the value lies:**
 The investigative value of `klist` execution is in what happens NEXT:
 - Does the same account authenticate on a DIFFERENT host shortly after? (lateral movement)
 - Is the authentication method on the destination host unusual? (e.g., Kerberos without a preceding interactive logon = possible ticket reuse)
@@ -81,34 +81,34 @@ The investigative value of `klist` execution is in what happens NEXT:
 
 Without downstream correlation, `klist` execution should be logged but not escalated.
 
-**Step 3 -- Session enumeration analysis:**
+**Step 3 — Session enumeration analysis:**
 `klist sessions` output reveals 13 active sessions, all using NTLM authentication. The NTLM-only pattern is itself a finding: in a healthy domain environment, Kerberos would be the primary authentication protocol. The fallback to NTLM suggests either domain trust issues or deliberate NTLM downgrade.
 
-**Step 4 -- Context from the attack chain:**
+**Step 4 — Context from the attack chain:**
 This scenario follows credential harvesting (AGC-031 LSASS, AGC-032 SAM, AGC-033 browser credentials). In that context, `klist` is a reconnaissance step before lateral movement. The chain context elevates the signal from "benign diagnostic" to "probable attack reconnaissance," but the confidence remains Medium because `klist` alone does not prove malicious intent.
 
 ### Report
 
-**Verdict: True Positive (Probable)** -- `klist` was executed as part of a credential access reconnaissance sequence. The tool itself is benign, but its use in the context of prior credential harvesting (AGC-031/032/033) makes it a probable attack indicator.
+**Verdict: True Positive (Probable)** — `klist` was executed as part of a credential access reconnaissance sequence. The tool itself is benign, but its use in the context of prior credential harvesting (AGC-031/032/033) makes it a probable attack indicator.
 
-**Confidence: Medium** -- This is an honest assessment:
-1. `klist` alone is weak evidence -- it is a legitimate diagnostic tool.
+**Confidence: Medium** — This is an honest assessment:
+1. `klist` alone is weak evidence — it is a legitimate diagnostic tool.
 2. Sysmon EID 1 confirmed execution by Administrator from PowerShell.
 3. No Kerberos tickets were found (domain trust broken), meaning no tickets are available for theft on this host.
 4. Confidence would rise to High only with downstream correlation: anomalous authentication on another host using tickets from this session.
 
 **Response recommendation:**
-1. **Do not act on `klist` alone** -- monitor for downstream correlation.
-2. **Flag for timeline analysis** -- correlate this event with any subsequent authentication anomalies (EID 4624 with unusual LogonProcessName, EID 4769 with unexpected service targets, or Pass-the-Ticket indicators).
-3. **Investigate the domain trust issue** -- zero Kerberos tickets and NTLM-only authentication indicate the domain trust relationship needs repair (`nltest /sc_verify:ashfordgrove.local`).
-4. **If correlated with lateral movement** -- reset Kerberos tickets for affected accounts (`klist purge` on the source host, password reset to invalidate TGTs). For confirmed Pass-the-Ticket at scale, consider a `krbtgt` password reset (double reset per Microsoft guidance), but only when the scope of compromise justifies this high-impact action.
+1. **Do not act on `klist` alone** — monitor for downstream correlation.
+2. **Flag for timeline analysis** — correlate this event with any subsequent authentication anomalies (EID 4624 with unusual LogonProcessName, EID 4769 with unexpected service targets, or Pass-the-Ticket indicators).
+3. **Investigate the domain trust issue** — zero Kerberos tickets and NTLM-only authentication indicate the domain trust relationship needs repair (`nltest /sc_verify:ashfordgrove.local`).
+4. **If correlated with lateral movement** — reset Kerberos tickets for affected accounts (`klist purge` on the source host, password reset to invalidate TGTs). For confirmed Pass-the-Ticket at scale, consider a `krbtgt` password reset (double reset per Microsoft guidance), but only when the scope of compromise justifies this high-impact action.
 
 ### MITRE Mapping
 
 | Tactic | Technique ID | Technique Name | Evidence | Confidence |
 |---|---|---|---|---|
-| Credential Access (TA0006) | T1558 | Steal or Forge Kerberos Tickets | Sysmon EID 1: `klist.exe` and `klist sessions` executed by Administrator from PowerShell. 13 sessions enumerated (all NTLM, 0 Kerberos tickets). Enumeration step in isolation -- signal is weak; value is in downstream correlation with anomalous authentication. | Medium |
+| Credential Access (TA0006) | T1558 | Steal or Forge Kerberos Tickets | Sysmon EID 1: `klist.exe` and `klist sessions` executed by Administrator from PowerShell. 13 sessions enumerated (all NTLM, 0 Kerberos tickets). Enumeration step in isolation — signal is weak; value is in downstream correlation with anomalous authentication. | Medium |
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

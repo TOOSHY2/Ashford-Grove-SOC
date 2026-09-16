@@ -10,4 +10,4 @@ AGC scenario numbering follows this narrative's chronological order, not the lit
 
 ## Execution order
 
-The four full-chain incidents (AGC-077–080) are simulated and documented first, before the other 96 scenarios.
+The main narrative (AGC-001 – AGC-076) was executed in ID order so that each scenario's foothold, artefacts, and telemetry genuinely inherit from the one before it. The four full-chain incidents (AGC-077 – AGC-080) were then run as standalone end-to-end replays, followed by the twenty judgment-track scenarios (AGC-081 – AGC-100), several of which hunt for or triage residual artefacts left by the main narrative.

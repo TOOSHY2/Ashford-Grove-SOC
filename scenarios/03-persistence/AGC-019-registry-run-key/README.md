@@ -18,7 +18,7 @@
 | Time to Detect | Immediate — Sysmon EID 13 captures registry value write with RuleName tag `T1060,RunKey` |
 | Time to Triage | 01:30 (from alert to value-data analysis and software inventory comparison) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | ◀ AGC-018 (Execution category) · next AGC-020 ▶ |
+| Chain | ◀ [AGC-018](../../02-execution/AGC-018-eicar-detection-test/README.md) (Execution category) · next [AGC-020](../AGC-020-scheduled-task/README.md) ▶ |
 | One-line Summary | Unknown registry Run key `WindowsUpdateHelper` added pointing to `cmd.exe` — not associated with any known legitimate software. FP twin: AGC-082. |
 
 ## Attacker Perspective
@@ -112,4 +112,4 @@ AGC-082 simulates a legitimate software installer adding a Run key (expected, do
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

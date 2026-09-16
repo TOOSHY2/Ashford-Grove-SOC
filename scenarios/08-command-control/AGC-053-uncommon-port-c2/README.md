@@ -1,4 +1,4 @@
-# AGC-053 -- Uncommon-Port C2
+# AGC-053 — Uncommon-Port C2
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,15 +11,15 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-053` |
-| Category | `08-command-control` -- Command & Control |
+| Category | `08-command-control` — Command & Control |
 | MITRE Technique | `T1571` Non-Standard Port |
 | Verdict | True Positive |
 | Confidence | High |
-| Time to Detect | Network-flow analysis -- outbound connection to destination port outside the documented baseline for the source segment |
+| Time to Detect | Network-flow analysis — outbound connection to destination port outside the documented baseline for the source segment |
 | Time to Triage | 03:00 (compare destination port against segment's documented outbound port baseline; check for legitimate application using that port) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) as beacon source; `EXT-ATTACKER-SIM` (10.10.40.10:8443) as C2 destination |
-| Chain | < AGC-052 . next AGC-054 > |
-| One-line Summary | C2 beacon from COMPROMISED-HOST-01 to 10.10.40.10 on non-standard port 8443. 8 connection attempts over ~3 minutes with ~23s interval. All timed out (no service on 8443). Sysmon EID 3 does NOT capture failed TCP connections, so host-based detection missed all 8 attempts. Comparison: port 443 to same destination generated 10 EID 3 events (AGC-051); port 8443 generated 0. This demonstrates the detection gap for non-standard ports when connections fail -- network-flow monitoring (Zeek, firewall logs) is essential. The key signal is comparing the destination port against the documented outbound port baseline for the LAN segment. |
+| Chain | ◀ [AGC-052](../AGC-052-dns-beacon/README.md) · next [AGC-054](../AGC-054-rare-destination-domain/README.md) ▶ |
+| One-line Summary | C2 beacon from COMPROMISED-HOST-01 to 10.10.40.10 on non-standard port 8443. 8 connection attempts over ~3 minutes with ~23s interval. All timed out (no service on 8443). Sysmon EID 3 does NOT capture failed TCP connections, so host-based detection missed all 8 attempts. Comparison: port 443 to same destination generated 10 EID 3 events (AGC-051); port 8443 generated 0. This demonstrates the detection gap for non-standard ports when connections fail — network-flow monitoring (Zeek, firewall logs) is essential. The key signal is comparing the destination port against the documented outbound port baseline for the LAN segment. |
 
 ## Attacker Perspective
 
@@ -36,7 +36,7 @@
 
 **Pre-conditions:**
 - `COMPROMISED-HOST-01` running, Administrator context.
-- `EXT-ATTACKER-SIM` (10.10.40.10) running (no listener on 8443 -- connections time out).
+- `EXT-ATTACKER-SIM` (10.10.40.10) running (no listener on 8443 — connections time out).
 
 **Beacon parameters:**
 - **URL:** `https://10.10.40.10:8443/beacon`
@@ -48,7 +48,7 @@
 
 | Cycle | Timestamp | Delta (s) | Result |
 |---|---|---|---|
-| 1 | 21:57:35.225 | -- | Timeout (no service on 8443) |
+| 1 | 21:57:35.225 | — | Timeout (no service on 8443) |
 | 2 | 21:57:58.313 | 23.088 | Timeout |
 | 3 | 21:58:21.333 | 23.020 | Timeout |
 | 4 | 21:58:44.339 | 23.006 | Timeout |
@@ -63,9 +63,9 @@
 
 ### Detection
 
-**Sysmon EID 3 -- Network Connection: 0 events (port 8443)**
+**Sysmon EID 3 — Network Connection: 0 events (port 8443)**
 
-No Sysmon EID 3 events were generated for the 8 connection attempts to port 8443. This is because EID 3 only fires for COMPLETED TCP connections -- when the TCP handshake fails (timeout/reset), no EID 3 is generated.
+No Sysmon EID 3 events were generated for the 8 connection attempts to port 8443. This is because EID 3 only fires for COMPLETED TCP connections — when the TCP handshake fails (timeout/reset), no EID 3 is generated.
 
 **Comparison with AGC-051 (same destination, standard port):**
 ```
@@ -85,45 +85,45 @@ The beaconing process (powershell.exe, PID running the Invoke-WebRequest loop) w
 
 ### Investigation
 
-**Step 1 -- Compare outbound ports against segment baseline:**
+**Step 1 — Compare outbound ports against segment baseline:**
 For the LAN workstation segment, the documented baseline of normal outbound ports includes:
 - 80 (HTTP), 443 (HTTPS), 53 (DNS)
 - Possibly: 587/993/995 (email), 8080 (proxy)
 
 Port 8443 is NOT in the standard LAN workstation outbound baseline. Any workstation connecting outbound on port 8443 to an external IP requires investigation.
 
-**Step 2 -- Check for legitimate application:**
+**Step 2 — Check for legitimate application:**
 Verify whether any approved software on the workstation uses port 8443:
 - VMware management interfaces (not applicable to user workstations)
 - Tomcat-based internal applications (would connect to internal, not external IPs)
 - No legitimate application on michael.chen's workstation justifies outbound 8443 to an external IP
 
-**Step 3 -- Correlate with beacon timing (AGC-051):**
+**Step 3 — Correlate with beacon timing (AGC-051):**
 Uncommon port + periodic timing = compound C2 indicator:
 - Port deviation from baseline: confirmed (8443 not in baseline)
 - Timing regularity: 23s mean interval with low variance (same C2 pattern as AGC-051)
 - Combined signal is stronger than either indicator alone
 
-**Step 4 -- Protocol/port mismatch analysis:**
+**Step 4 — Protocol/port mismatch analysis:**
 Even though the connection failed, if it had succeeded:
 - TLS handshake data (SNI, JA3 fingerprint) would reveal the client/server capabilities
 - A JA3 hash matching known malware frameworks (Cobalt Strike, Metasploit) on a non-standard port is a very high-confidence indicator
 
 ### Report
 
-**Verdict: True Positive** -- C2 beaconing on non-standard port 8443.
+**Verdict: True Positive** — C2 beaconing on non-standard port 8443.
 
-**Confidence: High** -- Calibrated assessment:
+**Confidence: High** — Calibrated assessment:
 1. Port 8443 is outside the documented outbound port baseline for LAN workstations.
 2. No legitimate application on this workstation justifies outbound connections to an external IP on port 8443.
 3. Periodic connection pattern (23s interval, low variance) matches C2 beacon behavior.
 4. Same destination IP (10.10.40.10) as confirmed C2 infrastructure (AGC-051, AGC-052).
-5. The connection failures actually make this MORE suspicious -- a legitimate application would not silently retry a failed connection every 23 seconds.
+5. The connection failures actually make this MORE suspicious — a legitimate application would not silently retry a failed connection every 23 seconds.
 
 **Response recommendation:**
-1. **Block port/destination combination** at the firewall -- deny 10.10.40.10:8443 and review all non-standard outbound port policies.
+1. **Block port/destination combination** at the firewall — deny 10.10.40.10:8443 and review all non-standard outbound port policies.
 2. **Enforce outbound port whitelist** via firewall policy, not just documentation. Only allow documented baseline ports for the LAN segment. This converts "detect and investigate" into "prevent and alert."
-3. **Isolate the beaconing host** -- same host as AGC-051/052, confirming multi-channel C2.
+3. **Isolate the beaconing host** — same host as AGC-051/052, confirming multi-channel C2.
 4. **Deploy non-standard port alerting:** Monitor for outbound connections to ports not in the segment's baseline whitelist. Alert on first occurrence, not volume threshold.
 
 ### MITRE Mapping
@@ -134,7 +134,7 @@ Even though the connection failed, if it had succeeded:
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### Uncommon port beacon summary
 

@@ -1,4 +1,4 @@
-# AGC-051 -- HTTPS Beacon (Periodic C2)
+# AGC-051 — HTTPS Beacon (Periodic C2)
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,15 +11,15 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-051` |
-| Category | `08-command-control` -- Command & Control |
+| Category | `08-command-control` — Command & Control |
 | MITRE Technique | `T1071.001` Application Layer Protocol: Web Protocols |
 | Verdict | True Positive |
 | Confidence | High |
-| Time to Detect | Network-flow analysis -- recurring connections to same external destination with consistent low-variance timing interval |
+| Time to Detect | Network-flow analysis — recurring connections to same external destination with consistent low-variance timing interval |
 | Time to Triage | 05:00 (compute inter-connection deltas; verify destination is not a known legitimate polling service) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) as beacon source; `EXT-ATTACKER-SIM` (10.10.40.10) as C2 destination |
-| Chain | < AGC-050 (Lateral Movement category) . next AGC-052 > |
-| One-line Summary | Periodic HTTPS beacon from COMPROMISED-HOST-01 to external IP 10.10.40.10 every ~30 seconds. 10 connection cycles over ~5 minutes with extremely low timing variance (30.018-30.135s delta). 10 Sysmon EID 3 events captured TCP connections from powershell.exe to 10.10.40.10. SSL/TLS handshake failed (no valid cert on C2). The consistent low-variance interval is the core detection signal -- human browsing produces irregular, high-variance connection patterns; automated C2 beaconing produces metronomic regularity. |
+| Chain | ◀ [AGC-050](../../07-lateral-movement/AGC-050-east-west-port-scan/README.md) (Lateral Movement category) · next [AGC-052](../AGC-052-dns-beacon/README.md) ▶ |
+| One-line Summary | Periodic HTTPS beacon from COMPROMISED-HOST-01 to external IP 10.10.40.10 every ~30 seconds. 10 connection cycles over ~5 minutes with extremely low timing variance (30.018-30.135s delta). 10 Sysmon EID 3 events captured TCP connections from powershell.exe to 10.10.40.10. SSL/TLS handshake failed (no valid cert on C2). The consistent low-variance interval is the core detection signal — human browsing produces irregular, high-variance connection patterns; automated C2 beaconing produces metronomic regularity. |
 
 ## Attacker Perspective
 
@@ -58,7 +58,7 @@ The attacker uses HTTPS specifically because:
 
 | Cycle | Timestamp | Delta (s) | Result |
 |---|---|---|---|
-| 1 | 21:43:43.232 | -- | SSL/TLS trust failure |
+| 1 | 21:43:43.232 | — | SSL/TLS trust failure |
 | 2 | 21:44:13.367 | 30.135 | SSL/TLS trust failure |
 | 3 | 21:44:43.391 | 30.024 | SSL/TLS trust failure |
 | 4 | 21:45:13.409 | 30.018 | SSL/TLS trust failure |
@@ -73,15 +73,15 @@ The attacker uses HTTPS specifically because:
 - Mean delta: 30.042 seconds
 - Standard deviation: 0.034 seconds
 - Variance coefficient: 0.11%
-- This is extremely low variance -- far below any human browsing pattern
+- This is extremely low variance — far below any human browsing pattern
 
 ## SOC Perspective
 
 ### Detection
 
-**Sysmon EID 3 -- Network Connection (10 events, one per beacon cycle):**
+**Sysmon EID 3 — Network Connection (10 events, one per beacon cycle):**
 
-All 10 events share identical structure -- same process (PID 2676, powershell.exe), same destination (10.10.40.10), incrementing source ports:
+All 10 events share identical structure — same process (PID 2676, powershell.exe), same destination (10.10.40.10), incrementing source ports:
 
 **Representative event (Cycle 10):**
 ```
@@ -118,25 +118,25 @@ Cycle 10: 64723
 **Detection indicators:**
 1. **Low-variance timing:** 10 connections with mean interval 30.042s and 0.034s standard deviation
 2. **Same destination:** All 10 connections target 10.10.40.10:443
-3. **Same process:** All from PID 2676 (powershell.exe) -- a single long-running process making periodic connections
+3. **Same process:** All from PID 2676 (powershell.exe) — a single long-running process making periodic connections
 4. **External IP:** 10.10.40.10 is in the External zone, not a known business service
 5. **No DNS resolution:** Destination accessed by raw IP, not hostname (no EID 22 DNS events)
 
 ### Investigation
 
-**Step 1 -- Compute inter-connection timing deltas:**
+**Step 1 — Compute inter-connection timing deltas:**
 Pull all connections from the source host to the destination and calculate the time delta between consecutive connections. The core signal is:
 - Low standard deviation relative to mean (coefficient of variation < 5% indicates automated beaconing)
-- In this case: CV = 0.11% -- essentially a metronome
+- In this case: CV = 0.11% — essentially a metronome
 
-Human browsing comparison: a user visiting the same site repeatedly would show deltas like 3s, 45s, 120s, 8s -- high variance, no regular pattern.
+Human browsing comparison: a user visiting the same site repeatedly would show deltas like 3s, 45s, 120s, 8s — high variance, no regular pattern.
 
-**Step 2 -- Check destination reputation and rarity:**
-- Is 10.10.40.10 a known business service or CDN? No -- it's in the lab's External zone.
+**Step 2 — Check destination reputation and rarity:**
+- Is 10.10.40.10 a known business service or CDN? No — it's in the lab's External zone.
 - Has any other host in the environment connected to this IP? If not, it's a rare/unique destination, which increases suspicion.
 - Domain reputation (if a domain were used): check against threat intelligence feeds.
 
-**Step 3 -- Exclude legitimate polling applications:**
+**Step 3 — Exclude legitimate polling applications:**
 Some legitimate applications produce regular-interval connections:
 - Windows Update check (irregular, not fixed interval)
 - Antivirus definition updates (typically hourly, not every 30s)
@@ -145,16 +145,16 @@ Some legitimate applications produce regular-interval connections:
 
 In this case: powershell.exe connecting to a raw external IP every 30s matches none of these legitimate patterns.
 
-**Step 4 -- Correlate with host indicators:**
+**Step 4 — Correlate with host indicators:**
 Cross-reference the beaconing host with other alerts:
 - COMPROMISED-HOST-01 has triggered alerts across the entire attack chain (AGC-001 through AGC-050)
-- The beacon destination (10.10.40.10) is in the External zone -- consistent with C2 infrastructure outside the organization's network
+- The beacon destination (10.10.40.10) is in the External zone — consistent with C2 infrastructure outside the organization's network
 
 ### Report
 
-**Verdict: True Positive** -- Periodic HTTPS beaconing to external C2 infrastructure.
+**Verdict: True Positive** — Periodic HTTPS beaconing to external C2 infrastructure.
 
-**Confidence: High** -- Calibrated assessment:
+**Confidence: High** — Calibrated assessment:
 1. 10 connections with 0.11% timing variance is statistically incompatible with human-driven traffic.
 2. Destination (10.10.40.10) is an external IP not associated with any known business service.
 3. Connection source (powershell.exe) is a scripting engine, not a legitimate application.
@@ -162,9 +162,9 @@ Cross-reference the beaconing host with other alerts:
 5. The pattern matches known C2 framework behavior (Cobalt Strike, Metasploit, etc.).
 
 **Response recommendation:**
-1. **Block the C2 destination** at the firewall immediately (10.10.40.10) -- sever the communication channel before the attacker can issue commands.
-2. **Isolate the beaconing host** -- COMPROMISED-HOST-01 is under active remote control.
-3. **Preserve connection logs** as evidence before log retention expires -- the beacon timeline is forensic evidence of the intrusion duration.
+1. **Block the C2 destination** at the firewall immediately (10.10.40.10) — sever the communication channel before the attacker can issue commands.
+2. **Isolate the beaconing host** — COMPROMISED-HOST-01 is under active remote control.
+3. **Preserve connection logs** as evidence before log retention expires — the beacon timeline is forensic evidence of the intrusion duration.
 4. **SIEM detection rule:** For each source-destination pair, compute the standard deviation of inter-connection deltas over a sliding window. Alert when CV < 5% AND connection count > 5 AND destination is not whitelisted. This catches beaconing regardless of the specific interval.
 5. **Hunt for additional beacons:** The attacker may have established backup C2 channels on other ports or to other destinations. Search for any other low-variance connection patterns from this host or from hosts it laterally moved to.
 
@@ -176,7 +176,7 @@ Cross-reference the beaconing host with other alerts:
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### Beacon timing analysis
 
@@ -195,7 +195,7 @@ Cycle 10: 21:48:13.606  delta: 30.026s
 Mean: 30.042s | SD: 0.034s | CV: 0.11%
 ```
 
-### Raw Sysmon EID 3 (representative -- Cycle 1)
+### Raw Sysmon EID 3 (representative — Cycle 1)
 
 ```
 Network connection detected:
@@ -213,7 +213,7 @@ DestinationIp: 10.10.40.10
 DestinationPort: 443
 ```
 
-### Raw Sysmon EID 3 (representative -- Cycle 10)
+### Raw Sysmon EID 3 (representative — Cycle 10)
 
 ```
 Network connection detected:

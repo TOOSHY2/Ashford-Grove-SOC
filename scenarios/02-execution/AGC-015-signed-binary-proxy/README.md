@@ -18,7 +18,7 @@
 | Time to Detect | Immediate — Sysmon EID 1 captures rundll32.exe process creation with full CommandLine |
 | Time to Triage | 01:30 (from alert to CommandLine content analysis confirming abuse pattern) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | ◀ AGC-014 · next AGC-016 ▶ |
+| Chain | ◀ [AGC-014](../AGC-014-executable-from-temp/README.md) · next [AGC-016](../AGC-016-wmi-process-creation/README.md) ▶ |
 | One-line Summary | rundll32.exe invoked with `javascript:` protocol handler to proxy-execute code through a Microsoft-signed binary, bypassing application whitelisting. |
 
 ## Attacker Perspective
@@ -116,4 +116,4 @@ The process ran at High integrity under the Administrator account, meaning the p
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

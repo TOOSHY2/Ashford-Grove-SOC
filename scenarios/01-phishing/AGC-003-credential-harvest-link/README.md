@@ -18,7 +18,7 @@
 | Time to Detect | N/A — no automated phishing or credential-harvesting alert fired |
 | Time to Triage | 04:00 (from email delivery to credential-capture confirmation) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103), `EXT-ATTACKER-SIM` (10.10.40.10) |
-| Chain | ◀ AGC-002 · next AGC-004 ▶ |
+| Chain | ◀ [AGC-002](../AGC-002-lookalike-domain/README.md) · next [AGC-004](../AGC-004-qr-code-phish/README.md) ▶ |
 | One-line Summary | Victim clicks phishing link and submits AD credentials into a fake login portal; attacker server confirms capture. |
 
 ## Attacker Perspective
@@ -141,4 +141,4 @@ All three phishing scenarios target `michael.chen`, link to `10.10.40.10/portal-
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

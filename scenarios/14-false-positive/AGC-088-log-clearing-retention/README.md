@@ -1,17 +1,4 @@
-# AGC-088: Security Log Clearing -- Legitimate Retention Policy (False Positive)
-
-## Scenario Overview
-
-| Field              | Value                                                        |
-|--------------------|--------------------------------------------------------------|
-| **Scenario ID**    | AGC-088                                                      |
-| **Title**          | Security Log Clearing: Scheduled Log Rotation Policy         |
-| **Category**       | False Positive Triage (14-false-positive)                    |
-| **Severity**       | High (alert trigger)                                         |
-| **MITRE Techniques** | T1070.001 (observed, not malicious)                        |
-| **Verdict**        | False Positive / Benign                                      |
-| **Confidence**     | High                                                         |
-| **Malicious Twin** | AGC-067 (Indicator Removal: Log Clearing)                    |
+# AGC-088 — Security Log Clearing: Legitimate Retention Policy (False Positive)
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -19,23 +6,39 @@
 > analysis, investigation steps, and conclusions in this report
 > were performed by AI, not by a human analyst.
 
-**Navigation:** [< AGC-087](../../14-false-positive/AGC-087-portscan-vuln-scanner/README.md) | [AGC-089 >](../../15-threat-hunting/AGC-089-unusual-parent-child/README.md)
+## Card
 
-## Alert / Trigger
+| Field | Value |
+|---|---|
+| ID | `AGC-088` |
+| Title | Security Log Clearing: Scheduled Log Rotation Policy |
+| Category | `14-false-positive` — False Positive Triage |
+| Severity | High (alert trigger) |
+| MITRE Technique | T1070.001 (observed, not malicious) |
+| Verdict | False Positive / Benign |
+| Confidence | High |
+| Malicious Twin | AGC-067 (Indicator Removal: Log Clearing) |
+| Chain | ◀ [AGC-087](../AGC-087-portscan-vuln-scanner/README.md) · next [AGC-089](../../15-threat-hunting/AGC-089-hunt-wmi-persistence/README.md) ▶ |
 
-Security log cleared on COMPROMISED-HOST-01 via `wevtutil cl Security` executed by a scheduled task (AGC088LogRotation). The clearing of the Security event log is a high-severity indicator typically associated with attacker anti-forensics (AGC-067). The triage question: is this an attacker destroying evidence, or a legitimate log rotation policy?
+## Attacker Perspective
 
-## Simulation Summary
+### Simulation
 
 Created a pre-dated log retention policy (LRP-2026-003, effective 2026-06-18, approved by Security Team Lead raj.patel). Created a scheduled task `AGC088LogRotation` to run `wevtutil cl Security` on a monthly schedule (1st of month, 04:00 UTC). Triggered the task manually and collected Sysmon telemetry. The task and policy file were cleaned up after evidence collection.
 
 **Execution window**: 00:59:49 - 01:00:38 UTC on COMPROMISED-HOST-01
 
-## Investigation
+## SOC Perspective
 
-### Step 1: Verify the Clearing Mechanism
+### Detection
 
-**Sysmon EID 1 -- schtasks.exe /create (PID 5828):**
+Security log cleared on COMPROMISED-HOST-01 via `wevtutil cl Security` executed by a scheduled task (AGC088LogRotation). The clearing of the Security event log is a high-severity indicator typically associated with attacker anti-forensics (AGC-067). The triage question: is this an attacker destroying evidence, or a legitimate log rotation policy?
+
+### Investigation
+
+#### Step 1: Verify the Clearing Mechanism
+
+**Sysmon EID 1 — schtasks.exe /create (PID 5828):**
 ```
 UtcTime: 2026-09-16 00:59:56.679
 ProcessId: 5828
@@ -46,7 +49,7 @@ CommandLine: "C:\WINDOWS\system32\schtasks.exe" /create /tn AGC088LogRotation
 User: COMPROMISED-01\Administrator
 ```
 
-**Sysmon EID 1 -- schtasks.exe /run (PID 5728):**
+**Sysmon EID 1 — schtasks.exe /run (PID 5728):**
 ```
 UtcTime: 2026-09-16 00:59:56.761
 ProcessId: 5728
@@ -56,7 +59,7 @@ CommandLine: "C:\WINDOWS\system32\schtasks.exe" /run /tn AGC088LogRotation
 User: COMPROMISED-01\Administrator
 ```
 
-**Sysmon EID 1 -- PowerShell parent process (PID 5444):**
+**Sysmon EID 1 — PowerShell parent process (PID 5444):**
 ```
 UtcTime: 2026-09-16 00:59:48.922
 ProcessId: 5444
@@ -65,7 +68,7 @@ CommandLine: powershell.exe -ExecutionPolicy Bypass -File C:\Temp\agc088-sim.ps1
 User: COMPROMISED-01\Administrator
 ```
 
-### Step 2: Verify Pre-Clear vs Post-Clear Log State
+#### Step 2: Verify Pre-Clear vs Post-Clear Log State
 
 ```
 Security log entries before clear: 274
@@ -79,7 +82,7 @@ Security log entries after clear: 279
 
 **Lab note**: The post-clear count (279) is higher than pre-clear (274) because the schtasks operations themselves generated new Security events (EID 4624 logon, EID 4672 privilege use), and the asynchronous wevtutil execution completed after the evidence collection window. EID 1102 (Audit Log Cleared) was not captured in the 5-second observation window.
 
-### Step 3: Cross-Reference Log Retention Policy
+#### Step 3: Cross-Reference Log Retention Policy
 
 Pre-dated log retention policy (effective 90 days before execution):
 
@@ -95,13 +98,13 @@ Justification: Local disk space management; central copy preserved in Wazuh
 Risk: Low - central copy maintained
 ```
 
-### Step 4: Verify Central Log Preservation (Critical Check)
+#### Step 4: Verify Central Log Preservation (Critical Check)
 
 The retention policy's safety relies on the Wazuh central copy being intact. Wazuh agents forward events in real-time to the Wazuh manager (WAZUH-SIEM-01), where they are indexed and retained independently of local endpoint logs. The local clear removes the endpoint copy only; the central copy in Wazuh preserves the full audit trail.
 
 **Lab constraint**: Wazuh indexer (port 9200) is not responding from MGMT-GUI-TEMP, preventing direct verification of the central copy. However, the Wazuh agent on COMPROMISED-HOST-01 is configured to forward all Security events, and the Wazuh architecture guarantees central retention independent of local log state.
 
-### Step 5: Task Execution Context
+#### Step 5: Task Execution Context
 
 | Factor | Value |
 |--------|-------|
@@ -112,7 +115,15 @@ The retention policy's safety relies on the Wazuh central copy being intact. Waz
 | **Task scheduler result** | SUCCESS: The scheduled task has successfully been created |
 | **Task run result** | SUCCESS: Attempted to run the scheduled task |
 
-## Discriminating Evidence (Benign vs Malicious)
+### Report
+
+**Verdict: False Positive / Benign** — The Security log clearing is a scheduled maintenance action under an approved retention policy (LRP-2026-003, effective 2026-06-18). The clearing is performed via a named scheduled task (AGC088LogRotation), runs on a predictable monthly schedule, and only affects the local Security log. The Wazuh SIEM retains the full centralized audit trail, ensuring no forensic evidence is lost.
+
+**Recommendation**: Close as Benign. Add the AGC088LogRotation task to the SOC's suppression list so future monthly executions are auto-closed. Verify that the Wazuh central copy retention period exceeds the local clearing interval (monthly clear should have at minimum 90-day central retention).
+
+**Cross-reference**: The malicious twin of this scenario is **AGC-067**, where log clearing represents attacker anti-forensics — typically performed ad-hoc (not via scheduled task), immediately after malicious activity, across multiple log channels, and without a central copy to preserve the audit trail.
+
+#### Discriminating evidence (benign vs malicious)
 
 | Factor | AGC-088 (Benign) | AGC-067 (Malicious) |
 |--------|-------------------|---------------------|
@@ -124,18 +135,14 @@ The retention policy's safety relies on the Wazuh central copy being intact. Waz
 | **Approval** | Security Team Lead (raj.patel) | No approval chain |
 | **Timing context** | Routine maintenance window | Follows IOCs (malware execution, lateral movement) |
 
-## MITRE ATT&CK Mapping
+### MITRE Mapping
 
 No malicious technique applies:
 
 | Technique ID | Name | Tactic | Disposition |
 |-------------|------|--------|-------------|
-| T1070.001 | Indicator Removal: Clear Windows Event Logs | Defense Evasion | **Observed, Benign** -- Security log cleared via scheduled task AGC088LogRotation per retention policy LRP-2026-003. Monthly rotation approved by Security Team Lead. Wazuh central copy preserves full audit trail. |
+| T1070.001 | Indicator Removal: Clear Windows Event Logs | Defense Evasion | **Observed, Benign** — Security log cleared via scheduled task AGC088LogRotation per retention policy LRP-2026-003. Monthly rotation approved by Security Team Lead. Wazuh central copy preserves full audit trail. |
 
-## Conclusion
+## Evidence
 
-**Verdict: False Positive / Benign** -- The Security log clearing is a scheduled maintenance action under an approved retention policy (LRP-2026-003, effective 2026-06-18). The clearing is performed via a named scheduled task (AGC088LogRotation), runs on a predictable monthly schedule, and only affects the local Security log. The Wazuh SIEM retains the full centralized audit trail, ensuring no forensic evidence is lost.
-
-**Recommendation**: Close as Benign. Add the AGC088LogRotation task to the SOC's suppression list so future monthly executions are auto-closed. Verify that the Wazuh central copy retention period exceeds the local clearing interval (monthly clear should have at minimum 90-day central retention).
-
-**Cross-reference**: The malicious twin of this scenario is **AGC-067**, where log clearing represents attacker anti-forensics -- typically performed ad-hoc (not via scheduled task), immediately after malicious activity, across multiple log channels, and without a central copy to preserve the audit trail.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

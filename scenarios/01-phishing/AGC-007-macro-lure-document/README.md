@@ -18,7 +18,7 @@
 | Time to Detect | N/A — no automated Wazuh alert for macro-delivered file writes; Sysmon EID 11 captures the file creation events |
 | Time to Triage | 03:00 (from .docm delivery to marker-file confirmation) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | ◀ AGC-006 · next AGC-008 ▶ |
+| Chain | ◀ [AGC-006](../AGC-006-html-attachment-redirect/README.md) · next [AGC-008](../AGC-008-password-reset-lure/README.md) ▶ |
 | One-line Summary | Macro-enabled Word document (.docm) delivered as phishing attachment executes VBA code on "Enable Content," writing a marker file to the system temp directory. |
 
 ## Attacker Perspective
@@ -116,4 +116,4 @@ This is the same campaign's eighth variation — the attacker has now used: spoo
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

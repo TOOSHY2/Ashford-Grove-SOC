@@ -1,4 +1,4 @@
-# AGC-048 -- SSH Pivot LAN to DMZ
+# AGC-048 — SSH Pivot LAN to DMZ
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,15 +11,15 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-048` |
-| Category | `07-lateral-movement` -- Lateral Movement |
+| Category | `07-lateral-movement` — Lateral Movement |
 | MITRE Technique | `T1021.004` Remote Services: SSH |
 | Verdict | True Positive |
 | Confidence | High |
-| Time to Detect | Immediate -- Sysmon EID 1 captures `ssh.exe` with target host and username in command line; firewall log captures LAN->DMZ SSH rule hit |
+| Time to Detect | Immediate — Sysmon EID 1 captures `ssh.exe` with target host and username in command line; firewall log captures LAN->DMZ SSH rule hit |
 | Time to Triage | 03:00 (verify the SSH connection is attributable to a scheduled maintenance task; cross-zone SSH from workstation is extremely high-signal) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) as source; target: `DMZ-LINUX-01` (10.10.20.10) |
-| Chain | < AGC-047 . next AGC-049 > |
-| One-line Summary | SSH lateral movement from LAN workstation to DMZ Linux host attempted. `ssh.exe dmzadmin@10.10.20.10` -- connection timed out (LAN->DMZ routing blocked by firewall). Second attempt to EXT zone (`kaliadmin@10.10.40.10`) also timed out. 2 Sysmon EID 1 events captured ssh.exe with target usernames and cross-zone IPs. LAN workstation initiating SSH to DMZ is an extremely high-signal indicator -- workstations have no legitimate reason to SSH to DMZ servers. |
+| Chain | ◀ [AGC-047](../AGC-047-pass-the-hash/README.md) · next [AGC-049](../AGC-049-account-multi-host-auth/README.md) ▶ |
+| One-line Summary | SSH lateral movement from LAN workstation to DMZ Linux host attempted. `ssh.exe dmzadmin@10.10.20.10` — connection timed out (LAN->DMZ routing blocked by firewall). Second attempt to EXT zone (`kaliadmin@10.10.40.10`) also timed out. 2 Sysmon EID 1 events captured ssh.exe with target usernames and cross-zone IPs. LAN workstation initiating SSH to DMZ is an extremely high-signal indicator — workstations have no legitimate reason to SSH to DMZ servers. |
 
 ## Attacker Perspective
 
@@ -50,21 +50,21 @@ A standard user workstation initiating SSH to a DMZ host outside of these contex
 
 | Step | Time (UTC) | Action | Host | Result |
 |---|---|---|---|---|
-| 1 | 2026-09-15 21:23:46 | TCP test to 10.10.20.10:22 | COMPROMISED-HOST-01 | CLOSED/TIMEOUT -- SSH port not reachable |
+| 1 | 2026-09-15 21:23:46 | TCP test to 10.10.20.10:22 | COMPROMISED-HOST-01 | CLOSED/TIMEOUT — SSH port not reachable |
 | 2 | 2026-09-15 21:23:51 | ssh dmzadmin@10.10.20.10 | COMPROMISED-HOST-01 | Connection timed out (LAN->DMZ blocked) |
 | 3 | 2026-09-15 21:24:01 | ssh kaliadmin@10.10.40.10 | COMPROMISED-HOST-01 | Connection timed out (LAN->EXT blocked) |
 
 **Key findings:**
 - Both cross-zone SSH attempts were blocked by the OPNsense firewall (LAN->DMZ and LAN->EXT routing not permitted for workstation traffic)
-- The firewall correctly enforces zone separation -- this is a functioning security control
+- The firewall correctly enforces zone separation — this is a functioning security control
 - Despite connection failure, the SSH ATTEMPT is the detection indicator. The attacker's intent to pivot cross-zone is clear from the command line
-- OpenSSH client is pre-installed on Windows 11 -- no additional tool installation required for SSH-based lateral movement
+- OpenSSH client is pre-installed on Windows 11 — no additional tool installation required for SSH-based lateral movement
 
 ## SOC Perspective
 
 ### Detection
 
-**Sysmon EID 1 -- Process Create (2 events):**
+**Sysmon EID 1 — Process Create (2 events):**
 
 **Event 1: SSH to DMZ-LINUX-01**
 ```
@@ -100,52 +100,52 @@ IntegrityLevel: High
 ```
 
 **Critical indicators:**
-1. **ssh.exe launched from a workstation** -- standard user workstations should not initiate SSH connections
-2. **Target IPs in different network zones** -- 10.10.20.10 (DMZ) and 10.10.40.10 (External) are outside the LAN zone (10.10.10.x)
-3. **-o StrictHostKeyChecking=no** -- disabling host key verification is a common attacker flag (suppresses interactive prompts for unknown hosts)
-4. **-o BatchMode=yes** -- non-interactive SSH is consistent with scripted/automated lateral movement
-5. **Remote command in argument** -- executing commands via SSH argument (not interactive shell) indicates fire-and-forget execution
+1. **ssh.exe launched from a workstation** — standard user workstations should not initiate SSH connections
+2. **Target IPs in different network zones** — 10.10.20.10 (DMZ) and 10.10.40.10 (External) are outside the LAN zone (10.10.10.x)
+3. **-o StrictHostKeyChecking=no** — disabling host key verification is a common attacker flag (suppresses interactive prompts for unknown hosts)
+4. **-o BatchMode=yes** — non-interactive SSH is consistent with scripted/automated lateral movement
+5. **Remote command in argument** — executing commands via SSH argument (not interactive shell) indicates fire-and-forget execution
 
-**Sysmon EID 3 (Network Connection):** 0 events -- SSH connections timed out before TCP handshake completed. In a successful connection, EID 3 would show the outbound TCP connection to port 22. However, SwiftOnSecurity config may filter EID 3 for ssh.exe.
+**Sysmon EID 3 (Network Connection):** 0 events — SSH connections timed out before TCP handshake completed. In a successful connection, EID 3 would show the outbound TCP connection to port 22. However, SwiftOnSecurity config may filter EID 3 for ssh.exe.
 
 ### Investigation
 
-**Step 1 -- Identify cross-zone SSH from workstation:**
+**Step 1 — Identify cross-zone SSH from workstation:**
 The primary indicator is `ssh.exe` process creation on a workstation with a target IP in a different network zone. Parse the command line for:
 - Target format: `user@IP` or `user@hostname`
 - Target IP subnet: if the target is outside the source host's subnet, this is cross-zone movement
 - In this case: source is 10.10.10.103 (LAN), targets are 10.10.20.10 (DMZ) and 10.10.40.10 (EXT)
 
-**Step 2 -- Check firewall logs for LAN->DMZ SSH rule:**
+**Step 2 — Check firewall logs for LAN->DMZ SSH rule:**
 OPNsense should log this connection attempt against the LAN->DMZ SSH rule. Even if the connection was blocked, the firewall log records the attempt with source IP, destination IP, and timestamp. A blocked connection still means the attacker attempted cross-zone movement.
 
-**Step 3 -- Verify maintenance attribution:**
+**Step 3 — Verify maintenance attribution:**
 For any LAN->DMZ SSH connection (successful or attempted), verify it corresponds to a scheduled maintenance task:
 - Who authorized the SSH session?
 - What maintenance ticket does it correspond to?
 - Is the source host a designated jump host or management workstation?
 
-In this case: COMPROMISED-HOST-01 is a standard user workstation (michael.chen's workstation), not a jump host. There is no maintenance task to attribute this connection to. This is unattributed cross-zone SSH from a standard workstation -- extremely high confidence True Positive.
+In this case: COMPROMISED-HOST-01 is a standard user workstation (michael.chen's workstation), not a jump host. There is no maintenance task to attribute this connection to. This is unattributed cross-zone SSH from a standard workstation — extremely high confidence True Positive.
 
-**Step 4 -- Cross-reference credential source:**
+**Step 4 — Cross-reference credential source:**
 The SSH attempts use `dmzadmin` and `kaliadmin` usernames. Where did the attacker obtain these credentials? Cross-reference with:
-- AGC-033 (browser credential store) -- may have contained saved SSH passwords
+- AGC-033 (browser credential store) — may have contained saved SSH passwords
 - Configuration files on COMPROMISED-HOST-01 that might contain SSH keys or credentials
 - The dmzadmin credential is the DMZ-LINUX-01 administrator account
 
 ### Report
 
-**Verdict: True Positive** -- Cross-zone SSH lateral movement was attempted from a LAN workstation to DMZ and external network zones.
+**Verdict: True Positive** — Cross-zone SSH lateral movement was attempted from a LAN workstation to DMZ and external network zones.
 
-**Confidence: High** -- Calibrated assessment:
+**Confidence: High** — Calibrated assessment:
 1. A standard user workstation (COMPROMISED-HOST-01) has zero legitimate reason to initiate SSH to DMZ servers. The narrow scope of legitimate LAN->DMZ SSH traffic means any unattributed connection is extremely high-signal.
 2. Two cross-zone SSH attempts in rapid succession (10 seconds apart) targeting different zones (DMZ and EXT) indicates systematic enumeration, not accidental connection.
 3. The `-o StrictHostKeyChecking=no -o BatchMode=yes` flags are consistent with automated/scripted lateral movement, not interactive human SSH usage.
 4. The target usernames (`dmzadmin`, `kaliadmin`) are administrative accounts, confirming the attacker possesses or is attempting to use privileged credentials.
-5. The firewall correctly blocked both connections -- this is a successfully defended scenario, but the attempt requires incident response.
+5. The firewall correctly blocked both connections — this is a successfully defended scenario, but the attempt requires incident response.
 
 **Response recommendation:**
-1. **Immediate: investigate COMPROMISED-HOST-01** -- the SSH pivot attempt confirms the host is under attacker control and the attacker is actively attempting to expand beyond the LAN zone.
+1. **Immediate: investigate COMPROMISED-HOST-01** — the SSH pivot attempt confirms the host is under attacker control and the attacker is actively attempting to expand beyond the LAN zone.
 2. **Rotate DMZ credentials:** Change `dmzadmin` password on DMZ-LINUX-01 and revoke any SSH keys associated with this account, in case the attacker has valid credentials.
 3. **Verify firewall rules:** Confirm that LAN->DMZ SSH is restricted to designated jump hosts only. The firewall correctly blocked this attempt.
 4. **Detection rule:** Alert on `ssh.exe` process creation from any workstation (not a jump host/management server). Cross-reference target IP against DMZ/external subnets for elevated priority.
@@ -159,7 +159,7 @@ The SSH attempts use `dmzadmin` and `kaliadmin` usernames. Where did the attacke
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### SSH pivot attempt results
 

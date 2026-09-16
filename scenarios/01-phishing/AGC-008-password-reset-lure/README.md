@@ -18,7 +18,7 @@
 | Time to Detect | N/A — no automated alert; Sysmon EID 1 captures the process chain |
 | Time to Triage | 02:00 (from link click to POST confirmation) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103), `EXT-ATTACKER-SIM` (10.10.40.10) |
-| Chain | ◀ AGC-007 · next AGC-009 ▶ |
+| Chain | ◀ [AGC-007](../AGC-007-macro-lure-document/README.md) · next [AGC-009](../AGC-009-oauth-consent-phish/README.md) ▶ |
 | One-line Summary | Urgency-framed "password expiration" email lures victim to fake reset page; credentials captured via POST to non-corporate IP. |
 
 ## Attacker Perspective
@@ -105,4 +105,4 @@ AGC-085 (False Positive: off-hours service account logon) is the FP twin of this
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.

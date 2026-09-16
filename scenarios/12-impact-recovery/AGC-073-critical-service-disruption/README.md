@@ -1,4 +1,4 @@
-# AGC-073 -- Critical Service Disruption
+# AGC-073 — Critical Service Disruption
 
 > **Execution & Documentation Note:** This scenario was executed
 > and documented in full by Claude (Anthropic AI), operating
@@ -11,14 +11,14 @@
 | Field | Value |
 |---|---|
 | ID | `AGC-073` |
-| Category | `12-impact-recovery` -- Impact & Recovery |
+| Category | `12-impact-recovery` — Impact & Recovery |
 | MITRE Technique | `T1489` Service Stop |
 | Verdict | True Positive |
 | Confidence | High |
 | Time to Detect | Sysmon EID 1 (sc.exe with stop argument in CommandLine) |
 | Time to Triage | 04:00 (service disruption confirmed via state transition, correlated with sc.exe invocation) |
 | Affected Systems | `COMPROMISED-HOST-01` (10.10.10.103) |
-| Chain | < AGC-072 . next AGC-074 > |
+| Chain | ◀ [AGC-072](../AGC-072-ransomware-simulation/README.md) · next [AGC-074](../AGC-074-dmz-website-defacement/README.md) ▶ |
 | One-line Summary | Deliberate service disruption via `sc.exe stop` targeting Print Spooler (business-critical service proxy). Additionally, a custom service (AGC073DemoSvc) was created and installed to demonstrate attacker-deployed service manipulation. Sysmon EID 1 captured all sc.exe invocations with full command lines. Windows EID 7045 captured the new service installation. Windows EID 7036 (service state change) was NOT observed on this Windows 11 build, representing a detection gap. The atomic standalone technique exercised here is reused by AGC-080 as the impact phase of its full attack chain. |
 
 ## Attacker Perspective
@@ -34,7 +34,7 @@
 - The `sc.exe` utility is a native Windows tool (living-off-the-land), requiring no additional tooling
 - Service disruption can be automated across multiple hosts via lateral movement channels
 
-**Distinction from AGC-069:** AGC-069 specifically targeted the Wazuh SIEM agent as a defense evasion tactic (T1562.001). AGC-073 targets business-critical services as an impact tactic (T1489) -- the goal is disruption, not stealth.
+**Distinction from AGC-069:** AGC-069 specifically targeted the Wazuh SIEM agent as a defense evasion tactic (T1562.001). AGC-073 targets business-critical services as an impact tactic (T1489) — the goal is disruption, not stealth.
 
 ### Simulation
 
@@ -63,7 +63,7 @@ sc start Spooler
 
 ### Detection
 
-**Sysmon EID 1 -- sc.exe stop Spooler (the disruption command):**
+**Sysmon EID 1 — sc.exe stop Spooler (the disruption command):**
 ```
 Process Create:
 UtcTime: 2026-09-15 23:35:20.295
@@ -78,7 +78,7 @@ IntegrityLevel: High
 ParentImage: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
 ```
 
-**Sysmon EID 1 -- sc.exe create AGC073DemoSvc (attacker service installation):**
+**Sysmon EID 1 — sc.exe create AGC073DemoSvc (attacker service installation):**
 ```
 Process Create:
 UtcTime: 2026-09-15 23:33:58.956
@@ -90,7 +90,7 @@ User: COMPROMISED-01\Administrator
 LogonId: 0x923C29
 ```
 
-**Sysmon EID 1 -- svchost.exe spawned by the new service:**
+**Sysmon EID 1 — svchost.exe spawned by the new service:**
 ```
 Process Create:
 UtcTime: 2026-09-15 23:34:01.062
@@ -102,7 +102,7 @@ User: NT AUTHORITY\SYSTEM
 LogonId: 0x3E7
 ```
 
-**Windows EID 7045 -- New service installed:**
+**Windows EID 7045 — New service installed:**
 ```
 A service was installed in the system.
 Service Name:  AGC073DemoSvc
@@ -112,33 +112,33 @@ Service Start Type:  auto start
 Service Account:  LocalSystem
 ```
 
-**DETECTION GAP -- EID 7036 absent:**
-Windows Event ID 7036 (Service Control Manager -- service entered the stopped/running state) was NOT observed on this Windows 11 build (26100) within 10 minutes of service state changes. This is a detection gap: the traditional EID 7036 detection strategy for service disruption may not be reliable on modern Windows 11 builds.
+**DETECTION GAP — EID 7036 absent:**
+Windows Event ID 7036 (Service Control Manager — service entered the stopped/running state) was NOT observed on this Windows 11 build (26100) within 10 minutes of service state changes. This is a detection gap: the traditional EID 7036 detection strategy for service disruption may not be reliable on modern Windows 11 builds.
 
 ### Investigation
 
-**Step 1 -- Identify the service stop commands:**
+**Step 1 — Identify the service stop commands:**
 Sysmon EID 1 captured two `sc.exe stop` invocations within 76 seconds:
 - 23:34:04 UTC: `sc stop AGC073DemoSvc` (PID 2204, LogonId 0x923C29)
 - 23:35:20 UTC: `sc stop Spooler` (PID 2200, LogonId 0x92EAB4)
 
-Both executed under `COMPROMISED-01\Administrator` at High integrity -- consistent with an attacker operating with elevated privileges on a compromised host.
+Both executed under `COMPROMISED-01\Administrator` at High integrity — consistent with an attacker operating with elevated privileges on a compromised host.
 
-**Step 2 -- Correlate with service installation:**
-EID 7045 captured a new service installation (AGC073DemoSvc) 66 seconds before the Spooler disruption. The service used `svchost.exe` as its binary -- a legitimate Windows executable that attackers abuse to blend in with normal service host processes. The `auto start` configuration means the attacker intended this service to persist across reboots.
+**Step 2 — Correlate with service installation:**
+EID 7045 captured a new service installation (AGC073DemoSvc) 66 seconds before the Spooler disruption. The service used `svchost.exe` as its binary — a legitimate Windows executable that attackers abuse to blend in with normal service host processes. The `auto start` configuration means the attacker intended this service to persist across reboots.
 
-**Step 3 -- Assess business impact:**
+**Step 3 — Assess business impact:**
 - **Print Spooler (Spooler):** In a production environment, stopping the Print Spooler disrupts all printing operations. For a financial services firm like Ashford Grove Capital, this impacts compliance document printing, client report generation, and audit trail production.
 - **AGC073DemoSvc:** Represents an attacker-installed service that could serve as a persistence mechanism, C2 channel, or additional disruption vector.
 
-**Step 4 -- Cross-reference with attack chain:**
+**Step 4 — Cross-reference with attack chain:**
 Service disruption (T1489) typically occurs alongside ransomware (AGC-072, T1486) in the impact phase. The combination of file encryption AND service disruption creates maximum business impact, consistent with modern ransomware operator playbooks (e.g., LockBit, BlackCat/ALPHV).
 
 ### Report
 
-**Verdict: True Positive** -- Deliberate service disruption via sc.exe stop.
+**Verdict: True Positive** — Deliberate service disruption via sc.exe stop.
 
-**Confidence: High** -- Multiple corroborating evidence sources:
+**Confidence: High** — Multiple corroborating evidence sources:
 1. Sysmon EID 1 captured the exact `sc.exe stop Spooler` command with Administrator context
 2. The Spooler service confirmed transitioned from Running to Stopped
 3. An attacker-style service (AGC073DemoSvc) was installed via EID 7045 in the same session
@@ -148,10 +148,10 @@ Service disruption (T1489) typically occurs alongside ransomware (AGC-072, T1486
 **Response recommendation:**
 1. **Immediate service restoration** for any business-critical service found stopped outside maintenance windows
 2. **Audit all sc.exe invocations** (Sysmon EID 1 with `CommandLine` containing `stop`, `delete`, or `config`) and correlate with change management records
-3. **Monitor EID 7045** (service installation) as a higher-fidelity detection than EID 7036 on modern Windows builds -- new service installations outside approved deployment processes are high-confidence indicators of compromise
+3. **Monitor EID 7045** (service installation) as a higher-fidelity detection than EID 7036 on modern Windows builds — new service installations outside approved deployment processes are high-confidence indicators of compromise
 4. **Implement service protection policies** via Group Policy: mark critical services as non-stoppable by non-SYSTEM accounts, or use Defender Application Control to restrict `sc.exe` usage
 5. **Create a documented critical-service list** and build alerting rules specifically for state changes to services on that list, reducing noise from routine service cycling
-6. **Correlate with AGC-072** (ransomware) -- service disruption and file encryption in the same timeline confirm coordinated destructive intent
+6. **Correlate with AGC-072** (ransomware) — service disruption and file encryption in the same timeline confirm coordinated destructive intent
 
 ### MITRE Mapping
 
@@ -161,7 +161,7 @@ Service disruption (T1489) typically occurs alongside ransomware (AGC-072, T1486
 
 ## Evidence
 
-Screenshots: not applicable (text-based evidence collection only).
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
 
 ### Service disruption timeline
 

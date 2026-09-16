@@ -18,7 +18,7 @@
 | Time to Detect | N/A — no automated alert fired; email gateway URL scanning cannot extract URLs from QR images |
 | Time to Triage | 06:00 (from email receipt to timing-correlated network request identification) |
 | Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103), `EXT-ATTACKER-SIM` (10.10.40.10) |
-| Chain | ◀ AGC-003 · next AGC-005 ▶ |
+| Chain | ◀ [AGC-003](../AGC-003-credential-harvest-link/README.md) · next [AGC-005](../AGC-005-url-shortener-redirect/README.md) ▶ |
 | One-line Summary | Phishing email delivers malicious URL via embedded QR code image, bypassing email gateway URL scanning entirely. |
 
 ## Attacker Perspective
@@ -134,4 +134,4 @@ The confidence is Medium (not High) because without decoding the QR image, an an
 
 ## Evidence
 
-Screenshots: to be added manually by the analyst.
+Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
