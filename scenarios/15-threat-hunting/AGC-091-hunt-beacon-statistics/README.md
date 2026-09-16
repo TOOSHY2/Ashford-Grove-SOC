@@ -29,9 +29,9 @@
 
 **Data source**: Network connection data from MGMT-GUI-TEMP (10.10.10.20) — active connections (`ss -tunap`), ARP neighbor table, and syslog network events.
 
-**Intended data source**: Security Onion `conn.log` (Zeek/Bro connection logs) which would provide the optimal dataset for inter-arrival time analysis.
+**Intended data source**: Security Onion `conn.log` (Zeek/Bro connection logs), the right dataset for inter-arrival time analysis.
 
-**Lab constraint**: Security Onion (10.10.30.20) has NO Guest Additions installed, preventing direct query via guestcontrol. The Wazuh indexer (port 9200) is not responding from MGMT-GUI-TEMP, preventing API-based data retrieval. The hunt used available network telemetry from the management workstation as an alternative.
+**Lab constraint**: Security Onion (10.10.30.20) has NO Guest Additions installed, so guestcontrol cannot query it directly. The Wazuh indexer (port 9200) does not answer from MGMT-GUI-TEMP, which rules out the API route. The hunt fell back to the network telemetry available on the management workstation.
 
 **Execution window**: 01:12:38 - 01:12:39 UTC
 
@@ -48,7 +48,7 @@ tcp   LISTEN 127.0.0.1:631          0.0.0.0:*       (CUPS)
 tcp   LISTEN 127.0.0.54:53          0.0.0.0:*       (systemd-resolved)
 ```
 
-All active connections are **local/loopback services** (DNS resolver, CUPS printing, mDNS). No outbound connections to external or internal hosts with periodic patterns.
+Every socket is a **local/loopback service** (DNS resolver, CUPS printing, mDNS). There is no outbound connection to any internal or external host, periodic or otherwise.
 
 ##### ARP Neighbor Table
 
@@ -68,11 +68,11 @@ DNS configured via systemd-resolved stub resolver (127.0.0.53) with upstream DNS
 
 ### Report
 
-**Result: Hypothesis Refuted** — No active C2 beaconing patterns were detected in the available network telemetry. All active connections from the management workstation are local services (DNS resolver, CUPS, mDNS) with no outbound periodic connections to internal or external hosts.
+**Result: Hypothesis Refuted** — The available network telemetry shows no C2 beaconing. Every active connection on the management workstation is a local service (DNS resolver, CUPS, mDNS); there is no outbound periodic connection to any internal or external host.
 
-**Lab constraint acknowledgment**: The ideal dataset for beaconing analysis (Security Onion conn.log with Zeek connection metadata including timestamps, durations, and byte counts) was unavailable due to Security Onion having no Guest Additions and the Wazuh indexer being offline. A production hunt would use the full conn.log dataset to compute inter-arrival time standard deviation for all (src, dst, dport) tuples.
+**Lab constraint acknowledgment**: The right dataset for this hunt is the Security Onion conn.log, with Zeek timestamps, durations, and byte counts per connection. It was out of reach: Security Onion has no Guest Additions and the Wazuh indexer was offline. A production run would take the full conn.log and compute inter-arrival time standard deviation for every (src, dst, dport) tuple.
 
-**Recommendation**: When Security Onion access is restored, re-run this hunt using the Zeek conn.log. The statistical method (low inter-arrival time variance = suspicious regularity) is sound and should be added to the periodic hunt library. Exclude known monitoring heartbeats (Wazuh agent check-ins, SNMP polling) from the baseline.
+**Recommendation**: Re-run this hunt against the Zeek conn.log once Security Onion access is restored. The method itself (low inter-arrival time variance = suspicious regularity) holds and belongs in the periodic hunt library. Exclude known monitoring heartbeats (Wazuh agent check-ins, SNMP polling) from the baseline.
 
 ### MITRE Mapping
 

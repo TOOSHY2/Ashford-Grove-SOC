@@ -44,7 +44,7 @@
 Total EID 4698 events: 0
 ```
 
-No EID 4698 events present in the current Security log. This is expected because the Security log was cleared during AGC-088 (log retention policy scenario) at approximately 01:00 UTC, removing historical task creation audit events.
+The current Security log holds no EID 4698 events. That is expected: AGC-088 (the log retention policy scenario) cleared the Security log at approximately 01:00 UTC and took the historical task-creation audit events with it.
 
 ##### Current Non-Microsoft Scheduled Tasks
 
@@ -59,13 +59,13 @@ No EID 4698 events present in the current Security log. This is expected because
 | SoftLandingDeferralTask (SID ...1000) | Ready | **Benign** — Windows SoftLanding |
 | SoftLandingTriggerTask (SID ...1000) | Disabled | **Benign** — Windows SoftLanding |
 
-All 6 tasks are Windows SoftLanding tasks (content delivery/tips system), present under two user SIDs. These are legitimate Windows system tasks and not persistence mechanisms.
+All 6 are Windows SoftLanding tasks (the content delivery/tips system), registered under two user SIDs. They are stock Windows tasks, not persistence.
 
-**No scenario-planted tasks remain** — the cleanup steps in AGC-081, AGC-085, and AGC-088 successfully removed all simulation tasks (AGC081Backup, AGC085NightlyReport, AGC088LogRotation).
+**No scenario-planted tasks remain** — the cleanup steps in AGC-081, AGC-085, and AGC-088 removed every simulation task (AGC081Backup, AGC085NightlyReport, AGC088LogRotation).
 
 ##### Sysmon EID 1: schtasks.exe History
 
-**9 schtasks.exe executions** found in Sysmon log, all from current session scenarios:
+**9 schtasks.exe executions** in the Sysmon log, all from this session's scenarios:
 
 | Timestamp (UTC) | Command | Assessment |
 |-----------------|---------|------------|
@@ -83,15 +83,15 @@ All 6 tasks are Windows SoftLanding tasks (content delivery/tips system), presen
 
 Documented change-management window: **Tue/Thu 22:00-02:00 UTC**
 
-All 9 schtasks.exe executions occurred on **2026-09-16 (Wednesday)** between **00:32-01:00 UTC** — outside the documented change window (the window covers only Tue and Thu). However, all are attributable to lab scenario execution (authorized testing activity), not unauthorized persistence.
+All 9 schtasks.exe executions ran on **2026-09-16 (Wednesday)** between **00:32-01:00 UTC**, outside the documented change window, which covers only Tue and Thu. Every one traces to authorized lab scenario execution, not unauthorized persistence.
 
 ### Report
 
-**Result: Hypothesis Confirmed (Residual Scenario Artifacts)** — The Sysmon EID 1 history reveals 9 scheduled task operations outside the documented change-management window (Wednesday vs. Tue/Thu window). All are attributable to authorized lab scenario execution (AGC-081, AGC-085, AGC-088) and were properly cleaned up after each scenario. No unauthorized persistence via scheduled tasks is currently active.
+**Result: Hypothesis Confirmed (Residual Scenario Artifacts)** — Sysmon EID 1 history shows 9 scheduled-task operations outside the change-management window (Wednesday, against a Tue/Thu window). All trace to authorized lab scenario execution (AGC-081, AGC-085, AGC-088), and each scenario cleaned up its own task. No unauthorized scheduled-task persistence is active.
 
-**Value of this hunt**: The off-hours task creation hunt is highly effective in production environments where change-management policies are enforced. Any `schtasks /create` or EID 4698 event outside the approved window without a matching emergency ticket warrants immediate investigation per the AGC-020 playbook.
+**Value of this hunt**: This hunt works wherever change-management windows are enforced, because the window itself is the baseline. Any `schtasks /create` or EID 4698 event outside the approved window with no matching emergency ticket goes straight to investigation under the AGC-020 playbook.
 
-**Recommendation**: Add scheduled task creation monitoring to the SIEM correlation rules. Alert on EID 4698 events that fall outside documented change windows. Cross-reference against the change management system (ticketing) for approved emergency changes. Schedule weekly hunt queries to catch any tasks that evaded real-time detection.
+**Recommendation**: Add a SIEM correlation rule that alerts on EID 4698 events outside the documented change windows. Cross-reference each hit against the change-management ticketing system for approved emergency changes. Run the hunt query weekly to catch any task the real-time rule missed.
 
 ### MITRE Mapping
 

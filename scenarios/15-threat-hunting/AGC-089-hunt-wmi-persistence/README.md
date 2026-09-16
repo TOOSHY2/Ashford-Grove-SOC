@@ -29,7 +29,7 @@
 
 **Data sources**: WMI repository enumeration via `Get-CimInstance` on `root/subscription` namespace; Sysmon EID 19/20/21 (WMI activity events).
 
-**Scope**: COMPROMISED-HOST-01 (primary target; the endpoint with the highest risk profile in the environment).
+**Scope**: COMPROMISED-HOST-01 (primary target; the highest-risk endpoint in the lab).
 
 **Execution window**: 01:04:19 - 01:04:24 UTC
 
@@ -100,21 +100,21 @@ Consumer: NTEventLogEventConsumer (Name = "SCM Event Log Consumer")
 | **Consumer name** | SCM Event Log Consumer | Windows built-in |
 | **Attributed to** | Windows OS (Service Control Manager subsystem) | Legitimate system component |
 
-**Determination**: This is a **built-in Windows system WMI subscription** that writes SCM events to the Windows Event Log. The consumer type is `NTEventLogEventConsumer` (event log writer), not `CommandLineEventConsumer` or `ActiveScriptEventConsumer` (the types used for persistence/execution). This subscription is present on all standard Windows installations and is benign.
+**Determination**: This is the **built-in Windows system WMI subscription** that writes SCM events to the Windows Event Log. Its consumer is `NTEventLogEventConsumer`, an event-log writer, not `CommandLineEventConsumer` or `ActiveScriptEventConsumer`, the two types that execute code. Every standard Windows install ships with it. Benign.
 
 ##### Historical Activity: AGC-079 WMI Subscriptions (Cleaned Up)
 
-The Sysmon EID 19/20/21 events show that the AGC-079 scenario's WMI subscriptions (`AGC079UpdateFilter` / `AGC079UpdateConsumer`) were created at 00:15:24 and subsequently deleted at 00:16:28 during scenario cleanup. These subscriptions **no longer exist** in the WMI repository, confirming successful cleanup.
+Sysmon EID 19/20/21 show the AGC-079 subscriptions (`AGC079UpdateFilter` / `AGC079UpdateConsumer`) created at 00:15:24 and deleted at 00:16:28 during that scenario's cleanup. Neither object **exists in the repository now**, so the cleanup held.
 
 ### Report
 
-**Result: Hypothesis Confirmed (Benign)** — The WMI repository contains one event-subscription triplet, which is a legitimate built-in Windows component (SCM Event Log Filter/Consumer using NTEventLogEventConsumer). No malicious persistence via WMI event subscriptions is currently active on COMPROMISED-HOST-01.
+**Result: Hypothesis Confirmed (Benign)** — The WMI repository holds one event-subscription triplet: the built-in SCM Event Log Filter/Consumer pair, using NTEventLogEventConsumer. No WMI event-subscription persistence is active on COMPROMISED-HOST-01.
 
-The Sysmon historical record confirms that a prior malicious WMI subscription (AGC-079) was planted and subsequently cleaned up. This validates that the hunt methodology would have detected active malicious subscriptions had they been present.
+The Sysmon record also shows the AGC-079 subscription being planted and then removed. The same three queries would have surfaced it while it was live, which is the check on the method.
 
-**Value of this hunt**: This reusable query can be scheduled as a periodic sweep across all domain endpoints. Any new `CommandLineEventConsumer` or `ActiveScriptEventConsumer` that is not attributed to a documented monitoring/management tool should trigger immediate escalation per the AGC-022 investigation playbook.
+**Value of this hunt**: The three queries are reusable and can be scheduled as a sweep across every domain endpoint. Any new `CommandLineEventConsumer` or `ActiveScriptEventConsumer` not tied to a documented monitoring or management tool goes straight to escalation under the AGC-022 investigation playbook.
 
-**Recommendation**: Add this WMI subscription enumeration to the SOC's periodic hunt library. Schedule monthly execution across all Windows endpoints. Alert on any non-system consumer types (CommandLine, ActiveScript) that are not in the approved software inventory.
+**Recommendation**: Add the WMI subscription enumeration to the SOC hunt library and run it monthly across all Windows endpoints. Alert on any non-system consumer type (CommandLine, ActiveScript) that is not in the approved software inventory.
 
 ### MITRE Mapping
 

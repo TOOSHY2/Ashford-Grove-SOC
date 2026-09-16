@@ -70,19 +70,19 @@
 
 The rare pairs fall into three categories:
 
-1. **Prior scenario artifacts** (AGC-014, AGC-015, AGC-016, AGC-027, AGC-028): Known execution chains from completed scenarios. These validate that the hunt methodology successfully surfaces malicious patterns.
+1. **Prior scenario artifacts** (AGC-014, AGC-015, AGC-016, AGC-027, AGC-028): Known execution chains from completed scenarios. The query surfaced every one of them, which is the check on the method.
 
-2. **Suspicious LOLBin chains** (mshta->cmd, mshta->powershell, spoolsv->regsvr32, WmiPrvSE->powershell): Classic abuse patterns that would warrant immediate investigation in a production environment.
+2. **Suspicious LOLBin chains** (mshta->cmd, mshta->powershell, spoolsv->regsvr32, WmiPrvSE->powershell): LOLBin abuse chains; in production each of these would go straight to investigation.
 
 3. **Benign system pairs** (services->svchost, svchost->taskhostw, etc.): Normal Windows service operations.
 
 ### Report
 
-**Result: Hypothesis Confirmed (Residual Artifacts)** — The statistical rare-pair analysis successfully identified LOLBin abuse patterns from prior scenario executions (mshta->cmd, mshta->powershell, spoolsv->regsvr32, WmiPrvSE->powershell). No currently active malicious parent-child chains were found beyond historical scenario artifacts.
+**Result: Hypothesis Confirmed (Residual Artifacts)** — The rare-pair analysis surfaced the LOLBin chains left by prior scenario runs (mshta->cmd, mshta->powershell, spoolsv->regsvr32, WmiPrvSE->powershell). Nothing outside those scenario artifacts turned up.
 
-**Value of this hunt**: The rare parent-child pair analysis provides a baseline-independent detection method. In production, this query should be scheduled weekly with results compared against a growing whitelist of known-good pairs. Any new rare pair involving LOLBins (mshta, rundll32, regsvr32, certutil, cmstp, msiexec) should trigger immediate triage.
+**Value of this hunt**: The rare-pair query needs no signature and no external baseline; the host's own EID 1 history is the baseline. In production, run it weekly and diff the output against a growing whitelist of known-good pairs. Any new rare pair involving a LOLBin (mshta, rundll32, regsvr32, certutil, cmstp, msiexec) goes straight to triage.
 
-**Recommendation**: Add rare parent-child pair enumeration to the periodic hunt library. Maintain a whitelist of validated benign rare pairs to reduce future triage workload.
+**Recommendation**: Add rare parent-child pair enumeration to the periodic hunt library. Keep a whitelist of validated benign rare pairs so later runs triage faster.
 
 ### MITRE Mapping
 

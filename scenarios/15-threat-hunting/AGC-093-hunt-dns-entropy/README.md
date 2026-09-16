@@ -31,7 +31,7 @@
 
 **Available data source**: MGMT-GUI-TEMP DNS configuration and resolution statistics.
 
-**Lab constraint**: Security Onion has NO Guest Additions (cannot query via guestcontrol). Wazuh indexer (port 9200) is not responding. MGMT-GUI-TEMP does not have `resolvectl` statistics available for cache analysis.
+**Lab constraint**: Security Onion has NO Guest Additions, so guestcontrol cannot query it. The Wazuh indexer (port 9200) is not responding. MGMT-GUI-TEMP cannot produce `resolvectl` statistics for cache analysis.
 
 **Execution window**: 01:12:38 - 01:12:39 UTC
 
@@ -44,7 +44,7 @@ nameserver 127.0.0.53    (systemd-resolved stub resolver)
 Upstream DNS: 10.10.10.1 (OPNsense-FW)
 ```
 
-DNS resolution follows the chain: MGMT-GUI-TEMP -> systemd-resolved (127.0.0.53) -> OPNsense-FW (10.10.10.1). DNS cache statistics were unavailable via CLI (`resolvectl statistics` not available on this Ubuntu version).
+Resolution runs MGMT-GUI-TEMP -> systemd-resolved (127.0.0.53) -> OPNsense-FW (10.10.10.1). The CLI gave no cache statistics; `resolvectl statistics` is not available on this Ubuntu version.
 
 ##### Syslog DNS Events
 
@@ -55,7 +55,7 @@ DNS resolution follows the chain: MGMT-GUI-TEMP -> systemd-resolved (127.0.0.53)
                     instead of UDP for DNS server 10.10.10.1
 ```
 
-The DNS resolver fell back from UDP+EDNS0 to TCP when communicating with OPNsense. This indicates DNS connectivity but degraded performance — not indicative of C2 or exfiltration.
+The resolver stepped down from UDP+EDNS0 to TCP when talking to OPNsense. That shows DNS is reachable but degraded; it is not a sign of C2 or exfiltration.
 
 ##### Alternative Data Points
 
@@ -64,17 +64,17 @@ On COMPROMISED-HOST-01, Sysmon EID 22 (DNS Query) is available and has been used
 - AGC-084: Constant subdomain pattern (SaaS update) — low entropy
 - AGC-063: Data-encoded subdomains (exfiltration) — very high entropy
 
-These prior scenarios validate the entropy-based detection methodology, even though a full cross-environment hunt was not possible in this session.
+Those three runs already show entropy separating C2 and exfiltration from SaaS traffic, even though a lab-wide hunt was not possible this session.
 
 ### Report
 
-**Result: Hypothesis Refuted (Insufficient DNS Log Access)** — The hunt could not be fully executed due to the unavailability of centralized DNS query logs. Security Onion's Zeek dns.log is the ideal dataset for this analysis but was inaccessible (no Guest Additions, no API access). The Wazuh indexer was offline, preventing aggregated Sysmon EID 22 retrieval across endpoints.
+**Result: Hypothesis Refuted (Insufficient DNS Log Access)** — No centralized DNS query log was reachable, so the hunt could not run in full. Security Onion's Zeek dns.log is the right dataset but was out of reach (no Guest Additions, no API access). The Wazuh indexer was offline, which blocked pulling Sysmon EID 22 across endpoints.
 
-**Methodology validation**: The entropy-based approach is validated by prior scenario executions:
+**Methodology validation**: Prior scenario runs already bear out the entropy approach:
 - **High entropy + high volume** = Likely C2 or exfiltration (AGC-052, AGC-063)
 - **Low entropy + consistent pattern** = Likely legitimate SaaS (AGC-084)
 
-**Recommendation**: When Security Onion or Wazuh access is restored, execute this hunt using the full Zeek dns.log dataset. Compute Shannon entropy per registered domain across all subdomains queried. Flag domains with entropy > 3.5 bits AND query count > 10 for immediate triage. Add to the periodic hunt library with weekly scheduling.
+**Recommendation**: Once Security Onion or Wazuh access is restored, run this hunt on the full Zeek dns.log. Compute Shannon entropy per registered domain across every subdomain queried. Flag domains with entropy > 3.5 bits AND query count > 10 for immediate triage. Add it to the periodic hunt library on a weekly schedule.
 
 ### MITRE Mapping
 
