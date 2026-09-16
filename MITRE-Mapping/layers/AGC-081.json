@@ -1,0 +1,63 @@
+{
+    "name": "AGC-081 -- Encoded PowerShell: Legitimate Scheduled Backup (False Positive)",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. | AGC-081: False Positive triage. Verdict: Benign, Confidence: High. Malicious twin: AGC-013.",
+    "filters": {
+        "platforms": ["Windows"]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1059.001",
+            "tactic": "execution",
+            "color": "#ffe766ff",
+            "comment": "AGC-081: -EncodedCommand detected in schtasks /create. Decoded: benign Copy-Item to internal backup share. VERDICT: BENIGN. Twin: AGC-013.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1027",
+            "tactic": "defense-evasion",
+            "color": "#ffe766ff",
+            "comment": "AGC-081: Base64 encoding for UNC path quoting (engineering reason). Pre-dated change record confirms. VERDICT: BENIGN.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        }
+    ],
+    "gradient": {
+        "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Observed: Benign (FP)", "color": "#ffe766ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
