@@ -1,0 +1,52 @@
+{
+    "name": "AGC-084 -- DNS Beacon Pattern: Legitimate SaaS Update Checker (False Positive)",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. | AGC-084: False Positive triage. Verdict: Benign, Confidence: High. Malicious twin: AGC-052.",
+    "filters": {
+        "platforms": ["Windows"]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1071.004",
+            "tactic": "command-and-control",
+            "color": "#ffe766ff",
+            "comment": "AGC-084: Periodic DNS queries to a1b2c3d4-update.agc084vendor-demo.local with CONSTANT subdomain. Matches software inventory for AGC084DemoApp v2.1. VERDICT: BENIGN. Twin: AGC-052.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        }
+    ],
+    "gradient": {
+        "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Observed: Benign (FP)", "color": "#ffe766ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
