@@ -1,0 +1,17 @@
+{
+  "name": "AGC-100: Revoked Resource Access",
+  "versions": { "attack": "16", "navigator": "4.9.5", "layer": "4.5" },
+  "domain": "enterprise-attack",
+  "description": "AGC-100: Post-revocation access attempt denied. Access control confirmed working. No MITRE technique.",
+  "filters": { "platforms": ["Windows", "Linux"] },
+  "sorting": 3,
+  "layout": { "layout": "side", "aggregateFunction": "average", "showID": true, "showName": true, "showAggregateScores": true, "countUnscored": false },
+  "hideDisabled": false,
+  "techniques": [],
+  "gradient": { "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"], "minValue": 0, "maxValue": 100 },
+  "legendItems": [{ "label": "Insider Threat: No MITRE Technique", "color": "#ffe766ff" }],
+  "metadata": [{ "name": "note", "value": "AGC-100: No MITRE technique applies. Access control boundary test. Single attempt denied, no circumvention indicators. Control confirmed working." }],
+  "links": [],
+  "showTacticRowBackground": true, "tacticRowBackground": "#dddddd",
+  "selectTechniquesAcrossTactics": true, "selectSubtechniquesWithParent": false, "selectVisibleTechniques": false
+}
