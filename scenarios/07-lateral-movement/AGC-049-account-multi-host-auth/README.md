@@ -21,14 +21,14 @@
 
 ### Tradecraft
 
-**What:** Multi-host authentication with a single account in a tight time window is a behavioral indicator of active lateral movement. The attacker uses harvested credentials to authenticate to multiple hosts rapidly, mixing protocols (SMB, RDP, WinRM, WMI, SSH) to:
+**What:** One account authenticating to many hosts in a tight window is a behavioral sign of lateral movement in progress. The attacker fires harvested credentials at several hosts in quick succession, mixing protocols (SMB, RDP, WinRM, WMI, SSH) to:
 1. Test which hosts accept the credentials
-2. Identify which protocols are available on each target
+2. Learn which protocols each target exposes
 3. Establish access across the environment before detection and credential rotation
 
-**Why this is a SIEM-level detection:** No single host's event log reveals this pattern. Each destination host sees only ONE logon event. The attacker's pattern — same account, many hosts, short window — is only visible when events from ALL hosts are aggregated in a SIEM (Wazuh). This is a key reason why centralized log collection is essential for lateral movement detection.
+**Why this is a SIEM-level detection:** No single host's event log shows this pattern. Each destination sees only ONE logon event. Same account, many hosts, short window — that only appears when events from ALL hosts land in the SIEM (Wazuh) together.
 
-**Why at this lifecycle stage:** This scenario represents the culmination of the lateral movement category. After testing individual protocols (AGC-043 RDP, AGC-044 SMB, AGC-045 WinRM, AGC-046 WMI, AGC-047 PtH, AGC-048 SSH), the attacker deploys all of them in a rapid sweep to maximize access before detection.
+**Why at this lifecycle stage:** This is the closing scenario of the lateral movement category. Having tried each protocol on its own (AGC-043 RDP, AGC-044 SMB, AGC-045 WinRM, AGC-046 WMI, AGC-047 PtH, AGC-048 SSH), the attacker runs them all in one rapid sweep to grab as much access as possible before anyone notices.
 
 ### Simulation
 
@@ -78,51 +78,51 @@
 ### Investigation
 
 **Step 1 — SIEM-level cross-host correlation:**
-This detection requires aggregating Security EID 4624 events across all destination hosts, grouped by account name within a sliding time window (15-30 minutes). The query pattern:
+The detection aggregates Security EID 4624 events from every destination host, grouped by account name over a sliding window (15-30 minutes). The query pattern:
 - Group by: `Account Name` + `Account Domain`
 - Count: distinct `Source Network Address` (or destination hostname)
 - Window: sliding 15-30 minute window
 - Threshold: 3+ distinct hosts (baseline-adjusted)
 
-A standard user account (`raj.patel` is IT-Support, not a Domain Admin) touching 4+ hosts in 96 seconds far exceeds any legitimate baseline.
+A standard user account (`raj.patel` is IT-Support, not a Domain Admin) touching 4+ hosts in 96 seconds is far past any legitimate baseline.
 
 **Step 2 — Mechanism diversity analysis:**
-Pull the logon types and authentication packages for each 4624 event:
+Pull the logon type and authentication package for each 4624:
 - Type 3 + NtLmSsp = SMB/WMI network logon
 - Type 10 + Negotiate = RDP interactive logon
-- SSH auth = auth.log entry on Linux destination
+- SSH auth = auth.log entry on the Linux destination
 
-Mixed mechanisms in a tight window have essentially zero false positive rate for standard user accounts. IT automation tools use ONE consistent protocol (SCCM uses WMI, Ansible uses WinRM, etc.), not a rotating mix.
+Mixed mechanisms in a tight window produce almost no false positives for standard user accounts. IT automation sticks to ONE protocol (SCCM uses WMI, Ansible uses WinRM, etc.); it does not rotate through four.
 
 **Step 3 — Establish account baseline:**
-Before classifying as anomalous, check the account's normal behavior:
+Before calling this anomalous, check the account's normal behavior:
 - Is `raj.patel` an IT-Support role that routinely touches multiple hosts?
-- Even if yes, does the baseline include 4 protocols in 96 seconds?
-- In this case: raj.patel is IT-Support (see AGC-043/044) but the velocity + mechanism diversity far exceeds any support workflow
+- Even so, does the baseline include 4 protocols in 96 seconds?
+- Here raj.patel is IT-Support (see AGC-043/044), but the velocity and protocol mix are well beyond any support workflow
 
 **Step 4 — Active incident determination:**
-Multi-host auth with mixed mechanisms in a tight window indicates **active lateral movement in progress** — the attacker is currently expanding access. This is NOT a historical finding; it requires immediate P1 response:
-- Isolate ALL affected hosts simultaneously (not sequentially — sequential isolation gives the attacker time to move further)
+Multi-host auth with mixed mechanisms in a tight window means **active lateral movement in progress** — the attacker is expanding access right now. This is not a historical finding; it needs an immediate P1 response:
+- Isolate ALL affected hosts at once (sequential isolation gives the attacker time to move again)
 - Rotate the compromised credential immediately
-- Begin incident response timeline analysis across all touched hosts
+- Start incident response timeline analysis across every touched host
 
 ### Report
 
 **Verdict: True Positive** — Active lateral movement campaign using `raj.patel` credentials across multiple hosts and protocols.
 
 **Confidence: Critical** — Calibrated assessment:
-1. 4 distinct target hosts authenticated to within 96 seconds — far beyond any legitimate workflow speed.
-2. 4 different authentication protocols (SMB, RDP, SSH, WMI) — no legitimate tool or workflow uses this diversity.
-3. Cross-zone SSH attempt (LAN -> DMZ) — standard user accounts never SSH to DMZ hosts.
-4. Credential reuse pattern matches credential access findings from AGC-031 through AGC-036.
-5. The combination of velocity + mechanism diversity + cross-zone reach has ZERO legitimate false positive scenarios for a standard user account.
+1. 4 distinct target hosts within 96 seconds — no legitimate workflow moves that fast.
+2. 4 different authentication protocols (SMB, RDP, SSH, WMI) — no legitimate tool or workflow mixes them like this.
+3. A cross-zone SSH attempt (LAN -> DMZ) — standard user accounts never SSH to DMZ hosts.
+4. The credential reuse matches the credential access findings from AGC-031 through AGC-036.
+5. Velocity plus mechanism diversity plus cross-zone reach leaves no plausible false positive for a standard user account.
 
 **Response recommendation:**
-1. **P1 ACTIVE INCIDENT:** This is lateral movement in progress, not a completed event. Escalate to full incident response immediately.
-2. **Simultaneous isolation:** Isolate ALL affected hosts at the same time (COMPROMISED-HOST-01, WIN-CLIENT-02, AD-DC-01, WIN-CLIENT-01, DMZ-LINUX-01). Sequential isolation gives the attacker time to move to un-isolated hosts.
-3. **Immediate credential rotation:** Reset `raj.patel`'s password and revoke all active sessions across all hosts.
-4. **SIEM detection rule:** Alert when any single account generates 4624 events on 3+ distinct hosts within a 15-minute sliding window. Elevate to Critical when mechanism diversity (multiple logon types) is present.
-5. **Timeline analysis:** Build a full timeline of raj.patel's activity across all hosts to identify the initial compromise point, all accessed hosts, and any data accessed or exfiltrated.
+1. **P1 ACTIVE INCIDENT:** This is lateral movement in progress, not a completed event. Escalate to full incident response now.
+2. **Simultaneous isolation:** Isolate ALL affected hosts at the same time (COMPROMISED-HOST-01, WIN-CLIENT-02, AD-DC-01, WIN-CLIENT-01, DMZ-LINUX-01). Isolating one at a time lets the attacker hop to whichever host is still open.
+3. **Immediate credential rotation:** Reset `raj.patel`'s password and revoke every active session on every host.
+4. **SIEM detection rule:** Alert when one account produces 4624 events on 3+ distinct hosts inside a 15-minute sliding window. Raise to Critical when the logon types are mixed.
+5. **Timeline analysis:** Build a full timeline of raj.patel's activity across all hosts to find the initial compromise point, every host reached, and any data touched or exfiltrated.
 
 ### MITRE Mapping
 

@@ -21,19 +21,19 @@
 
 ### Tradecraft
 
-**What:** Windows Remote Management (WinRM) is a Microsoft implementation of WS-Management protocol that enables remote PowerShell execution via `Invoke-Command`, `Enter-PSSession`, or direct `winrm` commands. WinRM operates over HTTP (port 5985) or HTTPS (port 5443) and is the backbone of PowerShell Remoting.
+**What:** Windows Remote Management (WinRM) is Microsoft's WS-Management implementation and the transport under PowerShell Remoting: `Invoke-Command`, `Enter-PSSession`, or direct `winrm` commands. It runs over HTTP (port 5985) or HTTPS (port 5443).
 
 Key characteristics:
-- **Invoke-Command** executes arbitrary script blocks on remote hosts — the most powerful remote execution mechanism built into Windows
-- The remote process runs as `wsmprovhost.exe` (WS-Management Provider Host) on the destination
-- WinRM uses WS-Management shell creation with a `ResourceUri` of `http://schemas.microsoft.com/powershell/Microsoft.PowerShell`
-- Authentication is via NTLM or Kerberos, generating Type 3 (Network) logon events
+- **Invoke-Command** runs arbitrary script blocks on remote hosts — the most capable remote execution mechanism built into Windows
+- The remote side runs as `wsmprovhost.exe` (WS-Management Provider Host) on the destination
+- Each session starts with a WS-Management shell whose `ResourceUri` is `http://schemas.microsoft.com/powershell/Microsoft.PowerShell`
+- Authentication is NTLM or Kerberos, which produces Type 3 (Network) logon events
 
-**Why at this lifecycle stage:** After SMB admin share access (AGC-044) provided file-level remote access, WinRM provides something more powerful: remote code execution. WinRM is the preferred lateral movement protocol for attackers who have already obtained valid credentials because:
-1. It is a legitimate Windows management protocol (blends with IT operations)
-2. It provides full PowerShell execution context on the remote host
-3. It can be harder to detect than PsExec or scheduled task creation
-4. Script-block logging (EID 4104) on the destination captures what was executed — but only if enabled
+**Why at this lifecycle stage:** SMB admin shares (AGC-044) offered file-level access; WinRM offers remote code execution. An attacker holding valid credentials tends to prefer it because:
+1. It is a legitimate Windows management protocol and blends with IT operations
+2. It gives a full PowerShell execution context on the remote host
+3. It can be harder to spot than PsExec or scheduled task creation
+4. Script-block logging (EID 4104) on the destination records what ran — but only if enabled
 
 ### Simulation
 
@@ -54,10 +54,10 @@ Key characteristics:
 | 6 | 2026-09-15 21:12:06 | Cleanup | COMPROMISED-HOST-01 | Marker file removed |
 
 **Key findings:**
-- Remote WinRM to WIN-CLIENT-02 failed for two reasons: TCP 5985 unreachable (network isolation) and TrustedHosts restriction (IP-based authentication requires explicit TrustedHosts configuration)
-- Enable-PSRemoting on localhost started the WinRM service (svchost.exe -k NetworkService -p -s WinRM) and configured the WinRM listener
-- Localhost WinRM succeeded on retry: `wsmprovhost.exe -Embedding` spawned as the remote session host process
-- The entire WinRM session lifecycle was captured: service start, shell creation, command execution, shell close, session close
+- Remote WinRM to WIN-CLIENT-02 failed on two counts: TCP 5985 unreachable (network isolation) and the TrustedHosts restriction (connecting by IP needs an explicit TrustedHosts entry)
+- Enable-PSRemoting on localhost started the WinRM service (svchost.exe -k NetworkService -p -s WinRM) and configured the listener
+- The localhost retry worked: `wsmprovhost.exe -Embedding` spawned as the remote session host process
+- Telemetry covers the whole WinRM session lifecycle: service start, shell creation, command execution, shell close, session close
 
 ## SOC Perspective
 
@@ -71,11 +71,11 @@ Key characteristics:
 | 2026-09-15 21:11:58 | svchost.exe | `svchost.exe -k NetworkService -p -s WinRM` | 3256 | NT AUTHORITY\NETWORK SERVICE |
 | 2026-09-15 21:12:05 | wsmprovhost.exe | `C:\WINDOWS\system32\wsmprovhost.exe -Embedding` | 5680 | Administrator |
 
-**Critical indicator — wsmprovhost.exe:** The WS-Management Provider Host process is the definitive WinRM remote session indicator. This process:
+**Critical indicator — wsmprovhost.exe:** The WS-Management Provider Host process is the definitive sign of a WinRM remote session. This process:
 - Only spawns when a WinRM remote session is established
-- Runs under the authenticated user's context (Administrator in this case)
-- Has `-Embedding` flag indicating COM activation (automated, not interactive)
-- Its parent process is `svchost.exe` hosting the WinRM service
+- Runs in the authenticated user's context (Administrator here)
+- Carries the `-Embedding` flag, meaning COM activation rather than interactive launch
+- Has `svchost.exe` hosting the WinRM service as its parent
 
 **Security EID 4624 — Type 3 Network Logon (4 events):**
 
@@ -86,7 +86,7 @@ Key characteristics:
 | 2026-09-15 21:12:05 | COMPROMISED-01\Administrator | 127.0.0.1:64509 | NtLmSsp | NTLM V2 |
 | 2026-09-15 21:12:06 | COMPROMISED-01\Administrator | 127.0.0.1:64509 | NtLmSsp | NTLM V2 |
 
-Multiple Type 3 logons from the same source within 1 second, all NTLM V2, all elevated tokens. The multiple logon events reflect WinRM's session initialization (authentication, shell creation, command execution, enumeration).
+Four Type 3 logons from the same source within 1 second, all NTLM V2, all elevated tokens. WinRM authenticates separately for each session stage (authentication, shell creation, command execution, enumeration), which is why there are several.
 
 **WinRM Operational Log (50 events in ~1 second):**
 
@@ -108,35 +108,35 @@ Key events in sequence:
 ### Investigation
 
 **Step 1 — Identify WinRM remote execution:**
-The primary indicator is `wsmprovhost.exe -Embedding` in Sysmon EID 1. This process ONLY exists during active WinRM remote sessions. Cross-reference with WinRM EID 91 (shell creation) to get the source IP and authenticated account.
+The primary indicator is `wsmprovhost.exe -Embedding` in Sysmon EID 1. That process ONLY exists during an active WinRM remote session. Pair it with WinRM EID 91 (shell creation) to get the source IP and authenticated account.
 
 **Step 2 — Determine source host role:**
-Is the source host a designated management workstation or jump host? WinRM from IT automation servers (Ansible, SCCM, Azure Arc) is expected. WinRM from a standard user workstation (COMPROMISED-HOST-01) is anomalous — this host has no documented management role.
+Is the source a designated management workstation or jump host? WinRM from IT automation servers (Ansible, SCCM, Azure Arc) is expected. COMPROMISED-HOST-01 is a standard user workstation with no documented management role, so WinRM from it is anomalous.
 
 **Step 3 — Examine script-block content (EID 4104):**
-PowerShell script-block logging (EID 4104) on the destination captures the exact commands executed via the remote session. In this case, 0 EID 4104 events were captured — this is a detection gap. Script-block logging should be enabled via GPO on all managed endpoints. When enabled, EID 4104 would reveal the exact script block: file creation of a marker at `C:\Windows\Temp\agc045.txt`.
+PowerShell script-block logging (EID 4104) on the destination records the exact commands the remote session ran. Here 0 EID 4104 events were captured — a detection gap. Script-block logging should be enabled via GPO on all managed endpoints. With it on, EID 4104 would have shown the script block creating the marker at `C:\Windows\Temp\agc045.txt`.
 
 **Step 4 — Enable-PSRemoting as preparation:**
-The attacker ran `Enable-PSRemoting -Force` to configure WinRM on the compromised host before executing the remote session. This is itself an indicator — enabling PSRemoting on a standard workstation where it was previously disabled is a configuration change that should be detected. The svchost.exe WinRM service start event (EID 1) captures this.
+The attacker ran `Enable-PSRemoting -Force` to configure WinRM on the compromised host before opening the remote session. That is an indicator on its own — turning on PSRemoting on a standard workstation where it was off is a configuration change worth alerting on. The svchost.exe WinRM service start (EID 1) records it.
 
 **Step 5 — Detection reuse:**
-This builds on the lateral movement detection chain from AGC-043 (RDP) and AGC-044 (SMB). The pattern is: failed remote protocol -> try next protocol. RDP (3389 blocked) -> SMB (445 errors) -> WinRM (5985). This protocol rotation is itself a behavioral indicator of automated lateral movement.
+This extends the lateral movement chain from AGC-043 (RDP) and AGC-044 (SMB). The pattern is: one remote protocol fails, try the next. RDP (3389 blocked) -> SMB (445 errors) -> WinRM (5985). That protocol rotation is a behavioral indicator in its own right.
 
 ### Report
 
-**Verdict: True Positive** — WinRM lateral movement was attempted from a compromised workstation, with localhost execution demonstrating the technique after remote target was unreachable.
+**Verdict: True Positive** — WinRM lateral movement was attempted from a compromised workstation; when the remote target was unreachable, the localhost run still exercised the technique.
 
 **Confidence: High** — Calibrated assessment:
-1. `wsmprovhost.exe -Embedding` only spawns during WinRM remote sessions — zero false positive rate for this process.
-2. WinRM Operational EID 91 captures shell creation with authenticated user and source IP — unambiguous remote execution evidence.
-3. The source host (COMPROMISED-HOST-01) is a standard workstation with no documented management role — WinRM from this host is anomalous.
-4. Enable-PSRemoting was run to configure WinRM — an attacker preparation step that changes system configuration.
-5. 4 Type 3 logon events within 1 second from the same source reflect the WinRM session lifecycle.
+1. `wsmprovhost.exe -Embedding` only spawns during WinRM remote sessions — no false positive rate to speak of for this process.
+2. WinRM Operational EID 91 records shell creation with the authenticated user and source IP — unambiguous remote execution evidence.
+3. COMPROMISED-HOST-01 is a standard workstation with no documented management role, so WinRM from it is anomalous.
+4. The attacker ran Enable-PSRemoting to configure WinRM — a preparation step that changes system configuration.
+5. 4 Type 3 logon events within 1 second from the same source match the WinRM session lifecycle.
 
 **Response recommendation:**
 1. **Restrict WinRM access:** Configure Windows Firewall to allow WinRM (TCP 5985/5443) only from designated management subnets or jump hosts. Block workstation-to-workstation WinRM.
-2. **Enable script-block logging:** Deploy GPO to enable PowerShell Script Block Logging (EID 4104) on all endpoints. This is the single most valuable detection source for WinRM attacks — it captures what was actually executed remotely.
-3. **Detection rule:** Alert on `wsmprovhost.exe` process creation from non-management source IPs. Cross-reference with WinRM EID 91 for shell creation context.
+2. **Enable script-block logging:** Deploy a GPO enabling PowerShell Script Block Logging (EID 4104) on all endpoints. It is the one source that shows what a WinRM session actually ran; this case captured nothing from it.
+3. **Detection rule:** Alert on `wsmprovhost.exe` process creation from non-management source IPs. Pair with WinRM EID 91 for shell creation context.
 4. **Monitor Enable-PSRemoting:** Alert on WinRM service start (svchost.exe -k NetworkService -p -s WinRM) on hosts where WinRM is not expected.
 
 ### MITRE Mapping

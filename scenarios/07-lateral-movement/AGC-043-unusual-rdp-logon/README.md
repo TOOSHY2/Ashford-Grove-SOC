@@ -21,20 +21,20 @@
 
 ### Tradecraft
 
-**What:** RDP lateral movement uses the Remote Desktop Protocol to pivot from a compromised host to another system. The workstation-to-workstation variant is particularly suspicious because:
-- Legitimate RDP traffic typically flows from a user's workstation to a SERVER (or from a jump host to a server)
-- Workstation-to-workstation RDP has almost no legitimate use case except in rare peer-support scenarios
-- The `cmdkey` + `mstsc` pattern (pre-storing credentials before launching RDP) indicates scripted/automated lateral movement rather than interactive use
+**What:** The attacker used RDP to pivot from a compromised host toward another system. The workstation-to-workstation variant stands out because:
+- Legitimate RDP flows from a user's workstation to a SERVER, or from a jump host to a server
+- Workstation-to-workstation RDP has almost no legitimate use outside rare peer-support cases
+- The `cmdkey` + `mstsc` pattern (storing credentials before launching RDP) points to scripted lateral movement rather than interactive use
 
-The credential pre-staging via `cmdkey` is a specific indicator:
+The `cmdkey` pre-staging is a specific indicator on its own:
 - `cmdkey /add:TERMSRV/<target> /user:<account> /pass:<password>` stores credentials in Windows Credential Manager
-- This bypasses the interactive credential prompt that a human user would see
-- The cleartext password appears in the command line, which Sysmon EID 1 captures
+- That skips the interactive credential prompt a human user would see
+- The cleartext password lands in the command line, which Sysmon EID 1 captures
 
-**Why at this lifecycle stage:** After completing discovery (AGC-037 through AGC-042), the attacker has mapped the environment and identified target hosts. The natural next step is lateral movement to expand access. RDP is a common lateral movement protocol because:
-1. It provides full interactive desktop access
-2. It is often allowed through firewalls (port 3389 is commonly open)
-3. It uses legitimate Windows authentication (blends with normal traffic)
+**Why at this lifecycle stage:** Discovery (AGC-037 through AGC-042) gave the attacker a map of the environment and a target list. Lateral movement is the next step. RDP suits it because:
+1. It gives full interactive desktop access
+2. Firewalls often allow it (port 3389 is commonly open)
+3. It uses legitimate Windows authentication and blends with normal traffic
 
 ### Simulation
 
@@ -52,10 +52,10 @@ The credential pre-staging via `cmdkey` is a specific indicator:
 | 4 | 2026-09-15 20:59:40 | cmdkey /delete:TERMSRV/10.10.10.102 | COMPROMISED-HOST-01 | Credential cleaned up |
 
 **Key findings:**
-- RDP connection did NOT complete — TCP 3389 was unreachable on WIN-CLIENT-02 (Windows Firewall likely blocking inbound RDP or network routing issue)
-- Despite the failure, the SOURCE-SIDE evidence is complete: mstsc process creation, credential storage, and target IP are all captured
-- The `cmdkey` command exposed `raj.patel`'s password in cleartext in the command line, which Sysmon EID 1 logged
-- No destination-side evidence (EID 4624 Type 10) was generated because the connection never completed
+- The RDP connection did NOT complete — TCP 3389 was unreachable on WIN-CLIENT-02 (Windows Firewall likely blocking inbound RDP, or a routing issue)
+- The SOURCE-SIDE evidence is still complete: mstsc process creation, credential storage, and target IP were all captured
+- The `cmdkey` command put `raj.patel`'s cleartext password in the command line, and Sysmon EID 1 logged it
+- No destination-side evidence (EID 4624 Type 10) exists because the connection never completed
 
 **Cleanup:** Stored credentials deleted via `cmdkey /delete`. mstsc process terminated.
 
@@ -73,57 +73,57 @@ The credential pre-staging via `cmdkey` is a specific indicator:
 
 All share `LogonGuid: {eb65e329-b1ac-6aa9-026c-580000000000}`.
 
-**Critical finding:** The `cmdkey /add` command line contains `raj.patel`'s password (`[REDACTED]`) in cleartext. Sysmon EID 1 logged this credential exposure. This is both an attack indicator AND a credential compromise — `raj.patel`'s password is now in the security event log.
+**Critical finding:** The `cmdkey /add` command line contains `raj.patel`'s password (`[REDACTED]`) in cleartext, and Sysmon EID 1 logged it. That is both an attack indicator AND a credential compromise — `raj.patel`'s password now sits in the security event log.
 
-**Sysmon EID 3 (Network Connection):** 0 events — no outbound TCP connection to port 3389 was established (connection failed before TCP handshake completed).
+**Sysmon EID 3 (Network Connection):** 0 events — no outbound TCP connection to port 3389 was established; the attempt failed before the handshake completed.
 
-**Security EID 4624 (destination):** No Type 10 (RemoteInteractive) logon events — the RDP connection never completed. Detection on the destination side requires a successful connection. This makes SOURCE-SIDE detection critical for catching failed/blocked lateral movement attempts.
+**Security EID 4624 (destination):** No Type 10 (RemoteInteractive) logon events — the RDP connection never completed. Destination-side detection needs a completed connection, so source-side telemetry is the only record of a blocked attempt like this one.
 
 ### Investigation
 
 **Step 1 — Identify workstation-to-workstation RDP pattern:**
-The key indicator is `mstsc.exe /v:<IP>` where the target is another workstation (not a server or jump host). In this case: COMPROMISED-HOST-01 (workstation) -> WIN-CLIENT-02 (workstation). This pattern has very limited legitimate use:
-- IT peer-support (rare, typically uses specific remote-assist tools not raw RDP)
-- Developer connecting to a test machine (would use a known hostname, not bare IP)
+The indicator is `mstsc.exe /v:<IP>` where the target is another workstation, not a server or jump host. Here: COMPROMISED-HOST-01 (workstation) -> WIN-CLIENT-02 (workstation). Legitimate uses of that pattern are few:
+- IT peer-support (rare, and usually done with a remote-assist tool rather than raw RDP)
+- A developer connecting to a test machine (who would use a known hostname, not a bare IP)
 
-Using a bare IP address rather than hostname further indicates enumeration-driven access rather than routine use.
+The bare IP, rather than a hostname, points to enumeration-driven access rather than routine use.
 
 **Step 2 — Credential pre-staging analysis:**
-The `cmdkey /add:TERMSRV/` + `mstsc` sequence is an automated credential staging pattern. A legitimate user would:
+The `cmdkey /add:TERMSRV/` + `mstsc` sequence stages credentials ahead of the connection. A legitimate user would:
 1. Launch mstsc
 2. Type the server name
 3. Enter credentials in the GUI prompt
 
-An attacker scripts the credential storage to bypass the interactive prompt, enabling:
+Scripting the credential storage skips the interactive prompt, which gives the attacker:
 - Automated lateral movement across multiple hosts
 - Credential reuse across sessions
 - Execution from non-interactive contexts (scripts, scheduled tasks)
 
 **Step 3 — Credential exposure in command line:**
-The `cmdkey /add` command exposed `raj.patel`'s password in cleartext. This has dual implications:
-1. **Attack indicator:** Confirms the attacker possesses raj.patel's credentials (likely harvested from AGC-031 through AGC-036)
-2. **Credential compromise:** The password is now in the Sysmon event log, expanding the exposure surface
+The `cmdkey /add` command exposed `raj.patel`'s password in cleartext. That cuts two ways:
+1. **Attack indicator:** The attacker holds raj.patel's credentials, most likely harvested during AGC-031 through AGC-036
+2. **Credential compromise:** The password is now in the Sysmon event log, so anyone who can read that log has it too
 
 **Step 4 — Correlate with discovery chain:**
-This follows the complete discovery sequence (AGC-037 through AGC-042) from the same source host. The transition from discovery to lateral movement confirms the attacker is advancing through the kill chain.
+The attempt came from the same source host that ran the full discovery sequence (AGC-037 through AGC-042). Discovery followed by a pivot attempt shows the attacker moving on from looking to acting.
 
 ### Report
 
 **Verdict: True Positive** — RDP lateral movement was attempted from a compromised workstation to another workstation using pre-staged credentials.
 
 **Confidence: High** — Calibrated assessment:
-1. Workstation-to-workstation RDP (both endpoints are standard Win11 workstations) has near-zero legitimate use in this environment.
-2. The `cmdkey` credential pre-staging pattern (storing credentials before launching mstsc) is not typical of interactive human use.
-3. The executing account (Administrator) is using `raj.patel`'s credentials for the RDP connection — a different account than the one executing the command, indicating credential theft and reuse.
-4. The target was specified by IP address (10.10.10.102), consistent with enumeration-driven lateral movement from AGC-041's share sweep results.
-5. Even though the connection failed, the ATTEMPT is sufficient for a True Positive classification — detection should not depend on attack success.
+1. Workstation-to-workstation RDP (both endpoints are standard Win11 workstations) has near-zero legitimate use in the lab.
+2. Storing credentials with `cmdkey` before launching mstsc is not how a human uses RDP interactively.
+3. The executing account (Administrator) supplied `raj.patel`'s credentials for the RDP connection — a different account from the one running the command, which reads as credential theft and reuse.
+4. The target was given by IP address (10.10.10.102), consistent with a pivot driven by AGC-041's share sweep results.
+5. The connection failed, but the attempt alone supports a true positive — detection should not depend on the attack succeeding.
 
 **Response recommendation:**
-1. **Immediate: rotate raj.patel's credentials** — the password was exposed in the cmdkey command line and is now in the Sysmon event log. raj.patel's account should be treated as compromised.
-2. **Restrict workstation-to-workstation RDP** via Windows Firewall rules or GPO: deny inbound port 3389 on workstations except from designated jump hosts. This is the most effective preventive control.
-3. **Detection rule (source-side):** Alert on `mstsc.exe` process creation where the `/v:` target resolves to a workstation IP (not a server or jump host). Cross-correlate with `cmdkey /add:TERMSRV/` from the same session.
-4. **Detection rule (destination-side):** Alert on Security EID 4624 Logon Type 10 where the source IP belongs to a workstation subnet (for successful connections).
-5. **Credential exposure alert:** Alert on `cmdkey.exe` command lines containing `/pass:` — cleartext credential storage in command line is always a high-severity finding regardless of context.
+1. **Immediate: rotate raj.patel's credentials** — the password was exposed in the cmdkey command line and is now in the Sysmon event log. Treat raj.patel's account as compromised.
+2. **Restrict workstation-to-workstation RDP** via Windows Firewall rules or GPO: deny inbound port 3389 on workstations except from designated jump hosts.
+3. **Detection rule (source-side):** Alert on `mstsc.exe` process creation where the `/v:` target resolves to a workstation IP (not a server or jump host). Correlate with `cmdkey /add:TERMSRV/` from the same session.
+4. **Detection rule (destination-side):** Alert on Security EID 4624 Logon Type 10 where the source IP belongs to a workstation subnet (catches the successful connections).
+5. **Credential exposure alert:** Alert on `cmdkey.exe` command lines containing `/pass:` — a cleartext credential in a command line is high severity regardless of context.
 
 ### MITRE Mapping
 

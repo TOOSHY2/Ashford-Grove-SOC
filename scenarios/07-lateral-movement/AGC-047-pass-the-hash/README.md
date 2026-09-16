@@ -21,13 +21,13 @@
 
 ### Tradecraft
 
-**What:** Pass-the-Hash (PtH) is a lateral movement technique where an attacker authenticates to a remote host using the NTLM hash of a password rather than the plaintext password itself. The NTLM authentication protocol accepts the hash directly, so an attacker who extracts the hash from one host's SAM database or LSASS memory can authenticate to any other host where the same password is used — without ever knowing the plaintext.
+**What:** Pass-the-Hash (PtH) authenticates to a remote host with the NTLM hash of a password instead of the password itself. NTLM accepts the hash as-is, so an attacker who pulls it from one host's SAM database or LSASS memory can log on to any other host that uses the same password — without ever learning the plaintext.
 
-The key enabler is **shared local admin passwords**: when the same local administrator account uses the same password across multiple workstations, a hash extracted from any one host grants access to all of them.
+The enabler is **shared local admin passwords**: when one local administrator account carries the same password on several workstations, a hash lifted from any one of them opens all of them.
 
-**Detection signature:** The defining characteristic of PtH is a network logon (Type 3) via `NtLmSsp` with **no preceding interactive credential entry**. A legitimate user who types a password produces a Type 2 (Interactive) or Type 10 (RemoteInteractive) logon event before any Type 3 network logon. PtH skips the interactive step entirely — the hash is injected directly into the NTLM handshake.
+**Detection signature:** PtH shows up as a network logon (Type 3) via `NtLmSsp` with **no preceding interactive credential entry**. A user who types a password produces a Type 2 (Interactive) or Type 10 (RemoteInteractive) logon before any Type 3 network logon. PtH skips that step — the hash goes straight into the NTLM handshake.
 
-**Why at this lifecycle stage:** After extracting credential material (AGC-031 through AGC-036), the attacker has NTLM hashes that can be used for lateral movement without knowing the plaintext passwords. PtH is the technique that converts credential access findings into lateral movement capability.
+**Why at this lifecycle stage:** Credential access (AGC-031 through AGC-036) left the attacker with NTLM hashes but not necessarily plaintext passwords. PtH is how those hashes become lateral movement.
 
 ### Simulation
 
@@ -47,10 +47,10 @@ The key enabler is **shared local admin passwords**: when the same local adminis
 | 5 | 2026-09-15 21:20:28 | Cleanup | COMPROMISED-HOST-01 | Marker file removed |
 
 **Key findings:**
-- SAM registry direct query denied even for Administrator — SAM ACLs prevent registry-based hash extraction (tools like Mimikatz bypass this via LSASS memory or offline SAM extraction as in AGC-032)
-- Remote PtH failed (network unreachable, consistent with prior scenarios)
-- Localhost ADMIN$ share access denied for wadmin — `Elevated Token: No` in EID 4624 indicates UAC filtering. LocalAccountTokenFilterPolicy registry value controls whether local admin accounts get filtered tokens for remote access
-- WMI process creation succeeded despite the share access denial
+- The direct SAM registry query was denied even for Administrator — SAM ACLs block registry-based hash extraction (Mimikatz and similar tools go through LSASS memory or offline SAM extraction instead, as in AGC-032)
+- Remote PtH failed (network unreachable, as in the prior scenarios)
+- Localhost ADMIN$ share access was denied for wadmin — `Elevated Token: No` in EID 4624 shows UAC filtering. The LocalAccountTokenFilterPolicy registry value decides whether local admin accounts get filtered tokens on remote access
+- WMI process creation still worked despite the share access denial
 - The EID 4624 with `NtLmSsp` and no interactive precursor is the PtH detection signature
 
 ## SOC Perspective
@@ -74,11 +74,11 @@ Elevated Token:       No
 ```
 
 **PtH indicators in this event:**
-1. **LogonProcess: NtLmSsp** — NTLM authentication via the Security Support Provider, not Kerberos or Negotiate
-2. **Logon Type: 3** — Network logon (not interactive)
-3. **No preceding Type 2/10 logon** — wadmin had no interactive session; the Type 3 appeared without interactive credential entry
-4. **Elevated Token: No** — UAC filtering applied (LocalAccountTokenFilterPolicy = 0), which is why the ADMIN$ share access was denied despite successful authentication
-5. **Account Domain: COMPROMISED-01** — Local account, not domain. Same-name local accounts across hosts is the PtH enabler
+1. **LogonProcess: NtLmSsp** — NTLM through the Security Support Provider, not Kerberos or Negotiate
+2. **Logon Type: 3** — Network logon, not interactive
+3. **No preceding Type 2/10 logon** — wadmin had no interactive session; the Type 3 appeared without any interactive credential entry
+4. **Elevated Token: No** — UAC filtering applied (LocalAccountTokenFilterPolicy = 0), which is why ADMIN$ was denied even though authentication succeeded
+5. **Account Domain: COMPROMISED-01** — A local account, not a domain one. Same-name local accounts across hosts are what make PtH work
 
 **Sysmon EID 1 — Process Create (6 events):**
 
@@ -94,37 +94,37 @@ Elevated Token:       No
 ### Investigation
 
 **Step 1 — Identify NtLmSsp network logon without interactive precursor:**
-The primary PtH indicator is a Security EID 4624 with `LogonProcess: NtLmSsp` and `Logon Type: 3` where there is NO corresponding interactive logon (Type 2 or Type 10) for the same account in the preceding time window. In a legitimate password-based authentication flow, the user's interactive session generates the initial logon event, and subsequent network access (share access, etc.) produces Type 3 events. PtH injects directly at the network level, skipping the interactive step.
+The primary PtH indicator is a Security EID 4624 with `LogonProcess: NtLmSsp` and `Logon Type: 3` and NO interactive logon (Type 2 or Type 10) for the same account in the preceding window. With a typed password, the user's interactive session produces the first logon event and later network access (share access, etc.) produces the Type 3 events. PtH starts at the network level and skips the interactive step.
 
 **Step 2 — Verify shared local admin credentials:**
-The wadmin account (SID `S-1-5-21-...-1000`) exists on COMPROMISED-HOST-01 and WIN-CLIENT-02 with the same password. This shared credential is the root enabler for PtH. Check: `net user wadmin` on each host; if the accounts have the same RID and the same password (hash), PtH works across hosts.
+The wadmin account (SID `S-1-5-21-...-1000`) exists on COMPROMISED-HOST-01 and WIN-CLIENT-02 with the same password. That shared credential is the root enabler. Check with `net user wadmin` on each host; if the accounts share a RID and a password (hash), PtH works between them.
 
 **Step 3 — SAM query as precursor:**
-The `reg query HKLM\SAM\SAM\Domains\Account\Users` attempt (EID 1, PID 1968) is a hash extraction precursor. Even though it failed (SAM ACL restriction), the attempt itself indicates the attacker is seeking credential material for PtH. Cross-reference with AGC-032 (SAM/SECURITY hive extraction) where the hashes were actually obtained.
+The `reg query HKLM\SAM\SAM\Domains\Account\Users` attempt (EID 1, PID 1968) is a hash extraction precursor. It failed on the SAM ACL, but the attempt shows the attacker hunting for credential material to pass. AGC-032 (SAM/SECURITY hive extraction) is where the hashes were actually obtained.
 
 **Step 4 — UAC filtering as partial mitigation:**
-The `Elevated Token: No` in the EID 4624 shows that UAC filtering prevented the wadmin account from getting an elevated token via network logon. This blocked ADMIN$ share access (error 5) but did NOT prevent WMI process creation. UAC filtering is a partial mitigation, not a complete defense against PtH.
+`Elevated Token: No` in the EID 4624 shows UAC filtering denied wadmin an elevated token on the network logon. That blocked ADMIN$ share access (error 5) but did NOT block WMI process creation. UAC filtering narrows PtH; it does not stop it.
 
 **Step 5 — Root cause remediation:**
-The fundamental fix is eliminating shared local admin passwords. Microsoft LAPS (Local Administrator Password Solution) or equivalent tools generate unique passwords for each host's local admin account, making PtH across hosts impossible even if one host's hash is compromised.
+The real fix is to stop sharing local admin passwords. Microsoft LAPS (Local Administrator Password Solution) or an equivalent gives each host's local admin account its own password, so a hash from one host is useless on the next.
 
 ### Report
 
-**Verdict: True Positive** — Pass-the-Hash lateral movement was demonstrated using the shared local admin credential (wadmin).
+**Verdict: True Positive** — Pass-the-Hash lateral movement was exercised with the shared local admin credential (wadmin).
 
 **Confidence: High** — Calibrated assessment:
-1. Security EID 4624 shows `NtLmSsp` Type 3 logon for `wadmin` with no interactive precursor — classic PtH signature.
-2. The `wadmin` account has the same password on COMPROMISED-HOST-01 and WIN-CLIENT-02 — confirmed shared credential.
-3. SAM registry query attempt shows hash extraction intent.
+1. Security EID 4624 shows an `NtLmSsp` Type 3 logon for `wadmin` with no interactive precursor — the PtH signature.
+2. The `wadmin` account has the same password on COMPROMISED-HOST-01 and WIN-CLIENT-02 — a confirmed shared credential.
+3. The SAM registry query attempt shows hash extraction intent.
 4. Multiple net.exe commands with wadmin credentials show cross-host authentication attempts.
-5. UAC filtering (Elevated Token: No) partially mitigated but did not prevent all access.
+5. UAC filtering (Elevated Token: No) cut off the share access but not the WMI execution.
 
 **Response recommendation:**
-1. **Deploy LAPS or equivalent:** Assign unique local admin passwords per host. This eliminates the PtH attack vector at the root.
-2. **Reset wadmin password on ALL hosts** — not just the detected host. The same hash exists on every host where wadmin has the same password.
-3. **Enable Credential Guard:** Prevents hash extraction from LSASS memory (the primary PtH source).
-4. **Set LocalAccountTokenFilterPolicy = 0** (or verify it remains at default) — UAC filtering for remote local admin access is a defense-in-depth layer.
-5. **Detection rule:** Alert on EID 4624 Type 3 with `NtLmSsp` where the source host is a workstation and the account is a local admin account that has no interactive session within the preceding 5-minute window.
+1. **Deploy LAPS or equivalent:** Give each host a unique local admin password. That removes the PtH vector at the root.
+2. **Reset wadmin password on ALL hosts** — not just the detected one. The same hash lives on every host where wadmin has the same password.
+3. **Enable Credential Guard:** Blocks hash extraction from LSASS memory, the main PtH source.
+4. **Set LocalAccountTokenFilterPolicy = 0** (or confirm it is still at default) — UAC filtering of remote local admin access is a defense-in-depth layer.
+5. **Detection rule:** Alert on EID 4624 Type 3 with `NtLmSsp` where the source host is a workstation and the account is a local admin with no interactive session in the preceding 5-minute window.
 
 ### MITRE Mapping
 
