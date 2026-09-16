@@ -28,7 +28,7 @@
 - Stopping security services (covered separately in AGC-069 for Wazuh) eliminates detection capabilities
 - Stopping business services creates immediate operational impact, forcing urgent response
 - The `sc.exe` utility is a native Windows tool (living-off-the-land), requiring no additional tooling
-- Service disruption can be automated across multiple hosts via lateral movement channels
+- This run targeted only `COMPROMISED-HOST-01`, but the same `sc.exe` commands scale unchanged to every host reachable through an established lateral movement channel
 
 **Distinction from AGC-069:** AGC-069 specifically targeted the Wazuh SIEM agent as a defense evasion tactic (T1562.001). AGC-073 targets business-critical services as an impact tactic (T1489) — the goal is disruption, not stealth.
 
@@ -52,8 +52,8 @@ sc start Spooler
 ```
 
 **Result:**
-- AGC073DemoSvc: Created successfully, started (svchost.exe launched as SYSTEM PID 3840), but could not properly register with SCM (expected for stub binary). Service installation captured by EID 7045.
-- Print Spooler: Transitioned from Running to STOP_PENDING to Stopped. Successfully restarted afterward. Sysmon EID 1 captured `sc.exe stop Spooler`.
+- AGC073DemoSvc: Created and started (svchost.exe launched as SYSTEM PID 3840), but did not register with SCM — expected, since the binary is a stub. Service installation captured by EID 7045.
+- Print Spooler: Transitioned from Running to STOP_PENDING to Stopped, then restarted. Sysmon EID 1 captured `sc.exe stop Spooler`.
 
 ## SOC Perspective
 
@@ -128,7 +128,7 @@ EID 7045 captured a new service installation (AGC073DemoSvc) 66 seconds before t
 - **AGC073DemoSvc:** Represents an attacker-installed service that could serve as a persistence mechanism, C2 channel, or additional disruption vector.
 
 **Step 4 — Cross-reference with attack chain:**
-Service disruption (T1489) typically occurs alongside ransomware (AGC-072, T1486) in the impact phase. The combination of file encryption AND service disruption creates maximum business impact, consistent with modern ransomware operator playbooks (e.g., LockBit, BlackCat/ALPHV).
+This engagement paired T1489 with ransomware (AGC-072, T1486) in the impact phase — the same combination modern ransomware operators use (e.g., LockBit, BlackCat/ALPHV) to maximize business impact.
 
 ### Report
 

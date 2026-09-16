@@ -21,12 +21,12 @@
 
 ### Tradecraft
 
-**What:** Encrypt victim files using a symmetric cipher and rename them with a distinctive extension, rendering the originals inaccessible. In real ransomware, the key would be asymmetrically encrypted and only the attacker holds the decryption key. This simulation uses XOR with a known static key (0x42) for safe, reversible execution.
+**What:** Encrypt victim files with a symmetric cipher and rename them with a distinctive extension so the originals become inaccessible. Real ransomware asymmetrically encrypts the key so only the attacker holds it; this simulation swaps in XOR with a known static key (0x42) so the run stays safe and reversible.
 
 **Why an Attacker Uses It Here:**
 - Culmination of the attack chain: after establishing persistence (AGC-019-024), escalating privileges (AGC-025-030), harvesting credentials (AGC-031-036), discovering targets (AGC-037-042), moving laterally (AGC-043-050), establishing C2 (AGC-051-056), collecting data (AGC-057-061), exfiltrating (AGC-062-066), and evading defenses (AGC-067-071)
 - Maximum business impact: encrypted financial documents directly threaten operations
-- Ransomware operators typically encrypt files rapidly (seconds to minutes) to minimize the window for detection and response
+- Encrypting all 10 files in 199 milliseconds left no realistic window to intervene before the run finished
 - The `.agc072locked` extension serves as the ransom note equivalent, signaling compromise to the victim
 
 **Simulation Safety:**
@@ -97,7 +97,7 @@ TargetFilename: C:\Temp\agc072-sim.ps1
 ```
 
 **DETECTION GAP — EID 11 NOT triggered for .agc072locked files:**
-The SwiftOnSecurity Sysmon configuration filters EID 11 (FileCreate) to only capture EXE and DLL extensions (`RuleName: EXE` / `RuleName: DLL`). The 10 `.agc072locked` files created during the ransomware simulation did NOT generate EID 11 events. This is a significant detection gap: ransomware file transformations that use non-executable extensions are invisible to this Sysmon configuration's file creation monitoring.
+The SwiftOnSecurity Sysmon configuration filters EID 11 (FileCreate) to only capture EXE and DLL extensions (`RuleName: EXE` / `RuleName: DLL`). The 10 `.agc072locked` files created during the ransomware simulation did NOT generate EID 11 events. That leaves a detection gap: any ransomware family that writes output under a non-executable extension is invisible to this Sysmon configuration's file creation monitoring.
 
 **Ransomware execution timeline (from simulation output):**
 ```
@@ -142,7 +142,7 @@ The EID 1 event shows PowerShell executing `agc072-sim.ps1` under Administrator 
 | Wazuh SIEM | PARTIAL | Would alert on EID 1 if rule exists for script execution |
 
 **Step 4 — Cross-reference with attack chain:**
-This is the culmination of the full kill chain simulated across AGC-001 through AGC-071. The ransomware execution represents the "impact" phase where all prior tradecraft (initial access, persistence, privilege escalation, lateral movement, defense evasion) converges into the attacker's ultimate objective: denying the victim access to their data for extortion.
+AGC-001 through AGC-071 built the access, persistence, and privilege this run cashes in. The encryption step is where that chain converges on the attacker's actual goal: deny the victim their data and set up extortion.
 
 ### Report
 

@@ -22,7 +22,7 @@
 
 #### Scenario context
 
-This is NOT an attack scenario. AGC-076 is the SOC incident response workflow that closes the main attack narrative spanning AGC-001 through AGC-075. It validates that the environment can be returned to a clean state after the full attack chain simulation.
+This is NOT an attack scenario. AGC-076 is the SOC incident response workflow that closes the main attack narrative spanning AGC-001 through AGC-075. It validates that the lab can be returned to a clean state after the full attack chain simulation.
 
 Everything from AGC-077 onward stands outside this continuous story:
 - AGC-077-080: Full Attack Chain capstones (each retells the complete story from a different angle)

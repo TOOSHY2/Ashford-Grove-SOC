@@ -21,14 +21,14 @@
 
 ### Tradecraft
 
-**What:** Overwrite the content of a publicly-facing web page with attacker-controlled content. Website defacement is one of the most visible forms of cyber attack — it immediately signals compromise to anyone who visits the site, causing reputational damage, loss of customer confidence, and potential regulatory scrutiny.
+**What:** Overwrite a public web page with attacker-controlled content. A defaced page is visible to every visitor immediately, which makes it useful for advertising a compromise rather than hiding it.
 
 **Why an Attacker Uses It Here:**
 - Maximum public visibility: unlike data theft or ransomware, defacement is immediately visible to every visitor
 - Reputational damage to a financial services firm is especially severe — clients expect rigorous security
 - Demonstrates deep access: writing to the web root proves the attacker controls the DMZ web server
 - Can serve as a distraction while other attack phases (data exfiltration, persistence) continue undetected
-- Some threat actors (hacktivists) use defacement as their primary objective rather than financial gain
+- Some attackers (hacktivists) use defacement as their primary objective rather than financial gain
 - In the lab narrative, this represents the culmination of an SSH pivot chain (AGC-079 context)
 
 **Lab Constraint:** DMZ-LINUX-01 (10.10.20.10) Guest Additions are broken (RunLevel=0), making guestcontrol inaccessible. EXT-ATTACKER-SIM (10.10.40.10) was used as the substitute Linux target, with its existing web server infrastructure. The defacement technique and detection methodology are identical regardless of which Linux host serves the web content.

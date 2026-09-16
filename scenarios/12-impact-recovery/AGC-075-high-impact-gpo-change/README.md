@@ -28,7 +28,7 @@
 - **Legitimate administration tool:** GPO changes are routine IT operations, making malicious modifications harder to distinguish from authorized changes
 - **Persistence potential:** GPO-pushed settings reapply automatically every 90 minutes (default refresh), so even if an admin manually fixes a host, the GPO reapplies the malicious setting
 - **Security weakening:** An attacker could disable Windows Firewall, relax password policies, disable audit logging, or push malicious scripts via GPO — far more impactful than host-level changes
-- **Requires Domain Admin or equivalent:** Successfully modifying GPOs proves the attacker has achieved the highest level of Active Directory compromise
+- **Requires Domain Admin or equivalent:** modifying a GPO at all proves the attacker reached the highest level of Active Directory compromise
 
 **Scope of this simulation:** The ScreenSaveTimeOut setting is deliberately low-impact (cosmetic screen saver timing), chosen to demonstrate the technique without disrupting lab infrastructure that other scenarios depend on. In a real attack, the GPO modification would target security-critical settings.
 
@@ -117,7 +117,7 @@ The Default Domain Policy (ID 31b2f340-016d-11d2-945f-00c04fb984f9) is linked at
 2. The Default Domain Policy has the broadest possible scope in the domain
 3. The technique (Set-GPRegistryValue) can modify any registry-based policy setting
 4. The same command could disable security controls domain-wide with a different ValueName
-5. Successful GPO modification proves Domain Admin-level compromise of Active Directory
+5. The GPO modification proves Domain Admin-level compromise of Active Directory
 6. EID 5136 not captured represents a significant audit gap for the most impactful AD modification category
 
 **Response recommendation:**
