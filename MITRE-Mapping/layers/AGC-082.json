@@ -1,0 +1,52 @@
+{
+    "name": "AGC-082 -- New Local Admin: Matches IT Onboarding Ticket (False Positive)",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. | AGC-082: False Positive triage. Verdict: Benign, Confidence: High. Malicious twin: AGC-023.",
+    "filters": {
+        "platforms": ["Windows"]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1136.001",
+            "tactic": "persistence",
+            "color": "#ffe766ff",
+            "comment": "AGC-082: EID 4720 (account created) + EID 4732 (added to Administrators). Account new_it_tech matches pre-dated onboarding ticket OB-2026-0847. VERDICT: BENIGN. Twin: AGC-023.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        }
+    ],
+    "gradient": {
+        "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Observed: Benign (FP)", "color": "#ffe766ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
