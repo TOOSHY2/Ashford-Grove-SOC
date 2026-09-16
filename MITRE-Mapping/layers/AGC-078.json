@@ -1,0 +1,153 @@
+{
+    "name": "AGC-078 -- Full Attack Chain: Trusted Access to GPO Impact",
+    "versions": {
+        "attack": "16",
+        "navigator": "4.9.5",
+        "layer": "4.5"
+    },
+    "domain": "enterprise-attack",
+    "description": "Execution & Documentation Note: This scenario was executed and documented in full by Claude (Anthropic AI), operating autonomously on the lab infrastructure. | AGC-078: 10-phase trusted-access attack chain. Verdict: True Positive, Confidence: Critical.",
+    "filters": {
+        "platforms": ["Windows", "Linux"]
+    },
+    "sorting": 0,
+    "layout": {
+        "layout": "side",
+        "aggregateFunction": "average",
+        "showID": true,
+        "showName": true,
+        "showAggregateScores": false,
+        "countUnscored": false,
+        "expandedSubtechniques": "none"
+    },
+    "hideDisabled": false,
+    "techniques": [
+        {
+            "techniqueID": "T1566.002",
+            "tactic": "initial-access",
+            "color": "#8ec843ff",
+            "comment": "AGC-078 Phase 1: Password-reset pretext phishing to raj.patel. HTTP GET+POST to 10.10.40.10. EID 3 captures connections.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1047",
+            "tactic": "execution",
+            "color": "#8ec843ff",
+            "comment": "AGC-078 Phase 2: Invoke-CimMethod Win32_Process Create. EID 1 ParentImage=WmiPrvSE.exe. PID 3240, ReturnValue=0.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1136.001",
+            "tactic": "persistence",
+            "color": "#8ec843ff",
+            "comment": "AGC-078 Phase 3: net user svc_helpdesk /add + net localgroup Administrators. Security EID 4720+4722+4732.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1558.003",
+            "tactic": "credential-access",
+            "color": "#ff6666ff",
+            "comment": "AGC-078 Phase 4: KerberosRequestorSecurityToken for MSSQLSvc SPN. Failed (domain trust broken). No EID 4769.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 50
+        },
+        {
+            "techniqueID": "T1021.002",
+            "tactic": "lateral-movement",
+            "color": "#ffe766ff",
+            "comment": "AGC-078 Phase 5: net use \\\\10.10.10.10\\C$ with svc_helpdesk. Error 86/1326. EID 1 captures cleartext credentials.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1071.004",
+            "tactic": "command-and-control",
+            "color": "#8ec843ff",
+            "comment": "AGC-078 Phase 6: 5x DNS beacon with randomized subdomains to 10.10.40.10. EID 22 captures all queries.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1119",
+            "tactic": "collection",
+            "color": "#ffe766ff",
+            "comment": "AGC-078 Phase 7: AD data exported to CSV (synthetic - RSAT unavailable). No EID 11 (non-EXE/DLL gap).",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": false,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1048.003",
+            "tactic": "exfiltration",
+            "color": "#8ec843ff",
+            "comment": "AGC-078 Phase 8: 8 Base64-encoded DNS queries with AD data in labels. EID 22 captures high-entropy queries.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1562.001",
+            "tactic": "defense-evasion",
+            "color": "#8ec843ff",
+            "comment": "AGC-078 Phase 9: net stop WazuhSvc. Running->Stopped. EID 1 captures command. Telemetry silence as supporting evidence.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1484.001",
+            "tactic": "defense-evasion",
+            "color": "#8ec843ff",
+            "comment": "AGC-078 Phase 10: Set-GPRegistryValue on Default Domain Policy (AD-DC-01). UserVersion 2->3. Reverted to 4. EID 5136 NOT captured.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        }
+    ],
+    "gradient": {
+        "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"],
+        "minValue": 0,
+        "maxValue": 100
+    },
+    "legendItems": [
+        { "label": "Confidence: Medium", "color": "#ff6666ff" },
+        { "label": "Confidence: High", "color": "#ffe766ff" },
+        { "label": "Confidence: Critical", "color": "#8ec843ff" }
+    ],
+    "metadata": [],
+    "links": [],
+    "showTacticRowBackground": false,
+    "tacticRowBackground": "#dddddd",
+    "selectTechniquesAcrossTactics": true,
+    "selectSubtechniquesWithParent": false,
+    "selectVisibleTechniques": false
+}
