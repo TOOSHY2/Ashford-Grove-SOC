@@ -21,15 +21,15 @@
 
 ### Tradecraft
 
-**What:** Disable Windows Defender Real-Time Protection to prevent detection of subsequent malicious activities (malware deployment, tool execution, payload staging). `Set-MpPreference -DisableRealtimeMonitoring $true` is the PowerShell method to turn off the real-time scanning engine.
+**What:** Turn off Windows Defender Real-Time Protection so later tooling, payload staging, and malware drops go unscanned. `Set-MpPreference -DisableRealtimeMonitoring $true` is the PowerShell call that switches off the real-time engine.
 
 **Why an Attacker Uses It Here:**
 - Real-time protection would detect and quarantine known-bad tools and payloads
-- Disabling it creates a window where the attacker can operate without AV interference
+- Disabling it opens a window to run tooling without Defender quarantining it
 - On older Windows versions (pre-tamper protection), this command succeeds with local admin
-- Even on modern Windows, the attempt reveals attacker intent regardless of success
+- On a tamper-protected Windows 11 host like this one, the attempt still records intent even when it fails
 
-**Tamper Protection (Windows 11):** Microsoft introduced Tamper Protection to prevent unauthorized changes to security settings, even by processes running as Administrator. This lab demonstrates the defensive value: the attacker has full admin access but cannot disable the endpoint protection through standard API calls.
+**Tamper Protection (Windows 11):** Tamper Protection blocks changes to Defender's security settings even from processes running as Administrator. Here the attacker had full admin on COMPROMISED-HOST-01 and still could not switch real-time protection off through the standard API.
 
 ### Simulation
 
@@ -42,7 +42,7 @@
 Set-MpPreference -DisableRealtimeMonitoring $true
 ```
 
-**Result:** Command returned without error, but Tamper Protection prevented the actual state change. Post-execution verification confirmed RealTimeProtectionEnabled remained True. No EID 5001 was generated (the protection was never actually disabled).
+**Result:** Command returned without error, but Tamper Protection blocked the state change. A post-execution check showed RealTimeProtectionEnabled still True. No EID 5001 was written because protection never went off.
 
 **Cleanup:** Defender re-enabled via `Set-MpPreference -DisableRealtimeMonitoring $false` (confirmed RealTimeProtectionEnabled: True).
 
@@ -64,10 +64,10 @@ IntegrityLevel: High
 ```
 
 **Windows Defender Operational Log — EID 5001: 0 events**
-No EID 5001 was generated because Tamper Protection prevented the actual state change. In environments without Tamper Protection, EID 5001 would be the primary detection artifact.
+No EID 5001 was written because Tamper Protection blocked the state change. Without Tamper Protection, EID 5001 would be the primary artifact.
 
 **Sysmon EID 13 — Registry value change: 0 events**
-No registry modification to `DisableRealtimeMonitoring` was recorded, confirming Tamper Protection blocked the write.
+Sysmon recorded no registry write to `DisableRealtimeMonitoring`, which confirms Tamper Protection blocked it.
 
 **Defender state transition:**
 ```
@@ -79,12 +79,12 @@ After:   RealTimeProtectionEnabled = True (unchanged -- tamper protected)
 ### Investigation
 
 **Step 1 — Assess the attempt vs. outcome:**
-The critical distinction: the attacker attempted to disable Defender but was blocked by Tamper Protection. The command returned no error (misleading the attacker into believing it succeeded), but the actual protection state did not change. This is a defensive win — the attempt is logged but the defense held.
+The attacker tried to disable Defender and Tamper Protection blocked it. The command returned no error, so the attacker had no sign it failed, but the protection state never changed. The attempt is logged and the defense held.
 
 **Step 2 — Detection without EID 5001:**
-Without the traditional EID 5001 detection, the attempt is still detectable through:
+With no EID 5001 to fire on, the attempt still surfaces through:
 1. **Sysmon EID 1:** Any PowerShell process containing `Set-MpPreference` and `DisableRealtimeMonitoring` in its command line or script content
-2. **PowerShell ScriptBlock Logging:** If enabled, would capture the exact Set-MpPreference call
+2. **PowerShell ScriptBlock Logging:** If enabled, captures the exact Set-MpPreference call
 3. **Defender Tamper Protection events:** Windows may log tamper protection blocks in the Defender operational log
 4. **Command-line auditing:** Security EID 4688 (if process creation auditing is enabled)
 
@@ -93,11 +93,11 @@ This attempt occurred on COMPROMISED-HOST-01, which has:
 - Active C2 connectivity (AGC-051/055/056)
 - Confirmed data exfiltration (AGC-062/063/066)
 - Recent log clearing (AGC-067)
-The Defender disable attempt fits the post-exfiltration cleanup pattern: the attacker is attempting to remove defensive layers after completing primary objectives.
+The disable attempt fits the post-exfiltration cleanup: the attacker is stripping defensive layers after finishing the primary objectives.
 
 **Step 4 — What would have happened without Tamper Protection:**
 On systems without Tamper Protection (Windows 10 older builds, Server 2016/2019, or systems with TP disabled), this command would:
-- Successfully disable Real-Time Protection
+- Disable Real-Time Protection
 - Generate EID 5001 in the Defender Operational log
 - Allow subsequent malware deployment and tool execution without AV interference
 - Create a detection gap until protection was re-enabled
@@ -106,19 +106,19 @@ On systems without Tamper Protection (Windows 10 older builds, Server 2016/2019,
 
 **Verdict: True Positive** — Deliberate attempt to disable endpoint protection on a compromised host.
 
-**Confidence: Critical** — Despite Tamper Protection preventing the actual disable:
-1. The intent to disable defense is unambiguous (Set-MpPreference -DisableRealtimeMonitoring $true)
+**Confidence: Critical** — Tamper Protection blocked the disable, but the attempt stands on its own:
+1. The intent is unambiguous (Set-MpPreference -DisableRealtimeMonitoring $true)
 2. The attempt originated from a confirmed compromised host with active C2
-3. Administrator privileges were used, indicating elevated access
-4. The attempt follows the post-exfiltration cleanup pattern (after AGC-066 exfiltration and AGC-067 log clearing)
+3. The command ran as Administrator at High integrity
+4. The attempt came right after the AGC-066 exfiltration and the AGC-067 log clear
 5. There is no legitimate reason for the compromised account to disable Defender
 
 **Response recommendation:**
-1. **Verify Tamper Protection is enabled** on all endpoints — it prevented the actual disable here
-2. **Alert on Set-MpPreference -DisableRealtimeMonitoring** in PowerShell command lines (Sysmon EID 1 / ScriptBlock Logging) as a high-confidence indicator, regardless of whether the command succeeds
-3. **Deploy detection rules** for Defender disable attempts that do NOT rely on EID 5001 — on tamper-protected systems, the traditional detection fires only when tamper protection fails
-4. **Investigate all recent PowerShell activity** on COMPROMISED-HOST-01 for additional defense evasion attempts
-5. **Isolate COMPROMISED-HOST-01** — the attacker is in the cleanup phase (log clearing + defense disable), indicating objectives are complete
+1. **Verify Tamper Protection is enabled** on all endpoints — it is what stopped the disable here
+2. **Alert on Set-MpPreference -DisableRealtimeMonitoring** in PowerShell command lines (Sysmon EID 1 / ScriptBlock Logging) whether or not the command succeeds
+3. **Deploy detection rules** for Defender disable attempts that do NOT rely on EID 5001 — on tamper-protected hosts, EID 5001 fires only when the protection fails
+4. **Investigate all recent PowerShell activity** on COMPROMISED-HOST-01 for further defense evasion attempts
+5. **Isolate COMPROMISED-HOST-01** — log clearing followed by a defense-disable attempt means the attacker is cleaning up after finishing
 
 ### MITRE Mapping
 

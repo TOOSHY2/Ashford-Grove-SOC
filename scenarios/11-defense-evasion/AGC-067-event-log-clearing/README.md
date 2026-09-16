@@ -22,15 +22,15 @@
 
 ### Tradecraft
 
-**What:** After completing attack objectives (credential access, lateral movement, exfiltration), the attacker clears the Windows Security event log to destroy forensic evidence of their activities. The `wevtutil cl Security` command removes all entries and replaces them with a single EID 1102 entry documenting the clearing itself.
+**What:** With credential access, lateral movement, and exfiltration done, the attacker clears the Windows Security event log to destroy the local record of the intrusion. `wevtutil cl Security` removes every entry and leaves a single EID 1102 that documents the clearing itself.
 
 **Why an Attacker Uses It Here:**
-- The Security log on COMPROMISED-HOST-01 contains evidence of the entire attack chain: logon events (4624), privilege use (4672), process creation audit records
-- Clearing the log destroys the local forensic timeline, forcing investigators to rely on centralized log copies (Wazuh/SIEM)
-- This is a common final-stage action after exfiltration is complete — the attacker has achieved their objectives and now covers their tracks
-- `wevtutil` is a legitimate Windows utility (living-off-the-land), requiring no additional tools
+- The Security log on COMPROMISED-HOST-01 holds the record of the whole chain: logons (4624), special privilege assignment (4672), and process-creation audit records
+- Clearing it destroys the local timeline and leaves investigators dependent on the forwarded copy (Wazuh/SIEM)
+- The clear follows the AGC-062 through AGC-066 exfiltration run — the attacker has the data and is now covering tracks
+- `wevtutil` ships with Windows, so the attacker needs no extra tooling (living off the land)
 
-**Irony of T1070.001:** The act of clearing the log creates the very evidence (EID 1102) that proves tampering occurred. The technique destroys the details of what happened but cannot conceal that something was hidden. This is why centralized log forwarding is critical — the SIEM retains the pre-clearing events that the local log no longer holds.
+**Irony of T1070.001:** Clearing the log writes the one event (EID 1102) that proves tampering. The attacker erases what happened but cannot hide that something was erased. The pre-clearing detail survives only where it was forwarded — the SIEM copy holds what the local log no longer does.
 
 ### Simulation
 
@@ -43,7 +43,7 @@
 wevtutil cl Security
 ```
 
-**Result:** Security log cleared. 1000+ entries reduced to 1 (EID 1102). Sysmon independently logged the wevtutil.exe process creation.
+**Result:** Security log cleared. 1000+ entries reduced to 1 (EID 1102). Sysmon logged the wevtutil.exe process creation in its own channel.
 
 ## SOC Perspective
 
@@ -62,7 +62,7 @@ Subject:
 **Key fields:**
 - **Security ID:** S-1-5-...-500 = built-in Administrator (RID 500)
 - **Account Name:** Administrator (local, not domain)
-- **Logon ID:** 0x722BE0 — correlates this clearing action to the specific logon session
+- **Logon ID:** 0x722BE0 — ties the clear to one logon session
 - **Timestamp:** 2026-09-15 23:07:10
 
 **Sysmon EID 1 — wevtutil.exe process creation:**
@@ -78,25 +78,25 @@ User: COMPROMISED-01\Administrator
 LogonId: 0x722BE0
 ```
 
-**Cross-log correlation:** The LogonId (0x722BE0) matches between the Security EID 1102 and the Sysmon EID 1, confirming the same session performed both actions. Sysmon logs are stored in a separate event channel (`Microsoft-Windows-Sysmon/Operational`) and are not affected by `wevtutil cl Security`.
+**Cross-log correlation:** The LogonId (0x722BE0) on the Security EID 1102 matches the Sysmon EID 1, so one session ran wevtutil and produced the clear. Sysmon writes to its own channel (`Microsoft-Windows-Sysmon/Operational`), which `wevtutil cl Security` does not touch.
 
 ### Investigation
 
 **Step 1 — Assess clearing scope:**
-The Security log went from 1000+ events to exactly 1 (EID 1102). This is a complete wipe — not a selective deletion of specific events, which Windows does not natively support. The attacker destroyed all logon records, privilege escalation events, and audit trails on this endpoint.
+The Security log dropped from 1000+ events to exactly 1 (EID 1102). That is a full wipe; Windows offers no native way to delete individual Security events. Every logon record, privilege assignment, and audit entry on COMPROMISED-HOST-01 is gone locally.
 
 **Step 2 — Identify what was destroyed:**
-Based on the pre-clearing baseline, the Security log contained:
-- EID 4624 (successful logons) — records of all sessions, including attacker sessions
-- EID 4672 (special privileges assigned) — privilege escalation evidence
+From the pre-clearing baseline, the Security log held:
+- EID 4624 (successful logons) — every session on the host, the attacker's included
+- EID 4672 (special privileges assigned) — the elevation trail
 - EID 4799 (security-enabled group membership) — group enumeration
 - Process creation audit events (if Security auditing was configured for this)
-The absence of these events is itself evidence — any gap in the Security log timeline is suspicious.
+Their absence is itself evidence: the local log now begins at the EID 1102 entry and nothing before it survives on the host.
 
 **Step 3 — Centralized log retention assessment:**
-Wazuh SIEM was configured to receive forwarded events from COMPROMISED-HOST-01. Events shipped to Wazuh before the clearing action persist in the centralized index and are not affected by local log clearing. This is the primary forensic value of centralized logging: the attacker can destroy local evidence but cannot reach the SIEM copy without separate access to the SIEM infrastructure.
+Wazuh was configured to receive forwarded events from COMPROMISED-HOST-01. Anything shipped before the clear sits in the central index, untouched by the local wipe. Reaching that copy would take separate access to the SIEM infrastructure.
 
-**Lab constraint:** Wazuh indexer services were not responding during this execution window (port 9200 connection refused), preventing live verification of the centralized copy. In a production environment, the SIEM would retain the full pre-clearing event history.
+**Lab constraint:** The Wazuh indexer was not responding during the execution window (port 9200 connection refused), so the central copy could not be checked live. A working SIEM would hold the full pre-clearing history.
 
 **Step 4 — Timeline window analysis:**
 ```
@@ -105,10 +105,10 @@ Pre-clearing: 1000+ Security events (logon, privilege, audit)
 23:07:10       EID 1102 written (sole surviving entry)
 Post-clearing: 1 event (EID 1102 only)
 ```
-The gap between the last legitimate event and EID 1102 represents the evidence the attacker was trying to hide. In a production investigation, the SIEM copy would reveal exactly which events fell within that window.
+Everything between the last pre-clear event and EID 1102 is what the attacker wanted gone. The SIEM copy is where an analyst reads back exactly which events fell in that window.
 
 **Step 5 — Cross-reference with FP twin (AGC-088):**
-AGC-088 represents the legitimate counterpart: scheduled administrative log maintenance with change-control approval. The distinguishing factors:
+AGC-088 is the legitimate counterpart: scheduled log maintenance with change-control approval. What separates them:
 - **AGC-067 (TP):** Unscheduled, no change control, performed from a compromised host with active C2
 - **AGC-088 (FP):** Scheduled, documented maintenance window, performed by authorized IT staff
 
@@ -116,19 +116,19 @@ AGC-088 represents the legitimate counterpart: scheduled administrative log main
 
 **Verdict: True Positive** — Deliberate destruction of forensic evidence via Security log clearing.
 
-**Confidence: Critical** — This is one of the least ambiguous indicators in the SOC catalog:
-1. EID 1102 has no false-positive-generating routine use case (legitimate clearing requires pre-approved maintenance)
+**Confidence: Critical** — five facts leave no other reading:
+1. EID 1102 has no routine benign source; legitimate clearing happens only inside a pre-approved maintenance window
 2. The clearing account is the local Administrator on a host with confirmed C2 (AGC-051/055/056)
-3. The clearing occurred after a complete exfiltration campaign (AGC-062 through AGC-066)
-4. Sysmon independently recorded the wevtutil.exe execution, providing redundant detection
+3. The clear came after the full exfiltration run (AGC-062 through AGC-066)
+4. Sysmon recorded the wevtutil.exe execution in a channel the clear did not touch
 5. Complete log erasure (1000+ events to 1) — not a partial cleanup
 
 **Response recommendation:**
 1. **Preserve the Sysmon log immediately** — it is now the sole remaining local forensic record on COMPROMISED-HOST-01
-2. **Pull all pre-clearing events from Wazuh/SIEM** before the attacker potentially targets the centralized store
-3. **Lock down SIEM access** — if the attacker reaches the SIEM, the pre-clearing history is the last copy of the evidence
-4. **Reconstruct the attack timeline** from the SIEM copy: every Security event from COMPROMISED-HOST-01 that precedes EID 1102 represents what the attacker tried to hide
-5. **Escalate immediately** — log clearing after exfiltration is a strong indicator the attacker has completed their mission and is now in the cleanup phase
+2. **Pull all pre-clearing events from Wazuh/SIEM** before the attacker turns to the central store
+3. **Lock down SIEM access** — the pre-clearing history there is the last copy of the evidence
+4. **Reconstruct the attack timeline** from the SIEM copy: every Security event from COMPROMISED-HOST-01 that precedes EID 1102 is what the attacker tried to hide
+5. **Escalate immediately** — log clearing right after exfiltration means the attacker is done and cleaning up
 
 ### MITRE Mapping
 

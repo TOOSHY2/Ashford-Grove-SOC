@@ -21,22 +21,22 @@
 
 ### Tradecraft
 
-**What:** Obfuscate command-line arguments using techniques that avoid the `-EncodedCommand` Base64 pattern that most detection rules target. Three methods demonstrated:
+**What:** Obfuscate command-line arguments without the `-EncodedCommand` Base64 pattern most detection rules key on. Three methods ran:
 
-1. **String concatenation (cmd.exe):** Use `set` to define variables, then concatenate them with `%var%` expansion at execution time. The actual command only appears in the expanded form, not in the original command line.
+1. **String concatenation (cmd.exe):** Define variables with `set`, then join them through `%var%` expansion at run time. The real command exists only after expansion, never in the command line as typed.
 
-2. **Character-code construction (PowerShell):** Build cmdlet names from `[char]` codes (`[char]87 = W`, `[char]114 = r`, etc.). The command name is never written as a readable string in the source.
+2. **Character-code construction (PowerShell):** Build the cmdlet name from `[char]` codes (`[char]87 = W`, `[char]114 = r`, etc.). The name never appears as readable text in the source.
 
-3. **Backtick insertion (PowerShell):** Insert PowerShell escape characters (backticks) between every character of a cmdlet name. PowerShell ignores the backticks during parsing, but signature-based detection sees a garbled string.
+3. **Backtick insertion (PowerShell):** Put a backtick between every character of the cmdlet name. PowerShell drops the backticks when parsing; a signature sees a garbled string.
 
 **Why an Attacker Uses It Here:**
 - `-EncodedCommand` (AGC-013) is now widely detected by EDR and SIEM rules
-- Non-encoded obfuscation evades these signature-based detections
-- Each variant requires different deobfuscation logic, increasing analyst effort
-- The obfuscated commands are still valid and execute correctly (when properly constructed)
-- Combined with the prior defense evasion chain (AGC-067-070), this represents layered evasion
+- Non-encoded obfuscation gives those signatures nothing to match
+- Each variant needs its own deobfuscation, which costs analyst time
+- A correctly built obfuscated command still runs as intended
+- Stacked on the prior defense evasion chain (AGC-067-070), this adds evasion of the detection rules themselves
 
-**Distinction from AGC-013:** AGC-013 used `-EncodedCommand` with Base64, which is trivially detected by pattern matching. AGC-071 deliberately avoids Base64 encoding, requiring heuristic analysis instead of signature matching.
+**Distinction from AGC-013:** AGC-013 used `-EncodedCommand` with Base64, which a pattern match catches at once. AGC-071 avoids Base64 entirely, so detection has to be heuristic rather than signature-based.
 
 ### Simulation
 
@@ -55,7 +55,7 @@ REM Method 3: Backtick insertion
 powershell.exe -NoProfile -Command "W`r`i`t`e`-`H`o`s`t 'AGC-071 tick obfuscation'"
 ```
 
-**Result:** Method 1 created marker file (agc071.txt). Methods 2 and 3 encountered parsing issues in the non-interactive guestcontrol execution environment, but all three methods generated Sysmon EID 1 events with the obfuscated command lines captured verbatim — the detection artifacts were successfully created regardless of execution outcome.
+**Result:** Method 1 created the marker file (agc071.txt). Methods 2 and 3 hit parsing issues in the non-interactive guestcontrol run, but all three produced Sysmon EID 1 events with the obfuscated command lines captured verbatim — the detection artifacts exist whether or not the command ran.
 
 ## SOC Perspective
 
@@ -98,7 +98,7 @@ User: COMPROMISED-01\Administrator
 ### Investigation
 
 **Step 1 — Identify obfuscation patterns (heuristic analysis):**
-Unlike AGC-013 where `-EncodedCommand` provides a clear signature, these command lines require heuristic detection:
+AGC-013 gave a signature in `-EncodedCommand`; these command lines give none, so detection is heuristic:
 - **Method 1 indicators:** Multiple `set` commands followed by `%variable%` expansion in a single cmd.exe invocation
 - **Method 2 indicators:** Dense `[char]` sequences in PowerShell command lines (high ratio of special characters to alphanumeric)
 - **Method 3 indicators:** Backtick characters between every letter of cmdlet names (visible as tab characters in Sysmon logs)
@@ -111,15 +111,15 @@ Method 2: [char]87=W, [char]114=r, [char]105=i, [char]116=t, [char]101=e,
            Reconstructed: "Write-Host"
 Method 3: W`r`i`t`e`-`H`o`s`t = "Write-Host" (backticks ignored by PS parser)
 ```
-All three methods reconstruct to benign commands in this simulation, but the same techniques could construct any command including `Invoke-WebRequest`, `Invoke-Expression`, or credential dumping commands.
+All three resolve to benign commands here, but the same construction works for any command, `Invoke-WebRequest`, `Invoke-Expression`, or a credential dump included.
 
 **Step 3 — Detection difficulty assessment:**
-This obfuscation family is genuinely harder to detect than Base64 encoding:
+This family is harder to catch than Base64 encoding:
 - No single signature matches all variants
-- New concatenation patterns can be invented trivially
+- New concatenation patterns cost the attacker nothing to invent
 - Automated detection requires statistical/heuristic analysis of command-line entropy and character distribution
 - Manual analyst review catches individual instances but does not scale
-- PowerShell ScriptBlock Logging would capture the deobfuscated command after parsing, providing better visibility than EID 1 alone
+- PowerShell ScriptBlock Logging would record the command after parsing, deobfuscated, which EID 1 alone cannot
 
 **Step 4 — Distinction from AGC-013:**
 | Attribute | AGC-013 (-EncodedCommand) | AGC-071 (Non-encoded) |
@@ -133,19 +133,19 @@ This obfuscation family is genuinely harder to detect than Base64 encoding:
 
 **Verdict: True Positive** — Deliberate command-line obfuscation to evade detection.
 
-**Confidence: Medium** — Intentionally lower than AGC-013 (High) to reflect genuine detection difficulty:
-1. The obfuscation was identified through manual review of command-line patterns
+**Confidence: Medium** — set below AGC-013 (High) because this family is harder to detect:
+1. The obfuscation was found by reading the command lines by hand
 2. No automated signature reliably catches all variants of this obfuscation family
 3. The individual commands resolved to benign operations, but the obfuscation itself is the indicator
-4. Executed from a confirmed compromised host in the context of a defense evasion campaign
-5. Future variants of the same techniques may evade current detection rules
+4. It ran on a confirmed compromised host in the middle of a defense evasion run
+5. New variants of the same three tricks may slip past the current rules
 
 **Response recommendation:**
-1. **Deobfuscate all commands** before assessing their actual impact — the obfuscation is the technique, not the payload
-2. **Enable PowerShell ScriptBlock Logging** (Event ID 4104) to capture deobfuscated commands after PowerShell parsing, complementing Sysmon EID 1 which only captures the obfuscated input
+1. **Deobfuscate all commands** before judging impact — the obfuscation is the technique, not the payload
+2. **Enable PowerShell ScriptBlock Logging** (EID 4104) to record commands after parsing, deobfuscated, alongside Sysmon EID 1, which sees only the obfuscated input
 3. **Develop heuristic detection rules** for: (a) cmd.exe with multiple `set` commands and `%variable%` expansion, (b) PowerShell with dense `[char]` sequences, (c) PowerShell with excessive backtick characters
-4. **Document the pattern** for SOC analyst training — this obfuscation family requires manual recognition skills that signature-based detection cannot replace
-5. **Correlate with the defense evasion chain** (AGC-067 through AGC-071) — five defense evasion techniques in sequence confirms systematic attacker cleanup
+4. **Document the pattern** for SOC analyst training — analysts have to recognize these three shapes by eye, since no signature will do it for them
+5. **Correlate with the defense evasion chain** (AGC-067 through AGC-071) — five defense evasion actions back to back is a deliberate cleanup, not a one-off
 
 ### MITRE Mapping
 
