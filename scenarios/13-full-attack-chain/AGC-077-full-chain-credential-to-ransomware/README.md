@@ -20,13 +20,13 @@
 
 ### Tradecraft
 
-**What:** A complete attack lifecycle from initial compromise through impact, demonstrating how individual TTPs chain together in a realistic intrusion. Each phase enables the next: stolen credentials grant access, access enables persistence, persistence survives reboots, credential dumping enables lateral movement, lateral movement expands reach, C2 enables remote control, collection stages data, exfiltration extracts it, defense evasion covers tracks, and ransomware delivers the final impact.
+**What:** A full attack lifecycle from initial compromise through impact, run as one continuous chain. Each phase feeds the next: stolen credentials grant access, access installs persistence, persistence survives reboots, credential dumping feeds lateral movement, C2 gives remote control, collection stages data, exfiltration extracts it, log clearing covers the tracks, and ransomware delivers the impact.
 
 **Why the Chain Matters:**
 - Atomic scenarios (AGC-001 through AGC-071) test individual detections in isolation
 - Real intrusions chain 5-15 techniques in sequence, creating detection opportunities at each transition
 - A defender who detects ANY single phase can disrupt the entire chain
-- The chain reveals which detection layers are strongest and where gaps allow silent progression
+- The chain shows which detection layers hold and where gaps let the attacker advance unseen
 
 ### Simulation
 
@@ -80,7 +80,7 @@ TIME (UTC)              RULE           TARGET OBJECT                            
 23:55:26.279            T1060,RunKey   HKU\.DEFAULT\...\Run\WindowsUpdateHelper                   powershell.exe -WindowStyle Hidden -EncodedCommand VwByAGkA...
 ```
 
-SwiftOnSecurity Sysmon config correctly tagged this as T1060 (legacy ID for Run key persistence). The value contains an encoded PowerShell payload — a high-fidelity persistence indicator.
+The SwiftOnSecurity Sysmon config tagged this as T1060, the legacy ID for Run key persistence. The value holds an encoded PowerShell payload, which makes it a high-fidelity persistence hit.
 
 **Sysmon EID 3 — Network Connection (7 events):**
 
@@ -104,7 +104,7 @@ TIME (UTC)              SUBJECT SID                                    ACCOUNT
 23:56:35                S-1-5-21-783388846-4178789021-3119572882-500    Administrator (COMPROMISED-01)
 ```
 
-This event survives the log clearing because Windows generates it AFTER the clear operation. It is the sole surviving Security log entry and a critical indicator of anti-forensics activity.
+This event survives the log clearing because Windows writes it AFTER the clear runs. It is the only Security log entry left standing and the clearest sign of the anti-forensics step.
 
 **Detection gaps in this chain:**
 - **EID 10 (ProcessAccess) DISABLED**: The LSASS dump attempt via rundll32+comsvcs.dll would generate a high-value EID 10 event targeting lsass.exe. With EID 10 disabled, the only evidence is the EID 1 for rundll32.exe (which was suppressed by PPL before execution).
@@ -118,7 +118,7 @@ This event survives the log clearing because Windows generates it AFTER the clea
 EID 3 shows the first connection to 10.10.40.10:80 at 23:55:10.773 UTC from powershell.exe (PID 5684). The HTTP POST to the credential harvest page submitted michael.chen@ashfordgrove.local credentials. This matches the spearphishing link pattern from AGC-001 (atomic phishing scenario).
 
 **Step 2 — Trace the execution chain:**
-Within 5 seconds of credential submission, a child powershell.exe (PID 2028) launched with `-EncodedCommand`. Decoding the Base64 reveals a payload that drops a marker file to `C:\Windows\Temp\agc077-stage2.txt`. This confirms code execution from the compromised session.
+Within 5 seconds of credential submission, a child powershell.exe (PID 2028) launched with `-EncodedCommand`. Decoding the Base64 gives a payload that drops a marker file to `C:\Windows\Temp\agc077-stage2.txt`, confirming code execution in the compromised session.
 
 **Step 3 — Identify persistence:**
 EID 13 (RuleName: T1060,RunKey) fires 2.5 seconds after encoded execution, showing reg.exe (PID 4092) writing "WindowsUpdateHelper" to the Run key with an encoded PowerShell payload. This ensures the attacker's code survives reboot. Cross-reference: same technique as AGC-019 (atomic Run key scenario).
@@ -130,7 +130,7 @@ The LSASS dump attempt (PID 816) was blocked by Protected Process Light — no m
 net.exe attempted IPC$ connection to 10.10.10.102 (WIN-CLIENT-02) using ashfordgrove\raj.patel credentials. Error 64 ("network name no longer available") indicates the target host's SMB service was unreachable. The cleartext password "[REDACTED]" is exposed in the EID 1 command line — a credential hygiene finding independent of whether the connection succeeded. Cross-reference: same technique as AGC-043-050 (atomic lateral movement scenarios).
 
 **Step 6 — Map the C2 infrastructure:**
-Three HTTPS connections to 10.10.40.10:443 at ~3-second intervals establish a beacon pattern. The server responded HTTP 200 to all three, confirming C2 infrastructure is active. The same IP served the credential harvest page (port 80) and received exfiltrated data — a single-server C2 architecture. Cross-reference: same techniques as AGC-051-056 (atomic C2 scenarios).
+Three HTTPS connections to 10.10.40.10:443 at ~3-second intervals form a beacon pattern. The server answered HTTP 200 to all three, so the C2 is live. The same IP served the credential harvest page on port 80 and took the exfiltrated data — one server doing every job. Cross-reference: same techniques as AGC-051-056 (atomic C2 scenarios).
 
 **Step 7 — Assess data loss:**
 Compress-Archive created an 812-byte ZIP file from 5 synthetic finance documents. The archive was successfully uploaded via both HTTPS (port 443) and HTTP (port 80) to 10.10.40.10. Data exfiltration over the C2 channel is confirmed. Cross-reference: same techniques as AGC-057-066 (atomic collection/exfiltration scenarios).

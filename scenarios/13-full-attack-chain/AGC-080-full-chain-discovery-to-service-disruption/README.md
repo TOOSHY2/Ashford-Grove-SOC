@@ -19,7 +19,7 @@
 
 ### Simulation
 
-11-phase attack chain on COMPROMISED-HOST-01, distinguished from the other three full-chain scenarios by an intentionally extended, spaced-out discovery phase designed to test whether volume/frequency-based detection catches slow enumeration. The final impact is pure availability disruption (service stop) — no data destruction or ransomware.
+11-phase attack chain on COMPROMISED-HOST-01. What sets it apart from the other three full-chain scenarios is a stretched-out discovery phase that spaces commands to test whether volume or frequency-based detection catches slow enumeration. The impact is availability only — a service stop, with no data destruction or ransomware.
 
 **Execution window**: 00:21:11 - 00:29:09 UTC (approximately 8 minutes)
 **Discovery phase**: 00:26:37 - 00:27:17 UTC (~40 seconds, 5 commands spaced 8 seconds apart)
@@ -36,7 +36,7 @@ Composite alert: Windows Push Notification Service (WpnService) stopped unexpect
 
 #### Phase 1: Initial Access — QR Code Phishing (T1566.002)
 
-QR-code-delivered phishing link directed michael.chen to a credential harvesting page at `updates.ashfordgrove-it.local` (resolving to 10.10.40.10). The delivery mechanism (QR image in email) differs from AGC-077/078/079's clickable links, but the network behavior is identical.
+QR-code-delivered phishing link directed michael.chen to a credential harvesting page at `updates.ashfordgrove-it.local` (resolving to 10.10.40.10). The delivery (a QR image in an email) differs from AGC-077/078/079's clickable links, but the network behavior is identical.
 
 **Sysmon EID 22 — DNS Query:**
 ```
@@ -98,7 +98,7 @@ DestinationIp: 10.10.40.10
 DestinationPort: 80
 ```
 
-Mshta.exe successfully started and fetched from the remote URL. The process was killed after ~5 minutes (it opened a GUI dialog on the headless VM). The key evidence is the process creation with a remote URL argument — a classic signed-binary proxy execution pattern.
+Mshta.exe started and fetched from the remote URL. The process was killed after ~5 minutes once it opened a GUI dialog on the headless VM. The evidence that matters is the process creation carrying a remote URL argument — signed-binary proxy execution.
 
 #### Phase 3: Privilege Escalation — DLL Search Order Hijacking (T1574.001)
 
@@ -109,7 +109,7 @@ Planted version.dll at C:\Windows\Temp\VulnApp\
 09/16/2026  12:26 AM                42 version.dll
 ```
 
-**Detection gap**: Sysmon EID 7 (Image Loaded) is **DISABLED** in the SwiftOnSecurity configuration. This means DLL hijacking would be invisible to current Sysmon monitoring. This is a legitimate detection gap that should be documented and addressed through configuration tuning — either enabling EID 7 with targeted rules for known hijack paths, or using alternative detection (file integrity monitoring on application directories).
+**Detection gap**: Sysmon EID 7 (Image Loaded) is **DISABLED** in the SwiftOnSecurity configuration, so this DLL hijack is invisible to current Sysmon monitoring. Closing it means enabling EID 7 with targeted rules for known hijack paths, or falling back to file integrity monitoring on application directories.
 
 **EID 1 evidence of file placement:**
 ```
@@ -167,7 +167,7 @@ CommandLine: "C:\WINDOWS\system32\net.exe" localgroup Administrators
 ```
 Returned: Administrator, ASHFORDGROVE\Domain Admins, wadmin.
 
-**Detection note**: The 8-second spacing between commands is designed to evade burst-detection rules that trigger on rapid-fire enumeration. A default investigation window of 5-10 minutes would catch all of these, but narrower real-time detection thresholds may miss them. This is the key tuning insight from this scenario.
+**Detection note**: The 8-second spacing is meant to slip past burst-detection rules that fire on rapid-fire enumeration. A 5-10 minute investigation window catches all five, but a narrower real-time threshold may miss them. That gap between window widths is the tuning lesson here.
 
 #### Phase 5: Credential Access — SAM Dump (T1003.002)
 
@@ -181,7 +181,7 @@ Image: C:\Windows\System32\cmd.exe
 CommandLine: "C:\WINDOWS\system32\cmd.exe" /c "dir C:\Windows\Temp\sam.save C:\Windows\Temp\system.save"
 ```
 
-**Result**: Access denied. The reg.exe process was blocked before execution (no EID 1 for reg.exe itself), indicating that Windows 11 protection mechanisms prevented the SAM hive export. In production, successful SAM dump would generate EID 1 for `reg.exe save HKLM\SAM` — one of the highest-fidelity indicators in the catalog, as legitimate administrative activity rarely saves these hives to disk.
+**Result**: Access denied. reg.exe was blocked before execution — no EID 1 for reg.exe itself — so Windows 11 protection stopped the SAM hive export. A successful dump would produce EID 1 for `reg.exe save HKLM\SAM`, one of the highest-fidelity hits in the catalog, since admins almost never save these hives to disk.
 
 #### Phase 6: Lateral Movement — Pass the Hash (T1550.002)
 
@@ -195,7 +195,7 @@ Image: C:\Windows\System32\net.exe
 CommandLine: "C:\WINDOWS\system32\net.exe" use \\10.10.10.102\IPC$ /user:wadmin [REDACTED]
 ```
 
-**Result**: System error 64 — "The specified network name is no longer available." The connection to WIN-CLIENT-02 timed out. In production, successful PtH would generate Security EID 4624 Type 3 with `LogonProcessName=NtLmSsp` and no corresponding interactive logon evidence — the diagnostic absence that distinguishes PtH from password-based logon.
+**Result**: System error 64 — "The specified network name is no longer available." The connection to WIN-CLIENT-02 timed out. A successful PtH would generate Security EID 4624 Type 3 with `LogonProcessName=NtLmSsp` and no matching interactive logon — the missing logon is what separates PtH from a password-based logon.
 
 **Note**: The cleartext password `[REDACTED]` is visible in the Sysmon EID 1 command line. In a real credential-dumping scenario, the NTLM hash would be used instead, but the network behavior would be identical.
 
@@ -211,7 +211,7 @@ Poll 3: [00:28:12] -> 10.10.40.10:443 (port 65500) - SUCCESS (1446 bytes)
 Poll 4: [00:28:15] -> 10.10.40.10:443 (port 65502) - SUCCESS (1446 bytes)
 ```
 
-The URL structure (`/api/v1/paste/fetch?id=<random>`) is designed to resemble legitimate cloud/paste service traffic. Detection requires behavioral analysis (polling frequency + payload size consistency) rather than reputation-based filtering, since the URL structure would not trigger domain/IP reputation rules.
+The URL structure (`/api/v1/paste/fetch?id=<random>`) is built to pass for legitimate cloud/paste service traffic. Catching it takes behavioral analysis — polling frequency plus consistent payload size — because the URL alone trips no domain or IP reputation rule.
 
 #### Phase 8: Collection — Network Shared Drive (T1039)
 
@@ -255,7 +255,7 @@ Defender real-time monitoring: DISABLED
 
 `Set-MpPreference -DisableRealtimeMonitoring $true` succeeded. No Defender EID 5001 event was captured in the event log within the 10-minute collection window.
 
-**Critical note**: This action occurred on COMPROMISED-HOST-01 (the origin host), NOT on the lateral movement destination. A careless investigation could misattribute this to the wrong host if not tracking per-host phase mapping carefully.
+**Critical note**: This ran on COMPROMISED-HOST-01, the origin host, NOT on the lateral movement destination. Without a per-host phase map, an analyst could pin it on the wrong host.
 
 #### Phase 11: Impact — Service Stop (T1489)
 
@@ -275,7 +275,7 @@ Service transitioned from Running to Stopped (STATE: 3 STOP_PENDING, then confir
 
 ### Report
 
-AGC-080 demonstrates how an attacker can achieve significant impact (service disruption + data exfiltration) while maintaining a deliberately low-profile discovery phase. The 40-second spaced enumeration window falls below most burst-detection thresholds, and three detection gaps compound the challenge:
+AGC-080 reaches real impact — service disruption plus data exfiltration — while keeping its discovery phase quiet. The 40-second spaced enumeration window sits below most burst-detection thresholds, and three detection gaps make it harder still:
 
 1. **EID 7 disabled**: DLL hijacking is invisible to Sysmon
 2. **EID 7036 absent on Windows 11**: Service stop detection depends entirely on EID 1 for sc.exe
@@ -321,13 +321,13 @@ AGC-080 demonstrates how an attacker can achieve significant impact (service dis
 | 00:28:26      | Disable Defender                    | No EID 5001 captured; detection gap                     |
 | 00:28:29      | Service stop (WpnService)           | EID 1: sc.exe stop; no EID 7036 (Win11 gap)            |
 
-**Key insight**: The ~5 minute gap between Phase 2 (mshta at 00:21:14) and Phase 3-4 (discovery starting at 00:26:35) is partly due to mshta blocking (GUI dialog on headless VM), but in a real attack this pause would represent the attacker settling in before beginning enumeration. An analyst who only investigates the last few minutes before the service stop would miss the initial access entirely.
+**Key insight**: The ~5 minute gap between Phase 2 (mshta at 00:21:14) and Phase 3-4 (discovery starting at 00:26:35) comes partly from mshta blocking on the headless VM's GUI dialog, but in a real attack the pause would be the attacker settling in before enumerating. An analyst who only looks at the last few minutes before the service stop would miss the initial access entirely.
 
 ## Mock Escalation
 
 **To**: SOC L2 / Incident Response
 **Priority**: P1 — Multi-Phase Compromise with Active Service Disruption
-**Summary**: An 11-phase attack chain on COMPROMISED-HOST-01 has been traced from QR-code phishing through extended AD enumeration to service disruption. The attack demonstrates a deliberate slow-enumeration approach designed to evade burst-detection rules.
+**Summary**: An 11-phase attack chain on COMPROMISED-HOST-01 traces from QR-code phishing through extended AD enumeration to service disruption. The attacker spaced enumeration out deliberately to slip past burst-detection rules.
 
 **Key findings**:
 1. QR-delivered credential phishing via `updates.ashfordgrove-it.local`

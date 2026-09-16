@@ -20,13 +20,13 @@
 
 ### Tradecraft
 
-**What:** A complete attack chain where every phase abuses channels that appear legitimate — password reset flows, WMI (standard admin tool), service account creation, Kerberos ticket requests, SMB admin shares, DNS queries, and Group Policy. Unlike AGC-077's textbook chain (encoded PowerShell, Run keys, HTTPS C2), this chain is designed to blend with normal IT operations at every stage.
+**What:** An attack chain where every phase abuses a channel that looks legitimate — password reset flows, WMI, service account creation, Kerberos ticket requests, SMB admin shares, DNS queries, and Group Policy. Where AGC-077 used loud tradecraft (encoded PowerShell, Run keys, HTTPS C2), this chain hides inside normal IT operations at every stage.
 
 **Why the Legitimate-Channel Theme Matters:**
-- A SOC analyst scanning for "obvious" indicators (EncodedCommand, suspicious Run keys, HTTPS to unknown IPs) would miss this chain entirely
-- Each individual phase could be a legitimate admin action — the chain's malicious nature emerges from the _sequence and timing_, not from any single event
-- The detection challenge shifts from pattern-matching to behavioral correlation: _who_ created _what_ account, _when_, and _what happened next_
-- The Wazuh agent disable (Phase 9) tests a fundamentally different detection model than log clearing (AGC-077): detecting absence vs detecting an event
+- An analyst scanning for the obvious hits — EncodedCommand, odd Run keys, HTTPS to unknown IPs — would miss this chain entirely
+- Each phase could be a real admin action; only the _sequence and timing_ give it away, never a single event
+- Detection shifts from pattern-matching to behavioral correlation: _who_ created _what_ account, _when_, and _what happened next_
+- The Wazuh agent disable (Phase 9) tests a different detection model than AGC-077's log clearing: spotting absence rather than an event
 
 ### Simulation
 
@@ -81,7 +81,7 @@ EID 1: PID 3240, Image: powershell.exe
   CommandLine: powershell.exe -WindowStyle Hidden -File C:\Windows\Temp\agc078-stage2.ps1
 ```
 
-The WmiPrvSE.exe parent process is the hallmark of WMI-based execution (T1047). This parent-child relationship distinguishes WMI execution from direct PowerShell launch, interactive shells, or scheduled tasks.
+The WmiPrvSE.exe parent marks WMI-based execution (T1047). That parent-child pair separates WMI execution from a direct PowerShell launch, an interactive shell, or a scheduled task.
 
 **Windows Security — Account Management (6 events):**
 
@@ -95,7 +95,7 @@ TIME (UTC)      EID     EVENT                                           TARGET A
 00:03:32        4732    A member was added to Administrators group      svc_helpdesk -> Builtin\Administrators
 ```
 
-The 4720->4722->4732(Administrators) sequence in rapid succession is a high-fidelity indicator of rogue admin account creation. The subject account (Administrator, LogonId 0xA2C250) is the attacker's session.
+The 4720->4722->4732(Administrators) burst in the same second is a high-fidelity sign of rogue admin account creation. The subject account (Administrator, LogonId 0xA2C250) is the attacker's session.
 
 **Sysmon EID 22 — DNS Query (13 events, showing key patterns):**
 
@@ -119,7 +119,7 @@ TIME (UTC)      QUERY NAME (Base64-encoded AD data in subdomain labels)
 00:04:25        hlbHBkZXNrLHN2Y19oZWxwZGVzaywsVHJ1ZQ.7.exfil.agc078lab.local
 ```
 
-The exfiltration labels decode to Base64-encoded CSV data containing AD user records. The sequential numbering (.3., .4., .5., .6., .7.) and consistent high-entropy subdomain pattern are textbook DNS tunneling indicators.
+The exfiltration labels decode to Base64-encoded CSV data holding AD user records. The sequential numbering (.3., .4., .5., .6., .7.) and the steady high-entropy subdomains are clear DNS tunneling signs.
 
 **Sysmon EID 3 — Network Connection (2 events):**
 
@@ -140,13 +140,13 @@ REVERT:  UserVersion AD:4/SysVol:4, ModificationTime 2026-09-15 17:06:20
 ### Investigation
 
 **Step 1 — Anchor on telemetry silence (unique to this chain):**
-The investigation starts not from a fired alert but from an absence: the Wazuh agent on COMPROMISED-HOST-01 transitions from Active to Disconnected at 00:04:38 UTC. This is the "negative detection" that anchors the timeline — working backward from the silence reveals the preceding attack phases.
+This case opens on an absence, not a fired alert: the Wazuh agent on COMPROMISED-HOST-01 goes from Active to Disconnected at 00:04:38 UTC. That "negative detection" anchors the timeline — working back from the silence surfaces the phases that came before it.
 
 **Step 2 — Work backward from the silence:**
 The last Sysmon events before agent shutdown show `net.exe stop WazuhSvc` (EID 1, PID 3792). The parent process tree traces to WmiPrvSE.exe (Phase 2), indicating the entire chain was WMI-initiated — a different execution pattern from AGC-077's direct PowerShell.
 
 **Step 3 — Account management events across the domain:**
-Windows Security EID 4720 (account created: svc_helpdesk) at 00:03:32 UTC, followed immediately by EID 4732 (added to Administrators group). The account name mimics a legitimate helpdesk service account — the naming convention abuse is deliberate social engineering of log reviewers.
+Windows Security EID 4720 creates svc_helpdesk at 00:03:32 UTC, and EID 4732 adds it to the Administrators group in the same second. The name mimics a real helpdesk service account, chosen to slip past whoever reviews the logs.
 
 **Step 4 — Kerberoasting attempt (domain trust constraint):**
 The KerberosRequestorSecurityToken call failed due to broken domain trust on COMPROMISED-HOST-01 (NTLM-only). In a production environment with functioning Kerberos, this would generate EID 4769 with RC4 encryption type (0x17) — the canonical Kerberoasting indicator. The klist.exe EID 1 confirms the attempt was made.
@@ -155,7 +155,7 @@ The KerberosRequestorSecurityToken call failed due to broken domain trust on COM
 net.exe EID 1 shows attempts to connect to \\10.10.10.10\C$ using the newly created svc_helpdesk account. Error 86 (incorrect password) and 1326 confirm the local account cannot authenticate to the DC (expected — local accounts don't have domain credentials). In a real attack with Kerberoasted domain credentials, this would succeed.
 
 **Step 6 — DNS C2 beacon identification:**
-EID 22 reveals 5 DNS queries with randomized numeric subdomains (224415-beacon, 903984-beacon, etc.) all resolving to the same server (10.10.40.10). The subdomain entropy and pattern regularity are the signature — not the query volume.
+EID 22 shows 5 DNS queries with randomized numeric subdomains (224415-beacon, 903984-beacon, and so on), all resolving to 10.10.40.10. The signature is the subdomain entropy and the steady interval, not the query volume.
 
 **Step 7 — DNS exfiltration burst:**
 8 DNS queries with long Base64-encoded subdomains (.3.exfil.agc078lab.local through .7.exfil) fired within milliseconds of each other, immediately after the collection phase. Decoding the labels reveals AD user records (michael.chen, raj.patel, sarah.jenkins, Administrator, svc_helpdesk).
@@ -167,7 +167,7 @@ On AD-DC-01, Default Domain Policy UserVersion incremented from 2 to 3 (Set-GPRe
 
 **Verdict: True Positive** — Multi-phase intrusion using legitimate administration channels for each phase.
 
-**Confidence: Critical** — The confidence is Critical for a fundamentally different reason than AGC-077: not because of overwhelming volume of high-fidelity indicators, but because three individual events are each near-conclusive on their own:
+**Confidence: Critical** — Critical here for a different reason than AGC-077: not the sheer volume of high-fidelity hits, but three events that are each near-conclusive on their own:
 1. **Account creation + immediate admin elevation** (EID 4720 + 4732 within same second) — a new local admin account outside change management is suspicious regardless of context
 2. **Kerberoasting attempt** (EID 1 for klist.exe tracing to KerberosRequestorSecurityToken call) — requesting TGS tickets for offline cracking is inherently adversarial
 3. **GPO modification** (UserVersion increment on Default Domain Policy) — unauthorized domain-wide policy change proves DC-level compromise
@@ -212,7 +212,7 @@ The Wazuh agent silence (Phase 9) is **supporting evidence** for intentional def
 | 00:04:38 | Defense Evasion | net stop WazuhSvc | EID 1: net.exe "stop WazuhSvc" + TELEMETRY SILENCE BEGINS |
 | 00:06:17 | Impact | Set-GPRegistryValue on Default Domain Policy | GPO UserVersion 2->3, ModificationTime updated (EID 5136 NOT captured) |
 
-**Key difference from AGC-077:** In AGC-077, the most detectable phase was persistence (Run key with encoded payload). In AGC-078, the most detectable phase is account management (4720+4732) — which looks like a routine admin task in isolation. The chain's stealth comes from each phase using a channel that individually appears legitimate.
+**Key difference from AGC-077:** In AGC-077 the most detectable phase was persistence (a Run key with an encoded payload). In AGC-078 it is account management (4720+4732), which reads as a routine admin task on its own. The chain stays quiet because each phase rides a channel that looks legitimate in isolation.
 
 ## Mock Escalation
 
