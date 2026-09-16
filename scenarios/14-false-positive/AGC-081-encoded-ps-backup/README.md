@@ -20,7 +20,7 @@
 
 ### Simulation
 
-Created a scheduled task (`AGC081Backup`) that uses `-EncodedCommand` for a benign file backup operation. The Base64 encoding is used for a legitimate engineering reason: avoiding quoting issues with UNC paths in schtasks command-line arguments. A pre-dated change record (approved by IT Operations 3 days prior) documents the task.
+Created a scheduled task (`AGC081Backup`) that runs a file backup through `-EncodedCommand`. The Base64 encoding has an engineering reason: it sidesteps quoting problems with UNC paths in schtasks arguments. A change record approved by IT Operations 3 days earlier documents the task.
 
 **Execution**: 00:32:49 - 00:33:08 UTC on COMPROMISED-HOST-01
 
@@ -28,7 +28,7 @@ Created a scheduled task (`AGC081Backup`) that uses `-EncodedCommand` for a beni
 
 ### Detection
 
-Sysmon EID 1 alert: `schtasks.exe /create` with `/tr "powershell.exe -EncodedCommand <Base64>"` detected on COMPROMISED-HOST-01. The `-EncodedCommand` flag triggers the same detection rule as AGC-013 (malicious encoded PowerShell download). The triage question: is this the same technique used maliciously, or a legitimate administrative operation?
+Sysmon EID 1 captured `schtasks.exe /create` with `/tr "powershell.exe -EncodedCommand <Base64>"` on COMPROMISED-HOST-01. The `-EncodedCommand` flag fires the same rule as AGC-013 (malicious encoded PowerShell download). The triage question: the same technique used maliciously, or an admin doing routine work?
 
 ### Investigation
 
@@ -43,7 +43,7 @@ CommandLine: "C:\WINDOWS\system32\schtasks.exe" /create /tn AGC081Backup /tr "po
 User: COMPROMISED-01\Administrator
 ```
 
-This is technically identical to what AGC-013 would produce: a PowerShell invocation with a Base64-encoded command blob. Without decoding, the alert signature is indistinguishable from the malicious variant.
+On its face this matches AGC-013 exactly: a PowerShell invocation with a Base64-encoded command blob. Until the blob is decoded, the alert is indistinguishable from the malicious variant.
 
 #### Step 2: Decode the Base64
 
@@ -85,19 +85,19 @@ The change record:
 
 #### Step 4: Confirm Schedule Consistency
 
-The schtasks command specifies `/sc daily /st 02:00` — daily at 2:00 AM. This matches the change record's documented schedule ("Daily at 02:00"). The consistency between technical artifact and paper trail closes the loop.
+The schtasks command specifies `/sc daily /st 02:00` — daily at 2:00 AM, matching the change record's "Daily at 02:00". Artifact and paper trail agree, which closes the loop.
 
 ### Report
 
-**Verdict: False Positive / Benign** — The encoded PowerShell command decodes to a standard `Copy-Item` backup operation targeting an internal backup share. The pre-dated change record from IT Operations confirms this is an authorized, documented scheduled task. The `-EncodedCommand` flag is used for a legitimate engineering reason (avoiding quoting issues with UNC paths in schtasks), not for obfuscation.
+**Verdict: False Positive / Benign** — The encoded command decodes to a `Copy-Item` backup to an internal share. The change record from IT Operations, approved before execution, shows the task was authorized. `-EncodedCommand` was chosen to avoid quoting issues with UNC paths in schtasks, not to hide anything.
 
-**Recommendation**: Close as Benign. Add the `AGC081Backup` task signature (task name + destination path pattern `\\10.10.10.10\Backups\`) to the detection-tuning allowlist to reduce future alert noise from this legitimate recurring operation. Do not suppress `-EncodedCommand` alerts globally — only allowlist this specific documented task.
+**Recommendation**: Close as Benign. Allowlist the `AGC081Backup` task signature (task name + destination path pattern `\\10.10.10.10\Backups\`) so this nightly job stops paging. Do not suppress `-EncodedCommand` alerts globally — allowlist only this documented task.
 
 **Cross-reference**: The malicious twin of this scenario is **AGC-013**, where the same `-EncodedCommand` alert reveals a download-and-execute payload targeting external attacker infrastructure with no corresponding change record.
 
 #### Discriminating evidence (benign vs malicious)
 
-This is the critical section that separates AGC-081 from its malicious twin AGC-013:
+What separates AGC-081 from its malicious twin AGC-013:
 
 | Factor | AGC-081 (Benign) | AGC-013 (Malicious) |
 |--------|-------------------|---------------------|
@@ -108,10 +108,10 @@ This is the critical section that separates AGC-081 from its malicious twin AGC-
 | **Schedule** | Regular (daily 02:00), matches change record | Ad-hoc or irregular |
 
 **Neither factor alone is sufficient**:
-- A decoded command that *appears* benign without a change record could be an attacker using plausible-deniability commands
-- A change record without verifying the decoded content is trusting paperwork over evidence
+- A decoded command that *looks* benign but has no change record could still be an attacker hiding behind a plausible cmdlet
+- A change record accepted without decoding the content is paperwork trusted over evidence
 
-**Together**, the benign decoded content + pre-dated change record with matching details produce a clean False Positive determination.
+**Together**, the benign decoded content and a pre-dated change record whose details match give a clean false positive.
 
 ### MITRE Mapping
 

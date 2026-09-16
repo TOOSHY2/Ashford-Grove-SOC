@@ -20,9 +20,9 @@
 
 ### Simulation
 
-Created a documented service account (`svc_reporting`) with a pre-existing service account registry entry (created 2026-08-17, approved by IT Operations). Registered a scheduled task (`AGC085NightlyReport`) to run under this account at 03:00 daily, then triggered it manually to simulate the off-hours execution.
+Created a service account (`svc_reporting`) backed by a pre-existing registry entry (created 2026-08-17, approved by IT Operations). Registered a scheduled task (`AGC085NightlyReport`) to run under that account at 03:00 daily, then ran it by hand to stand in for the off-hours execution.
 
-**Lab constraint**: The `svc_reporting` account was created without "Log on as a batch job" privilege (requires Local Security Policy modification not available via guestcontrol). The scheduled task registered successfully but the batch logon event (EID 4624 Type 4) did not fire. Evidence is based on the schtasks creation/execution telemetry and account creation events.
+**Lab constraint**: The `svc_reporting` account was created without the "Log on as a batch job" privilege (that needs a Local Security Policy change guestcontrol cannot make). The task registered, but the batch logon event (EID 4624 Type 4) never fired. Evidence rests on the schtasks creation/run telemetry and the account creation event.
 
 **Execution window**: 00:49:26 - 00:49:27 UTC on COMPROMISED-HOST-01
 
@@ -30,7 +30,7 @@ Created a documented service account (`svc_reporting`) with a pre-existing servi
 
 ### Detection
 
-An off-hours authentication event for account `svc_reporting` detected on COMPROMISED-HOST-01. The scheduled task `AGC085NightlyReport` is configured to run daily at 03:00 UTC under the `svc_reporting` service account. Off-hours authentication alerts fire identically regardless of whether the account is a human user or a service account, creating one of the most common false positive patterns in SOC operations.
+An off-hours authentication event for account `svc_reporting` was detected on COMPROMISED-HOST-01. The scheduled task `AGC085NightlyReport` runs daily at 03:00 UTC under that account. Off-hours logon rules fire the same way for a human user and a service account, which makes this one of the most common false positive patterns a SOC sees.
 
 ### Investigation
 
@@ -66,7 +66,7 @@ CommandLine: "C:\WINDOWS\system32\net.exe" user svc_reporting [REDACTED] /add
 User: COMPROMISED-01\Administrator
 ```
 
-The account name `svc_reporting` follows the `svc_` naming convention for service accounts. This is the first discriminating check: is this a human interactive account or a dedicated service/automation account?
+The name `svc_reporting` follows the `svc_` convention for service accounts. That is the first discriminating check: human interactive account, or dedicated automation account?
 
 #### Step 3: Cross-Reference Service Account Documentation
 
@@ -97,13 +97,13 @@ Field-by-field verification:
 
 #### Step 4: Logon Type Analysis
 
-In production, the scheduled task execution under `svc_reporting` would generate:
+In production, the task running under `svc_reporting` would log:
 
-- **EID 4624 with Logon Type 4 (Batch)**: Expected for scheduled task execution. This is the correct, non-interactive logon type for automated tasks.
-- **NOT Logon Type 2 (Interactive)**: An interactive logon for a service account would be anomalous even during the documented schedule window.
-- **NOT Logon Type 10 (RemoteInteractive/RDP)**: A remote desktop session under a service account would be highly suspicious regardless of timing.
+- **EID 4624 with Logon Type 4 (Batch)**: the expected non-interactive logon type for a scheduled task.
+- **NOT Logon Type 2 (Interactive)**: an interactive logon by a service account is anomalous even inside the documented schedule window.
+- **NOT Logon Type 10 (RemoteInteractive/RDP)**: an RDP session under a service account is suspicious at any hour.
 
-**Lab constraint**: The batch logon privilege was not assigned to `svc_reporting` in the lab environment (requires Local Security Policy > User Rights Assignment > "Log on as a batch job"), so EID 4624 Type 4 did not fire. The schtasks warning confirms: "Batch logon privilege needs to be enabled for the task principal."
+**Lab constraint**: The lab never granted `svc_reporting` the batch logon privilege (Local Security Policy > User Rights Assignment > "Log on as a batch job"), so EID 4624 Type 4 did not fire. The schtasks warning says as much: "Batch logon privilege needs to be enabled for the task principal."
 
 #### Step 5: Task Scheduler Warning (Privilege Gap)
 
@@ -112,17 +112,17 @@ WARNING: The task is registered, but may fail to start.
 Batch logon privilege needs to be enabled for the task principal.
 ```
 
-This warning itself is useful evidence: it confirms the task was properly registered under the service account. In production, the service account would have the batch logon privilege assigned during provisioning, and the EID 4624 Type 4 event would fire normally.
+The warning is evidence in its own right: it confirms the task was registered under the service account. In production the privilege is assigned at provisioning, and the EID 4624 Type 4 event fires as normal.
 
 ### Report
 
-**Verdict: False Positive / Benign** — The off-hours authentication is from a documented service account (`svc_reporting`) running a nightly scheduled task at its expected time (03:00). The account type (service, not human), expected logon type (batch, not interactive), and documented schedule all match the observed activity.
+**Verdict: False Positive / Benign** — The off-hours authentication belongs to a documented service account (`svc_reporting`) running its nightly scheduled task at the expected time (03:00). Account type (service, not human), expected logon type (batch, not interactive), and documented schedule all match what was observed.
 
-**Lab constraint**: EID 4624 Type 4 (Batch logon) did not fire because the service account was not granted "Log on as a batch job" privilege in the lab environment. In production, this privilege would be assigned during service account provisioning.
+**Lab constraint**: EID 4624 Type 4 (Batch logon) did not fire because the lab never granted the account "Log on as a batch job". In production that privilege is assigned when the service account is provisioned.
 
-**Recommendation**: Close as Benign. Implement a pre-filtered allowlist for documented service accounts with known schedules. The allowlist should verify three conditions: (1) account is in the service account registry, (2) logon type matches expected type (Batch/Service, not Interactive), (3) timing falls within the documented schedule window. All three must match — a service account logging on interactively, or outside its documented schedule, should still generate an alert.
+**Recommendation**: Close as Benign. Build an allowlist for documented service accounts with known schedules that checks three conditions: (1) the account is in the service account registry, (2) the logon type is the expected one (Batch/Service, not Interactive), (3) the time falls inside the documented schedule window. All three must hold — a service account logging on interactively, or outside its schedule, should still alert.
 
-**Cross-reference**: The malicious twin of this scenario is **AGC-008**, where an off-hours logon involves a human user account (phishing victim) authenticating interactively outside normal business hours with no documented scheduled task.
+**Cross-reference**: The malicious twin is **AGC-008**, where a human user account (a phishing victim) logs on interactively outside business hours with no scheduled task to explain it.
 
 #### Discriminating evidence (benign vs malicious)
 
@@ -135,7 +135,7 @@ This warning itself is useful evidence: it confirms the task was properly regist
 | **Account purpose** | Dedicated automation, non-interactive | Interactive human account used outside normal hours |
 | **Behavioral baseline** | Identical pattern every night | Anomalous departure from user's normal hours |
 
-**The account type check is the fastest discriminator.** Before evaluating whether the timing is suspicious, determine whether the account is a human interactive account or a service/automation account. For service accounts with documented schedules, off-hours activity is expected behavior, not anomalous behavior.
+**The account type check is the fastest discriminator.** Before judging the timing, settle whether the account is a human interactive account or an automation account. For a service account with a documented schedule, off-hours activity is the expected behavior.
 
 ### MITRE Mapping
 

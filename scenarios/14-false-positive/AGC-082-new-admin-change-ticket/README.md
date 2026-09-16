@@ -20,7 +20,7 @@
 
 ### Simulation
 
-Created a pre-dated IT onboarding ticket (OB-2026-0847, approved 2026-09-11) documenting the provisioning of a local admin account for a new IT support technician. Then executed the account creation (`net user new_it_tech /add`) and group addition (`net localgroup Administrators new_it_tech /add`) on COMPROMISED-HOST-01. The technical artifacts are identical to those produced by the malicious twin AGC-023.
+Created a pre-dated IT onboarding ticket (OB-2026-0847, approved 2026-09-11) for a local admin account for a new IT support technician. Then ran the account creation (`net user new_it_tech /add`) and group addition (`net localgroup Administrators new_it_tech /add`) on COMPROMISED-HOST-01. The artifacts are the same ones the malicious twin AGC-023 produces.
 
 **Execution window**: 00:38:48 - 00:38:50 UTC on COMPROMISED-HOST-01
 
@@ -28,7 +28,7 @@ Created a pre-dated IT onboarding ticket (OB-2026-0847, approved 2026-09-11) doc
 
 ### Detection
 
-Security Event ID 4720 (user account created) and Event ID 4732 (member added to Administrators group) fired on COMPROMISED-HOST-01. The new account `new_it_tech` was created by `COMPROMISED-01\Administrator` and immediately added to the local Administrators group. This is the identical event signature produced by AGC-023 (unauthorized admin persistence). The triage question: was this an authorized IT onboarding operation, or unauthorized account creation for persistence?
+Windows Security EID 4720 (user account created) and EID 4732 (member added to Administrators group) fired on COMPROMISED-HOST-01. The new account `new_it_tech` was created by `COMPROMISED-01\Administrator` and immediately added to the local Administrators group. This is the same event signature AGC-023 (unauthorized admin persistence) produces. The triage question: authorized IT onboarding, or an account created for persistence?
 
 ### Investigation
 
@@ -72,7 +72,7 @@ Group:
     Group Domain:   Builtin
 ```
 
-These events are technically identical in shape to what AGC-023 produces. Without the paper trail, there is no way to distinguish benign from malicious from the events alone.
+These events have the same shape as the ones AGC-023 produces. The events alone cannot separate benign from malicious; the paper trail has to do that.
 
 #### Step 2: Corroborating Sysmon Evidence
 
@@ -94,7 +94,7 @@ CommandLine: "C:\WINDOWS\system32\net.exe" localgroup Administrators new_it_tech
 User: COMPROMISED-01\Administrator
 ```
 
-Both commands executed under the local `Administrator` account, 2 seconds apart.
+Both commands ran under the local `Administrator` account, 2 seconds apart.
 
 #### Step 3: Cross-Reference Onboarding Ticket
 
@@ -122,15 +122,15 @@ Risk Assessment: Low - standard onboarding procedure
 | **Target Group** | Local Administrators | EID 4732: `Administrators (Builtin)` | YES |
 | **Timing** | Start date 2026-09-16 | Events fired 2026-09-16 00:38 UTC | YES |
 
-All five fields match precisely. The ticket pre-dates the technical execution by 5 days and names the exact account, host, group, and provisioning identity.
+All five fields match. The ticket pre-dates execution by 5 days and names the exact account, host, group, and provisioning identity.
 
 ### Report
 
-**Verdict: False Positive / Benign** — The local admin account `new_it_tech` was created as part of a documented IT onboarding process for a new IT support technician. The pre-dated onboarding ticket (OB-2026-0847, approved 2026-09-11 by raj.patel) names the exact account, target host, provisioning identity, and target group, all of which match the Security EID 4720/4732 events field-for-field.
+**Verdict: False Positive / Benign** — The local admin account `new_it_tech` was provisioned for a new IT support technician under a documented onboarding ticket. That ticket (OB-2026-0847, approved 2026-09-11 by raj.patel) names the account, target host, provisioning identity, and target group, and each one matches the Security EID 4720/4732 events.
 
-**Recommendation**: Close as Benign. Consider implementing a standard SOC notification workflow where HR/IT Operations sends the SOC a pre-provisioning notification for expected onboarding events. This would allow analysts to pre-validate the ticket before the events fire, reducing triage time for this common, recurring alert pattern.
+**Recommendation**: Close as Benign. Have HR/IT Operations send the SOC a pre-provisioning notice for expected onboarding accounts. Analysts could then validate the ticket before the events fire rather than after, which cuts triage time on a recurring alert.
 
-**Cross-reference**: The malicious twin of this scenario is **AGC-023**, where the same EID 4720/4732 events indicate unauthorized local account creation for persistence, with no corresponding onboarding documentation.
+**Cross-reference**: The malicious twin is **AGC-023**, where the same EID 4720/4732 events record an unauthorized local account created for persistence, with no onboarding ticket behind it.
 
 #### Discriminating evidence (benign vs malicious)
 
@@ -142,7 +142,7 @@ All five fields match precisely. The ticket pre-dates the technical execution by
 | **Timing** | Matches documented start date | Unexpected / outside business process |
 | **Technical events** | Identical EID 4720 + 4732 | Identical EID 4720 + 4732 |
 
-The technical telemetry is indistinguishable between the two scenarios. The **entire** difference is the existence and consistency of the pre-dated onboarding ticket. This makes documentation verification the critical step in the SOC playbook for this alert type.
+The telemetry is indistinguishable between the two scenarios. The **entire** difference is whether a pre-dated onboarding ticket exists and matches the events. For this alert type, ticket verification is the step that decides the verdict.
 
 ### MITRE Mapping
 

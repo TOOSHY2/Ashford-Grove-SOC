@@ -20,7 +20,7 @@
 
 ### Simulation
 
-Created a pre-dated data sharing agreement (DSA-2026-041, approved 2026-07-18 by Compliance Officer sarah.jenkins). Generated a synthetic regulatory extract (500-row CSV, 20,731 bytes) and uploaded it via `Invoke-WebRequest` POST to the documented regulatory intake endpoint (10.10.40.10/regulatory-intake, simulated on EXT-ATTACKER-SIM). The upload returned HTTP 200 OK.
+Created a pre-dated data sharing agreement (DSA-2026-041, approved 2026-07-18 by Compliance Officer sarah.jenkins). Generated a synthetic regulatory extract (500-row CSV, 20,731 bytes) and POSTed it with `Invoke-WebRequest` to the documented regulatory intake endpoint (10.10.40.10/regulatory-intake, simulated on EXT-ATTACKER-SIM). The server returned HTTP 200 OK.
 
 **Execution window**: 00:53:04 - 00:53:05 UTC on COMPROMISED-HOST-01
 
@@ -28,7 +28,7 @@ Created a pre-dated data sharing agreement (DSA-2026-041, approved 2026-07-18 by
 
 ### Detection
 
-A large HTTPS POST (20,731 bytes) from COMPROMISED-HOST-01 to external endpoint 10.10.40.10 on port 80 detected. The volume and destination pattern match the detection signature for data exfiltration (AGC-062). The triage question: is this a legitimate scheduled regulatory submission, or unauthorized data exfiltration?
+COMPROMISED-HOST-01 sent a large HTTPS POST (20,731 bytes) to external endpoint 10.10.40.10 on port 80. Volume and destination match the data exfiltration signature (AGC-062). The triage question: a scheduled regulatory submission, or exfiltration?
 
 ### Investigation
 
@@ -52,7 +52,7 @@ Content Length: 20,731 bytes
 Response: 200 OK
 ```
 
-**Lab note**: Sysmon EID 3 did not fire for the PowerShell HTTP connection (filtered by SwiftOnSecurity config). The upload is confirmed by the HTTP 200 response.
+**Lab note**: Sysmon EID 3 did not fire for the PowerShell HTTP connection (the SwiftOnSecurity config filters it). The HTTP 200 response confirms the upload landed.
 
 #### Step 2: Cross-Reference Data Sharing Agreement
 
@@ -83,15 +83,15 @@ Firewall Allow-List: Rule FW-OUT-REG-001 permits HTTPS to 10.10.40.10:443
 
 #### Step 4: Connection Pattern Analysis
 
-The upload is a **standalone scheduled transfer**: a single POST request to the documented endpoint, then the connection closes. This is structurally different from exfiltration riding a C2 beacon (AGC-062), where the data transfer occurs within an ongoing periodic connection pattern.
+The upload is a **standalone scheduled transfer**: one POST to the documented endpoint, then the connection closes. Exfiltration riding a C2 beacon (AGC-062) looks different — the data moves inside an ongoing periodic connection.
 
 ### Report
 
-**Verdict: False Positive / Benign** — The large HTTPS upload is a scheduled regulatory data submission to a documented, allow-listed endpoint. The data sharing agreement (DSA-2026-041) pre-dates the transfer by 60 days and names the exact destination, endpoint, data type, and schedule. The transfer is a standalone POST, not embedded within a C2 beaconing pattern.
+**Verdict: False Positive / Benign** — The large HTTPS upload is a scheduled regulatory submission to a documented, allow-listed endpoint. The data sharing agreement (DSA-2026-041) pre-dates the transfer by 60 days and names the destination, endpoint, data type, and schedule. The transfer is a standalone POST, not traffic inside a C2 beacon.
 
-**Recommendation**: Close as Benign. Ensure the firewall allow-list rule (FW-OUT-REG-001) is documented alongside the data sharing agreement in the SOC's reference materials, so future monthly submissions do not require full re-investigation.
+**Recommendation**: Close as Benign. File the firewall allow-list rule (FW-OUT-REG-001) next to the data sharing agreement in the SOC reference set, so next month's submission takes a lookup instead of a full investigation.
 
-**Cross-reference**: The malicious twin of this scenario is **AGC-062**, where a large HTTPS upload represents unauthorized data exfiltration to an undocumented destination, typically riding an existing C2 connection.
+**Cross-reference**: The malicious twin is **AGC-062**, where a large HTTPS upload carries stolen data to an undocumented destination, usually over an existing C2 connection.
 
 #### Discriminating evidence (benign vs malicious)
 

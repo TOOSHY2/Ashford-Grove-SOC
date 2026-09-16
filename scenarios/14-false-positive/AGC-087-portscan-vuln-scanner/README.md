@@ -20,7 +20,7 @@
 
 ### Simulation
 
-Executed a port scan from MGMT-GUI-TEMP (10.10.10.20, the documented internal vulnerability scanner host) targeting 3 LAN-NET hosts (10.10.10.100, 10.10.10.101, 10.10.10.102) across 6 standard vulnerability assessment ports. All 18 connection attempts returned closed/filtered. The scan ran as a bash script using `/dev/tcp` probes.
+Ran a port scan from MGMT-GUI-TEMP (10.10.10.20, the documented internal vulnerability scanner) against 3 LAN-NET hosts (10.10.10.100, 10.10.10.101, 10.10.10.102) on 6 standard assessment ports. All 18 probes came back closed/filtered. The scan was a bash script using `/dev/tcp` probes.
 
 **Execution window**: 00:56:13 - 00:56:44 UTC on MGMT-GUI-TEMP (10.10.10.20)
 
@@ -28,7 +28,7 @@ Executed a port scan from MGMT-GUI-TEMP (10.10.10.20, the documented internal vu
 
 ### Detection
 
-Network IDS alert: sequential port scan detected from 10.10.10.20 (MGMT-GUI-TEMP) targeting multiple LAN-NET hosts across common service ports (22, 80, 443, 445, 3389, 5985). The scan pattern and port set match signatures for lateral movement reconnaissance (AGC-050). The triage question: is this an attacker mapping the network, or a scheduled vulnerability assessment?
+The network IDS fired on a sequential port scan from 10.10.10.20 (MGMT-GUI-TEMP) against several LAN-NET hosts on common service ports (22, 80, 443, 445, 3389, 5985). Pattern and port set match the lateral movement reconnaissance signature (AGC-050). The triage question: an attacker mapping the network, or a scheduled vulnerability assessment?
 
 ### Investigation
 
@@ -43,7 +43,7 @@ Target Range: LAN-NET (10.10.10.0/24)
 Owner: Security Team
 ```
 
-The source IP (10.10.10.20) is the management workstation designated as the internal vulnerability scanner. This host is documented in the SOC asset inventory as the authorized scanning platform.
+The source IP (10.10.10.20) is the management workstation designated as the internal vulnerability scanner, and the SOC asset inventory lists it as the authorized scanning platform.
 
 #### Step 2: Verify Scan Pattern
 
@@ -96,11 +96,11 @@ Firewall Exception: FW-SCAN-001
 
 ### Report
 
-**Verdict: False Positive / Benign** — The port scan originates from the documented internal vulnerability scanner (MGMT-GUI-TEMP, 10.10.10.20) running its scheduled monthly assessment. The source host, port set, target scope, and scan pattern all match the scanner registry entry approved by the Security Team Lead. The rate-limited, sequential probing pattern is characteristic of authorized vulnerability assessment, not attacker reconnaissance.
+**Verdict: False Positive / Benign** — The port scan came from the documented internal vulnerability scanner (MGMT-GUI-TEMP, 10.10.10.20) running its scheduled monthly assessment. Source host, port set, target scope, and scan pattern all match the scanner registry entry approved by the Security Team Lead. The rate-limited, sequential probing fits an authorized assessment, not attacker reconnaissance.
 
-**Recommendation**: Close as Benign. Ensure the scanner registry (host, schedule, port profile, target scope) is documented in the SOC's asset inventory so future monthly scans are automatically suppressed or auto-closed.
+**Recommendation**: Close as Benign. Record the scanner registry (host, schedule, port profile, target scope) in the SOC asset inventory so future monthly scans are suppressed or auto-closed.
 
-**Cross-reference**: The malicious twin of this scenario is **AGC-050**, where a port scan represents unauthorized network reconnaissance by an attacker performing lateral movement discovery from a compromised host.
+**Cross-reference**: The malicious twin is **AGC-050**, where the same kind of scan is an attacker on a compromised host mapping targets for lateral movement.
 
 #### Discriminating evidence (benign vs malicious)
 
