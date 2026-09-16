@@ -1,0 +1,17 @@
+{
+  "name": "AGC-096: Bulk Download Pre-Resignation",
+  "versions": { "attack": "16", "navigator": "4.9.5", "layer": "4.5" },
+  "domain": "enterprise-attack",
+  "description": "AGC-096: Bulk file copy during resignation notice period. Behavioral signal (volume + HR timing), no MITRE technique.",
+  "filters": { "platforms": ["Windows", "Linux"] },
+  "sorting": 3,
+  "layout": { "layout": "side", "aggregateFunction": "average", "showID": true, "showName": true, "showAggregateScores": true, "countUnscored": false },
+  "hideDisabled": false,
+  "techniques": [],
+  "gradient": { "colors": ["#ff6666ff", "#ffe766ff", "#8ec843ff"], "minValue": 0, "maxValue": 100 },
+  "legendItems": [{ "label": "Insider Threat: No MITRE Technique", "color": "#ffe766ff" }],
+  "metadata": [{ "name": "note", "value": "AGC-096: No MITRE technique applies. Detection is behavioral baseline deviation (50 files, 5x above baseline) correlated with HR context (resignation notice)." }],
+  "links": [],
+  "showTacticRowBackground": true, "tacticRowBackground": "#dddddd",
+  "selectTechniquesAcrossTactics": true, "selectSubtechniquesWithParent": false, "selectVisibleTechniques": false
+}
