@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-001: Spoofed display-name phishing email delivered credential-harvesting link. Verdict: True Positive, Confidence: High.",
+    "description": "Manual Execution & Real Telemetry (Phase 2) by Ali (TOOSHY2). | AGC-001: Spoofed display-name phishing email delivered credential-harvesting link. Full evidence across Email Headers, OPNsense Firewall, Zeek HTTP, and Wazuh/Sysmon EID 1. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",
@@ -29,7 +29,7 @@
             "techniqueID": "T1566.002",
             "tactic": "initial-access",
             "color": "#ffe766ff",
-            "comment": "AGC-001: Spoofed display-name phishing. From header display name 'IT Support' vs actual sender domain 'ashford-grove-support.local'. Credential-harvesting link to 10.10.40.10/portal-login. Verdict: True Positive, Confidence: High.",
+            "comment": "AGC-001: Spearphishing link delivered via spoofed display-name 'IT Support' <it-support@ashford-grove-support.local>. Link opened in browser to 10.10.40.10/portal-login and credentials submitted. Evidenced via Zeek http.log (200 OK), OPNsense live log pass, and Sysmon EID 1 in Wazuh. Verdict: True Positive, Confidence: High.",
             "enabled": true,
             "metadata": [],
             "links": [],

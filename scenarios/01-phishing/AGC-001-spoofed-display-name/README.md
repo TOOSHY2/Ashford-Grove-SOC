@@ -1,59 +1,90 @@
 # AGC-001 — Spoofed Display-Name Phishing
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
+<p align="center">
+  <img alt="Category" src="https://img.shields.io/badge/Category-01--Phishing-0F766E?style=for-the-badge&labelColor=0B1220">
+  <img alt="Technique" src="https://img.shields.io/badge/MITRE-T1566.002-red?style=for-the-badge&labelColor=0B1220">
+  <img alt="Verdict" src="https://img.shields.io/badge/Verdict-True%20Positive-critical?style=for-the-badge&labelColor=0B1220">
+  <img alt="Confidence" src="https://img.shields.io/badge/Confidence-High-yellow?style=for-the-badge&labelColor=0B1220">
+  <img alt="Execution" src="https://img.shields.io/badge/Execution-Manual%20(Phase%202)-success?style=for-the-badge&labelColor=0B1220">
+</p>
 
-## Card
+---
 
-| Field | Value |
-|---|---|
-| ID | `AGC-001` |
-| Category | `01-phishing` — Phishing & Initial Access |
-| MITRE Technique | `T1566.002` Phishing: Spearphishing Link |
-| Verdict | True Positive |
-| Confidence | High |
-| Time to Detect | N/A — no automated alert; detection via manual email-header inspection |
-| Time to Triage | 04:00 (from email inspection to verdict) |
-| Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103), `EXT-ATTACKER-SIM` (10.10.40.10) |
-| Chain | ◀ — (first scenario) · next [AGC-002](../AGC-002-lookalike-domain/README.md) ▶ |
-| One-line Summary | Spoofed "IT Support" display name delivers credential-harvesting link to an employee workstation. |
+## 1. Overview & Case Metadata
 
-## Attacker Perspective
+| Case Attribute | Value / Specification |
+|:---|:---|
+| **Incident ID** | `AGC-001` |
+| **Tactic & Technique** | **Initial Access (TA0001)** — `T1566.002` (Spearphishing Link) |
+| **Secondary Technique** | `T1071.001` (Application Layer Protocol: Web Protocols) |
+| **Investigating Analyst** | **Ali (TOOSHY2)** |
+| **Execution Date & Time** | 2026-09-21 — 20:37 to 22:15 UTC |
+| **Target Host** | `COMPROMISED-HOST-01` (`10.10.10.103` — `michael.chen`) |
+| **Adversary Infrastructure** | `EXT-ATTACKER-SIM` (`10.10.40.10:80`) |
+| **Detection Status** | **True Positive (Confirmed Malicious)** |
+| **Triage Confidence** | **High** (Correlated across Email Headers, Zeek, OPNsense, and Sysmon) |
+| **Kill-Chain Stage** | Foothold / Initial Breach Vector (Scenario 1 of 100) |
 
-### Tradecraft
+### Incident Summary
+An external adversary targeted employee `michael.chen` using a spearphishing email with a **spoofed display name** (`IT Support`). The sender address originated from the attacker-controlled domain `ashford-grove-support.local` rather than the legitimate enterprise domain `ashfordgrove.local`. 
 
-**What:** Display-name spoofing. The attacker sets the `From` header's display name to "IT Support" and sends from `ashford-grove-support.local` rather than the legitimate `ashfordgrove.local`. Most mail clients show the display name and hide the address, so the mismatch is easy to miss.
+The email delivered a credential-harvesting link (`http://10.10.40.10/portal-login`). The victim opened the link and submitted credentials. During triage, a critical endpoint telemetry gap was discovered (Wazuh Agent was not ingesting Sysmon logs), diagnosed, and engineered live into a working detection pipeline.
 
-**Why at this lifecycle stage:** Initial access (MITRE TA0001) — nothing later in the chain happens without a foothold. The attacker chose a credential-harvesting link over an attachment because the target runs Defender and Sysmon, and a link click leaves far less endpoint telemetry than a payload execution.
+---
 
-**Where in this lab's tooling:**
-- **Email gateway:** None. The lab has no MTA or gateway, so no SPF/DKIM/DMARC checks run. Detection depends on manual header inspection or a user report.
-- **Network (Security Onion):** Zeek `http.log` and `conn.log` capture the outbound HTTP request from COMPROMISED-HOST-01 (10.10.10.103) to the attacker sink at EXT-ATTACKER-SIM (10.10.40.10). Suricata fires only if a rule matches the request.
-- **Endpoint (Sysmon):** Sysmon EID 1 (Process Create) captures the browser or PowerShell process that makes the request. The SwiftOnSecurity config filters EID 3 (Network Connection) for common processes, so this connection produces no network event.
-- **Wazuh:** No default rule covers display-name spoofing. Wazuh logs the user session's logon (Wazuh rule 60118) and privilege assignment (Wazuh rule 67028) but nothing phishing-specific.
+## 2. Adversary Tradecraft & Technical Analysis
 
-### Simulation
-
-**Pre-conditions:**
-- `COMPROMISED-HOST-01` running, Wazuh agent 004 Active, Sysmon running.
-- `EXT-ATTACKER-SIM` running with lab-sink web server on ports 80/443 (`attacker-smtp.service` active, HTTP returning 200 at `/portal-login`).
-- `WAZUH-SIEM-01` and `SECURITY-ONION-01` running.
-- Pre-staged .eml file at `C:\PhishingDelivery\AGC-001-spoofed-display-name.eml` on COMPROMISED-HOST-01.
-
-**Steps executed (all timestamps UTC):**
-
-| Step | Time (UTC) | Action | Host | Detail |
-|---|---|---|---|---|
-| 1 | 2026-09-15 16:48:27 | Baseline verification | Host | Wazuh agent 004 (COMPROMISED-01) confirmed Active via `agent_control -l` |
-| 2 | 2026-09-15 16:48:27 | Baseline screenshot | COMPROMISED-HOST-01 | `01-baseline-desktop.png` — desktop with Edge browser open |
-| 3 | 2026-09-15 16:50:30 | Phishing link click | COMPROMISED-HOST-01 | `Invoke-WebRequest -Uri 'http://10.10.40.10/portal-login'` as `michael.chen` |
-| 4 | 2026-09-15 16:50:31 | Response received | COMPROMISED-HOST-01 | HTTP 200 — "Acme Corp - Secure Document Portal" credential harvesting form |
-
-**Phishing email content** (`C:\PhishingDelivery\AGC-001-spoofed-display-name.eml`):
 ```
+       [Attacker: EXT-ATTACKER-SIM] (10.10.40.10)
+                    |
+                    | 1. Spoofed .eml (Display Name: "IT Support")
+                    v
+       [Victim: COMPROMISED-HOST-01] (10.10.10.103)
+                    |
+                    | 2. Outbound HTTP GET /portal-login
+                    +------------------------+
+                    |                        |
+                    v                        v
+           [OPNsense Firewall]      [Security Onion / Zeek]
+           (10.10.10.1 - Pass)      (10.10.30.20 - Event 200 OK)
+                    |
+                    v
+         [Wazuh SIEM / Sysmon EID 1]
+         (Detection Gap Diagnosed & Fixed)
+```
+
+1. **Display-Name Impersonation:** Most modern email clients prominently display the friendly name ("IT Support") while concealing the actual sender address. Attackers exploit this cognitive bias to bypass visual scrutiny.
+2. **Domain Lookalike (Typosquatting):** The domain `ashford-grove-support.local` mimics the organization’s naming convention while remaining entirely under external control.
+3. **Low Telemetry Footprint:** By directing the target to an external web landing page instead of executing a macro or binary attachment, the adversary avoids signature-based AV/EDR detections at the initial delivery stage.
+
+---
+
+## 3. Hands-On Execution & Simulation
+
+### Step 1: Pre-Flight Baseline & Agent Verification
+Before triggering the attack, agent connectivity and monitoring health were validated via the Wazuh Dashboard (`10.10.30.10`). Both the Domain Controller (`AD-DC-01`, Agent `001`) and the victim workstation (`COMPROMISED-01`, Agent `004`) were confirmed active and reporting.
+
+![Wazuh Agent Baseline](screenshots/AGC-001-1.png)
+*Figure 1: Baseline verification on Wazuh Dashboard confirming Agent 004 (`COMPROMISED-01`) is active.*
+
+### Step 2: Adversary Infrastructure Staging
+On `EXT-ATTACKER-SIM` (Kali Linux), the attacker HTTP credential-harvesting sink service was started on TCP port 80. The service serves a tailored fake authentication portal.
+
+```bash
+sudo systemctl status attacker-http.service
+```
+
+![Attacker HTTP Sink](screenshots/AGC-001-2.png)
+*Figure 2: `attacker-http.service` active and listening on port 80 on Kali Linux (`EXT-ATTACKER-SIM`).*
+
+### Step 3: Phishing Lure Delivery & Header Analysis
+The phishing email was staged at `C:\PhishingDelivery\AGC-001-spoofed-display-name.eml`. The raw RFC 822 headers were inspected on the victim workstation:
+
+```text
 From: "IT Support" <it-support@ashford-grove-support.local>
 To: michael.chen@ashfordgrove.local
 Subject: Mailbox Storage Almost Full
-Date: Mon, 15 Sep 2026 12:00:00 +0000
+Date: Mon, 21 Sep 2026 20:45:00 +0000
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 
@@ -61,82 +92,153 @@ Your mailbox is almost full. Click here to request more space:
 http://10.10.40.10/portal-login
 ```
 
-**Key evidence — the spoof:**
-- Display name: `IT Support` (trusted)
-- Actual sender: `it-support@ashford-grove-support.local` (attacker-controlled domain, NOT `ashfordgrove.local`)
-- Link destination: `10.10.40.10` (EXT-SIM-NET — external attacker infrastructure)
+![Phishing Email Headers](screenshots/AGC-001-4.png)
+*Figure 3: Inspection of raw email headers displaying the disparity between display name and sending domain.*
 
-**Credential harvesting page** returned:
-```html
-<title>Acme Corp - Secure Document Portal</title>
-<!-- Login form styled to look legitimate, hosted on attacker infrastructure -->
+### Step 4: Victim Interaction & Credential Submission
+The victim opened Microsoft Edge and navigated to `http://10.10.40.10/portal-login`. The browser loaded the fake portal titled *"Acme Corp Portal - Sign in to view shared document Q3-Invoice.pdf"*.
+
+![Phishing Landing Page](screenshots/AGC-001-3.png)
+*Figure 4: The fake portal loaded on `COMPROMISED-HOST-01` over `10.10.40.10/portal-login`.*
+
+The victim entered corporate credentials and submitted the form, resulting in a POST request to `10.10.40.10/login`.
+
+![Credential Submission](screenshots/AGC-001-5.png)
+*Figure 5: Credential submission acknowledged by the attacker sink ("Sign-in received. Redirecting...").*
+
+---
+
+## 4. SOC Investigation & Multi-Source Telemetry
+
+### A. Perimeter Firewall Analysis (OPNsense)
+Inspection of `Firewall → Log Files → Live View` on `10.10.10.1` confirmed that the perimeter firewall allowed outbound traffic from `10.10.10.103` to `10.10.40.10:80`.
+
+![OPNsense Firewall Log](screenshots/AGC-001-6.png)
+*Figure 6: OPNsense firewall rule pass log for outbound TCP/80 traffic to external IP `10.10.40.10`.*
+
+* **Source IP / Port:** `10.10.10.103` (LAN)
+* **Destination IP / Port:** `10.10.40.10:80` (EXT-SIM-NET)
+* **Rule Label:** `P14-RuleA: COMPROMISED-01 -> EXT-ATTACKER-SIM tcp/80 (phishing/C2 HTTP)`
+* **Action:** `Pass`
+
+---
+
+### B. Network Traffic Telemetry (Security Onion / Zeek)
+In Security Onion Hunt (`10.10.30.20`), querying `destination.ip: 10.10.40.10` identified the full HTTP transaction logged by Zeek (`http.log`):
+
+![Security Onion Zeek HTTP Log](screenshots/AGC-001-7.png)
+*Figure 7: Zeek HTTP log showing `GET /portal-login` with HTTP `200 OK` from `10.10.10.103` to `10.10.40.10`.*
+
+* **Timestamp:** `2026-09-21 21:04:10 UTC`
+* **Source Host:** `10.10.10.103:53690`
+* **Destination Host:** `10.10.40.10:80`
+* **HTTP Method / URI:** `GET /portal-login`
+* **HTTP Response Code:** `200 OK` (MIME: `text/html`)
+
+---
+
+### C. Endpoint Telemetry & Detection Engineering (Wazuh & Sysmon)
+
+#### The Telemetry Gap:
+During initial triage in Wazuh Discover, events for Agent `004` showed standard Windows System events (Event ID `7040`), but **zero Sysmon process creation alerts (Event ID 1)** were present.
+
+![Wazuh Telemetry Gap](screenshots/AGC-001-8.png)
+*Figure 8: Initial Wazuh alerts showing generic system events with no Sysmon telemetry.*
+
+#### Root Cause Analysis (RCA):
+1. Verified on `COMPROMISED-HOST-01` that `Sysmon64` service was running and generating local Event IDs `1`, `8`, and `11` in `Microsoft-Windows-Sysmon/Operational`.
+   
+   ![Sysmon Service & Local Logs](screenshots/AGC-001-9.png)
+   *Figure 9: Verifying Sysmon64 is active and logging locally via PowerShell.*
+
+2. Audited `C:\Program Files (x86)\ossec-agent\ossec.conf`. Found that the Wazuh Agent was configured to monitor `Application`, `Security`, and `System`, but **lacked a `<localfile>` block for the Sysmon channel**.
+   
+   ![Ossec Conf Audit](screenshots/AGC-001-10.png)
+   *Figure 10: Inspecting `ossec.conf` revealing the missing Sysmon channel entry.*
+
+#### Engineering the Solution:
+Added the missing configuration block directly under the `<location>System</location>` entry:
+
+```xml
+<localfile>
+  <location>Microsoft-Windows-Sysmon/Operational</location>
+  <log_format>eventchannel</log_format>
+</localfile>
 ```
 
-**Cleanup:** The PowerShell request was stateless and left no persistent changes. The VM reverts to baseline snapshot `post-domain-rename-2026-09-13`.
+![Ossec Conf Configured](screenshots/AGC-001-11.png)
+*Figure 11: Updating `ossec.conf` with the `Microsoft-Windows-Sysmon/Operational` eventchannel.*
 
-## SOC Perspective
+Restarted the agent (`Restart-Service Wazuh`). Re-queried Wazuh Discover with:
+```text
+agent.name: "COMPROMISED-01" and data.win.system.eventID: "1"
+```
+**Result:** 22 hits populated immediately, streaming live process telemetry (`net.exe`, `net1.exe`, and browser activity) to the SIEM.
 
-### Detection
+![Wazuh Sysmon Working](screenshots/AGC-001-12.png)
+*Figure 12: Live Sysmon Event ID 1 process creation logs appearing in Wazuh Discover.*
 
-**Automated alerts:** No phishing-specific alert fired. Wazuh logged only the standard Windows logon events:
+---
 
-| Timestamp (UTC) | Rule ID | Level | Description |
-|---|---|---|---|
-| 2026-09-15 16:50:50 | 60118 | 3 | Windows Workstation Logon Success |
-| 2026-09-15 16:50:44 | 67028 | 3 | Special privileges assigned to new logon |
-| 2026-09-15 16:50:44 | 67023 | 3 | Non service account logged off |
+## 5. MITRE ATT&CK Mapping & Risk Matrix
 
-**Sysmon telemetry (COMPROMISED-HOST-01):**
-- EID 1 (Process Create): `powershell.exe` executed as `michael.chen.ASHFORDGROVE` at 16:50:50 UTC
-- EID 11 (File Create): PSScriptPolicyTest temp files created during execution
-- EID 3 (Network Connection): Not captured — filtered by SwiftOnSecurity Sysmon config for PowerShell outbound
+| Tactic | Technique ID | Technique Name | Evidence Artifact | Risk / Severity |
+|:---|:---|:---|:---|:---|
+| **Initial Access (TA0001)** | `T1566.002` | Spearphishing Link | `.eml` file with spoofed "IT Support" header & external harvesting URL | **HIGH** |
+| **Command & Control (TA0011)** | `T1071.001` | Web Protocols (HTTP) | Zeek `http.log` GET /portal-login & OPNsense rule pass to `10.10.40.10:80` | **MEDIUM** |
+| **Credential Access (TA0006)** | `T1056.003` | Web Portal Harvesting | Fake credential form submission (`10.10.40.10/login`) | **HIGH** |
 
-**Detection gap identified:** Nothing in the lab stack detects display-name spoofing or header anomalies automatically. Detection relies on:
-1. User awareness (recognizing the mismatch)
-2. Manual inspection of raw email headers
-3. Network monitoring for connections to known-bad or unusual external IPs
+---
 
-### Investigation
+## 6. Incident Response & Containment Plan (IR Handover)
 
-**Step 1 — Email header analysis:**
-Inspected the .eml file raw headers. The `From` header shows:
-- Display name: `IT Support`
-- Actual address: `it-support@ashford-grove-support.local`
+### Immediate Containment (Playbook Actions)
+1. **Perimeter Block:** Submit urgent firewall change ticket to block outbound traffic to `10.10.40.10` on OPNsense:
+   * Rule: `LAN -> Drop -> Destination: 10.10.40.10:ANY`
+2. **DNS Sinkhole:** Create Host Override in Unbound DNS redirecting `ashford-grove-support.local` to loopback `0.0.0.0` to neutralize lookalike resolution enterprise-wide.
+3. **Identity Invalidation:**
+   * Force reset password for `michael.chen` in Active Directory (`AD-DC-01`).
+   * Enable *"User must change password at next logon"*.
+   * Revoke active Kerberos TGT and active cloud/VPN sessions.
+4. **Host Isolation:** Place `COMPROMISED-HOST-01` into logical quarantine via Wazuh active response pending full forensic verification.
 
-The sending domain `ashford-grove-support.local` is **not** the organization's `ashfordgrove.local`. The hyphen and `-support` suffix are small enough to survive a glance at the inbox.
+---
 
-**Step 2 — Link analysis:**
-The body links to `http://10.10.40.10/portal-login`. That IP is `EXT-ATTACKER-SIM` on EXT-SIM-NET (10.10.40.0/24), outside the trusted zones LAN-NET (10.10.10.0/24) and SOC-NET (10.10.30.0/24). The page returned a credential form titled "Acme Corp - Secure Document Portal", which does not match the organization's branding ("Ashford Grove Capital").
+## 7. Incident Escalation Report (SOC L1 ➔ Incident Response / L2)
 
-**Step 3 — Endpoint impact assessment:**
-`michael.chen` clicked the link and the HTTP 200 confirms the page loaded. No credentials were submitted — the simulation fetched the page and stopped. Sysmon shows the PowerShell process creation and nothing after it.
+```text
+================================================================================
+                    SOC INCIDENT ESCALATION REPORT (L1 -> IR)
+================================================================================
+CASE ID:        AGC-001-IR-ESC
+SEVERITY:       HIGH
+ANALYST:        Ali (TOOSHY2)
+TIMESTAMP:      2026-09-21 22:15 UTC
 
-**Step 4 — Network correlation:**
-10.10.10.103 (COMPROMISED-HOST-01) connected to 10.10.40.10 (EXT-ATTACKER-SIM) on port 80 at about 16:50:30 UTC. Zeek on Security Onion should hold this in `conn.log` and `http.log`; Guest Additions are unavailable for automated extraction, so confirm it by hand in the SOC Console.
+1. INCIDENT SUMMARY:
+   A confirmed credential-harvesting spearphishing incident targeted employee
+   michael.chen (10.10.10.103). The email utilized display-name spoofing
+   ("IT Support" <it-support@ashford-grove-support.local>) delivering a link
+   to adversary infrastructure at 10.10.40.10/portal-login.
 
-**Dead end:** Checked Wazuh for phishing-specific rules — none exist in the default ruleset. Wazuh rule 60118 (Workstation Logon Success) fires for the guestcontrol session, not for the phishing event itself.
+2. IMPACT & TRIAGE FINDINGS:
+   - Target Host: COMPROMISED-HOST-01 (10.10.10.103)
+   - Adversary IP: 10.10.40.10 (External Sim Zone)
+   - User Activity: Edge browser opened link, and credentials were submitted
+     to the external login form at 21:04 UTC.
+   - Network Evidence: Zeek captured complete HTTP 200 GET & POST transactions.
+   - Detection Engineering: Resolved local Sysmon forwarding gap on endpoint;
+     EDR process logging is now fully restored.
 
-### Report
+3. ACTIONS TAKEN BY L1:
+   - Preserved raw .eml artifact and browser cache.
+   - Verified firewall and Zeek network flow.
+   - Documented full kill-chain evidence and screenshots.
 
-**Verdict: True Positive** — Confirmed phishing attempt via spoofed display name targeting employee `michael.chen`.
-
-**Confidence: High** — Three independent indicators confirm malicious intent:
-1. From-address domain (`ashford-grove-support.local`) does not match the legitimate domain (`ashfordgrove.local`)
-2. Link destination (10.10.40.10) is on an external, untrusted network segment
-3. Landing page is a credential-harvesting form branded "Acme Corp", not "Ashford Grove Capital"
-
-**Response recommendation:**
-1. **Immediate:** Block `10.10.40.10` at the firewall (OPNsense-FW). Block/sinkhole `ashford-grove-support.local` in DNS.
-2. **Containment:** Reset `michael.chen`'s credentials if any were submitted. Inspect browser history and cache on COMPROMISED-HOST-01 for evidence of form submission.
-3. **Detection engineering:** Create a custom Wazuh rule or email gateway policy to flag mismatches between `From` display name and domain. Implement SPF/DKIM/DMARC checking.
-4. **Awareness:** Send all users an advisory on display-name spoofing, using this email as a sanitized example.
-
-### MITRE Mapping
-
-| Tactic | Technique ID | Technique Name | Evidence | Confidence |
-|---|---|---|---|---|
-| Initial Access (TA0001) | T1566.002 | Phishing: Spearphishing Link | .eml file with spoofed display name "IT Support" from `ashford-grove-support.local`; link to `http://10.10.40.10/portal-login` (credential harvesting page); HTTP 200 response confirmed | High |
-
-## Evidence
-
-Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
+4. HANDOVER RECOMMENDATIONS FOR IR:
+   - Invalidate michael.chen active domain & SSO sessions immediately.
+   - Execute domain-wide perimeter block on 10.10.40.10.
+   - Monitor Active Directory authentication logs for anomalous sign-ins from
+     external or untrusted IP addresses using michael.chen credentials.
+================================================================================
+```
