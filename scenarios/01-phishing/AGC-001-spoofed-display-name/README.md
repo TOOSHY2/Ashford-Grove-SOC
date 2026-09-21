@@ -204,41 +204,30 @@ agent.name: "COMPROMISED-01" and data.win.system.eventID: "1"
 
 ---
 
-## 7. Incident Escalation Report (SOC L1 ➔ Incident Response / L2)
+## 7. SOC L1 ➔ L2 Escalation Note
 
-```text
-================================================================================
-                    SOC INCIDENT ESCALATION REPORT (L1 -> IR)
-================================================================================
-CASE ID:        AGC-001-IR-ESC
-SEVERITY:       HIGH
-ANALYST:        Ali (TOOSHY2)
-TIMESTAMP:      2026-09-21 22:15 UTC
+```ini
+[TICKET HANDOVER: TIER 1 -> TIER 2]
+Ticket ID       : INC-AGC-001
+Severity / Pri  : HIGH (P2)
+Triage Verdict  : True Positive (Confirmed Credential Harvesting)
+Assigned Analyst: Ali (TOOSHY2) | Shift UTC: 2026-09-21 22:15
+Target Scope    : COMPROMISED-HOST-01 (10.10.10.103) \ michael.chen
+Adversary IoC   : 10.10.40.10:80 | ashford-grove-support.local
 
-1. INCIDENT SUMMARY:
-   A confirmed credential-harvesting spearphishing incident targeted employee
-   michael.chen (10.10.10.103). The email utilized display-name spoofing
-   ("IT Support" <it-support@ashford-grove-support.local>) delivering a link
-   to adversary infrastructure at 10.10.40.10/portal-login.
+[INCIDENT SUMMARY]
+User received a display-name spoofed email ("IT Support" <it-support@ashford-grove-support.local>), navigated to external landing page (http://10.10.40.10/portal-login), and submitted corporate domain credentials.
 
-2. IMPACT & TRIAGE FINDINGS:
-   - Target Host: COMPROMISED-HOST-01 (10.10.10.103)
-   - Adversary IP: 10.10.40.10 (External Sim Zone)
-   - User Activity: Edge browser opened link, and credentials were submitted
-     to the external login form at 21:04 UTC.
-   - Network Evidence: Zeek captured complete HTTP 200 GET & POST transactions.
-   - Detection Engineering: Resolved local Sysmon forwarding gap on endpoint;
-     EDR process logging is now fully restored.
+[TRIAGE EVIDENCE]
+• Email Artifact   : Raw .eml confirms display-name spoofing vs external sender domain.
+• Perimeter Log    : OPNsense pass log confirms outbound TCP/80 flow from 10.10.10.103 to 10.10.40.10.
+• Network Telemetry: Zeek http.log confirms HTTP 200 GET (/portal-login) and subsequent POST submission.
+• Endpoint State   : Sysmon logging pipeline diagnosed & restored; no secondary payload execution detected.
 
-3. ACTIONS TAKEN BY L1:
-   - Preserved raw .eml artifact and browser cache.
-   - Verified firewall and Zeek network flow.
-   - Documented full kill-chain evidence and screenshots.
-
-4. HANDOVER RECOMMENDATIONS FOR IR:
-   - Invalidate michael.chen active domain & SSO sessions immediately.
-   - Execute domain-wide perimeter block on 10.10.40.10.
-   - Monitor Active Directory authentication logs for anomalous sign-ins from
-     external or untrusted IP addresses using michael.chen credentials.
-================================================================================
+[ACTION ITEMS FOR TIER 2]
+[ ] Immediate AD password reset & Kerberos TGT / active session revocation for michael.chen.
+[ ] Implement perimeter drop rule for 10.10.40.10 on OPNsense firewall.
+[ ] Instate DNS sinkhole (0.0.0.0) for ashford-grove-support.local on Unbound.
+[ ] Query mail gateway/M365 logs for additional recipients of the spoofed lure.
 ```
+
