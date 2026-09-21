@@ -206,27 +206,37 @@ agent.name: "COMPROMISED-01" and data.win.system.eventID: "1"
 
 ## 7. SOC L1 ➔ L2 Escalation Note
 
-> **[TICKET HANDOVER: TIER 1 ➔ TIER 2]**  
-> **Ticket ID:** `INC-AGC-001`  
-> **Severity / Priority:** **HIGH (P2)**  
-> **Triage Verdict:** True Positive (Confirmed Credential Harvesting)  
-> **Assigned Analyst:** Ali (TOOSHY2) \| **Shift UTC:** 2026-09-21 22:15  
-> **Target Scope:** `COMPROMISED-HOST-01` (`10.10.10.103`) \ `michael.chen`  
-> **Adversary IoC:** `10.10.40.10:80` \| `ashford-grove-support.local`  
+```ini
+[TICKET HANDOVER: TIER 1 -> TIER 2]
+Ticket ID       : INC-AGC-001
+Severity / Pri  : HIGH (P2)
+Triage Verdict  : True Positive (Credential Harvesting)
+Assigned Analyst: Ali (TOOSHY2) | Shift UTC: 2026-09-21 22:15
+Target Scope    : COMPROMISED-HOST-01 (10.10.10.103) \ michael.chen
+Adversary IoC   : 10.10.40.10:80 | ashford-grove-support.local
 
-### Incident Summary
-User received a display-name spoofed email (`IT Support` via `it-support@ashford-grove-support.local`), navigated to the external landing page (`http://10.10.40.10/portal-login`), and submitted corporate domain credentials.
+[INCIDENT SUMMARY]
+User received a display-name spoofed email ("IT Support"
+via it-support@ashford-grove-support.local), clicked
+link (http://10.10.40.10/portal-login), and submitted
+corporate domain credentials on external harvesting page.
 
-### Triage Evidence
-* **Email Artifact:** Raw `.eml` confirms display-name spoofing vs external sender domain.
-* **Perimeter Log:** OPNsense pass log confirms outbound TCP/80 flow from `10.10.10.103` to `10.10.40.10`.
-* **Network Telemetry:** Zeek `http.log` confirms HTTP 200 GET (`/portal-login`) and subsequent POST submission.
-* **Endpoint State:** Sysmon logging pipeline diagnosed & restored; no secondary payload execution detected.
+[TRIAGE EVIDENCE]
+• Email Artifact   : Raw .eml confirms display-name spoofing
+                     vs external sender domain.
+• Perimeter Log    : OPNsense pass log confirms outbound
+                     TCP/80 flow (10.10.10.103 -> 10.10.40.10).
+• Network Telemetry: Zeek http.log confirms HTTP 200 GET
+                     (/portal-login) and POST submission.
+• Endpoint State   : Sysmon logging pipeline restored;
+                     no secondary payload executed.
 
-### Action Items for Tier 2
-- [ ] Immediate AD password reset & Kerberos TGT / active session revocation for `michael.chen`.
-- [ ] Implement perimeter drop rule for `10.10.40.10` on OPNsense firewall.
-- [ ] Instate DNS sinkhole (`0.0.0.0`) for `ashford-grove-support.local` on Unbound.
-- [ ] Query mail gateway/M365 logs for additional recipients of the spoofed lure.
+[ACTION ITEMS FOR TIER 2]
+[ ] Force AD password reset & revoke Kerberos TGT/sessions.
+[ ] Add perimeter drop rule for 10.10.40.10 on OPNsense.
+[ ] Instate DNS sinkhole (0.0.0.0) for lookalike domain.
+[ ] Query mail logs for other recipients of spoofed lure.
+```
+
 
 
