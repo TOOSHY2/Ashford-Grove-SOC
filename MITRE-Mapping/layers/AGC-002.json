@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-002: Homoglyph domain ashfordgr0ve.local (zero-for-O) delivers credential-harvesting link. Verdict: True Positive, Confidence: High.",
+    "description": "Manual Execution & Real Telemetry (Phase 2) by Ali (TOOSHY2). | AGC-002: Homoglyph domain ashfordgr0ve.local (zero-for-O substitution) delivers credential-harvesting link. Full evidence across Email Headers, DNS NXDOMAIN (Sysmon EID 22), Wazuh Custom Detection Rule 100022, Zeek HTTP 200, and OPNsense LAN pass. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",
@@ -29,7 +29,7 @@
             "techniqueID": "T1566.002",
             "tactic": "initial-access",
             "color": "#ffe766ff",
-            "comment": "AGC-002: Homoglyph/lookalike domain phishing. Sender domain ashfordgr0ve.local (zero-for-O substitution of ashfordgrove.local). Credential-harvesting link to 10.10.40.10/portal-login. Sysmon EID 22 DNS query (NXDOMAIN), EID 3 network connection, EID 1 process create. Verdict: True Positive, Confidence: High.",
+            "comment": "AGC-002: Homoglyph lookalike domain phishing via hr@ashfordgr0ve.local. Link opened in browser to 10.10.40.10/portal-login and credentials submitted. Evidenced via Sysmon EID 22 (NXDOMAIN status 9003), Wazuh custom rule 100022, Zeek http.log (200 OK), and OPNsense firewall LAN pass. Verdict: True Positive, Confidence: High.",
             "enabled": true,
             "metadata": [],
             "links": [],
