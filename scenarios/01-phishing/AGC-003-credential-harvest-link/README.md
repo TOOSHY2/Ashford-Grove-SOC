@@ -1,45 +1,97 @@
 # AGC-003 — Credential-Harvesting Link Click
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
+<p align="center">
+  <img alt="Category" src="https://img.shields.io/badge/Category-01--Phishing-0F766E?style=for-the-badge&labelColor=0B1220">
+  <img alt="Technique" src="https://img.shields.io/badge/MITRE-T1566.002-red?style=for-the-badge&labelColor=0B1220">
+  <img alt="Verdict" src="https://img.shields.io/badge/Verdict-True%20Positive-critical?style=for-the-badge&labelColor=0B1220">
+  <img alt="Confidence" src="https://img.shields.io/badge/Confidence-Critical-red?style=for-the-badge&labelColor=0B1220">
+  <img alt="Execution" src="https://img.shields.io/badge/Execution-Manual%20(Phase%202)-success?style=for-the-badge&labelColor=0B1220">
+</p>
 
-## Card
+---
 
-| Field | Value |
-|---|---|
-| ID | `AGC-003` |
-| Category | `01-phishing` — Phishing & Initial Access |
-| MITRE Technique | `T1566.002` Phishing: Spearphishing Link |
-| Verdict | True Positive |
-| Confidence | Critical |
-| Time to Detect | N/A — no automated phishing or credential-harvesting alert fired |
-| Time to Triage | 04:00 (from email delivery to credential-capture confirmation) |
-| Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103), `EXT-ATTACKER-SIM` (10.10.40.10) |
-| Chain | ◀ [AGC-002](../AGC-002-lookalike-domain/README.md) · next [AGC-004](../AGC-004-qr-code-phish/README.md) ▶ |
-| One-line Summary | Victim clicks phishing link and submits AD credentials into a fake login portal; attacker server confirms capture. |
+## 1. Overview & Case Metadata
 
-## Attacker Perspective
+| Case Attribute | Value / Specification |
+|:---|:---|
+| **Incident ID** | `AGC-003` (`T100-003`) |
+| **Tactic & Technique** | **Initial Access (TA0001)** — `T1566.002` (Spearphishing Link) |
+| **Secondary Techniques** | `T1056.003` (Web Portal Harvesting), `T1071.001` (Web Protocols), `T1589.001` (Credentials) |
+| **Investigating Analyst** | **Ali (TOOSHY2)** |
+| **Execution Date & Time** | 2026-10-03 — 12:33 to 14:44 UTC |
+| **Target Host** | `COMPROMISED-HOST-01` (`10.10.10.103` — `michael.chen`) |
+| **Adversary Infrastructure** | `EXT-ATTACKER-SIM` (`10.10.40.10:80` — Fake "Acme Corp" Portal) |
+| **Detection Status** | **True Positive (Confirmed Enterprise Compromise)** |
+| **Triage Confidence** | **Critical** (Correlated across Wire Sniffing, Server Sink Logs, Zeek, OPNsense, & Wazuh) |
+| **Kill-Chain Stage** | Initial Access & Credential Harvesting (Campaign Evolution: Scenario 3 of 100) |
 
-### Tradecraft
+### Incident Summary
+Following the preliminary reconnaissance and display spoofing in AGC-001 and the lookalike domain simulation in AGC-002, the adversary escalated to an **active credential harvesting campaign**. Impersonating the internal IT Helpdesk via `helpdesk@ashfordgrove.local`, the threat actor dispatched a targeted spearphishing lure to employee `michael.chen` regarding an urgent shared financial document (`Q3-Invoice.pdf`). 
 
-**What:** Credential-harvesting phishing. The attacker hosts a login portal styled as an internal SSO page and emails the victim a link to it. AGC-001 (display-name spoof) and AGC-002 (homoglyph domain) tested whether the victim would click; AGC-003 finishes the job by getting the victim to type valid Active Directory credentials into the fake form. The attacker walks away with working credentials.
+The lure directed the victim to an external credential harvesting portal hosted on `10.10.40.10/portal-login`. The victim navigated to the link and submitted valid Active Directory credentials (`michael.chen@ashfordgrove.local` / `Soclab24`). Multi-layered telemetry captured the entire transaction: live packet sniffing (`tcpdump`) intercepted the cleartext HTTP POST on the wire, the adversary server logged the persistent credentials, Zeek recorded the full HTTP transaction, OPNsense validated perimeter egress filtering, and Wazuh captured host-level activity—highlighting an enterprise detection gap for plain HTTP credential submissions.
 
-**Why at this lifecycle stage:** The end of the initial-access phishing chain. AGC-001 and AGC-002 delivered links; AGC-003 harvests the credential. With a valid username and password the attacker can authenticate to Outlook, VPN, RDP, and file shares with no malware on the endpoint. Talking a user out of a credential is quieter than exploiting a vulnerability.
+---
 
-**Where in this lab's tooling:**
-- **Email gateway:** None. The phishing email is pre-staged as a `.eml` file on COMPROMISED-HOST-01. No SPF/DKIM/DMARC to block or flag it.
-- **Endpoint (Sysmon):** Sysmon EID 1 (Process Create) captures the PowerShell process that performs the click. EID 3 (Network Connection) captures the TCP connection from 10.10.10.103 to 10.10.40.10:80. The POST carrying the credentials crosses the network as plaintext HTTP.
-- **Wazuh:** No credential-harvesting or phishing rule. Standard Windows logon events fire for the guestcontrol session.
-- **Network (Security Onion):** Zeek `http.log` should hold both the GET for the login page and the POST with the submitted credentials, including the form field names (`username`, `password`). That is the strongest detection surface here.
+## 2. Adversary Tradecraft & Attack Chain
 
-### Simulation
-
-**Pre-conditions:**
-- `COMPROMISED-HOST-01` running, Wazuh agent Active, Sysmon running.
-- `EXT-ATTACKER-SIM` running with lab-sink web server on port 80, serving `/portal-login` (credential harvest form) and accepting POST at `/login`.
-- Pre-staged `.eml` at `C:\PhishingDelivery\AGC-003-credential-harvest.eml` on COMPROMISED-HOST-01.
-
-**Phishing email content:**
 ```
+       [Attacker: EXT-ATTACKER-SIM] (10.10.40.10)
+                    |
+                    | 1. Internal Domain Spoof: "helpdesk@ashfordgrove.local"
+                    v
+       [Victim: COMPROMISED-HOST-01] (10.10.10.103)
+                    |
+                    | 2. Edge Browser opens http://10.10.40.10/portal-login
+                    | 3. Victim enters AD Credentials & clicks Sign In
+                    +------------------------+
+                    |                        |
+                    v                        v
+           [OPNsense Firewall]      [Security Onion / Zeek]
+         (Rule P14-RuleA Pass)      (zeek.http -> POST /login)
+                    |                        |
+                    +-----------+------------+
+                                |
+                                v
+               [Attacker Sniffer & Sink Log]
+         (tcpdump wire capture + captured-creds.log)
+                                |
+                                v
+                    [Wazuh SIEM / Detection]
+                 (Endpoint Telemetry & Gap Triage)
+```
+
+1. **Internal Domain Impersonation (Pretexting):** Unlike the external sender in AGC-001 or typosquatted domain in AGC-002, the attacker weaponized the organization's authentic root domain (`helpdesk@ashfordgrove.local`). In enterprise networks without enforced SPF/DMARC hard-fail or internal mail signing, internal address spoofing causes significant trust exploitation.
+2. **Plaintext Credential Harvesting (HTTP vs HTTPS):** The harvest portal was intentionally served over unencrypted HTTP (TCP 80). When the employee submitted their Active Directory credentials, the credentials crossed network boundaries in cleartext plaintext, exposing them to any on-path inspection and immediate attacker-side capture.
+3. **Defense-in-Depth Validation (Ingress Default-Deny):** Although the attacker successfully captured credentials, direct inbound connections from `10.10.40.10` to internal LAN hosts (`10.10.10.103:445`) were blocked by OPNsense perimeter firewall rules, validating that network zoning and segmentation effectively isolate internal endpoints from external unsolicited ingress.
+
+---
+
+## 3. Hands-On Execution & Simulation
+
+### Step 1: Pre-Flight Baseline & Agent Verification
+Prior to attack initiation, the operational baseline was verified via the Wazuh Dashboard at `https://10.10.30.10`. Both the Domain Controller (`AD-DC-01`, Agent `001`) and the target endpoint (`COMPROMISED-01`, Agent `004`) were validated in an active reporting status.
+
+![Wazuh Agent Baseline](screenshots/AGC-003-1.png)
+*Figure 1: Wazuh Endpoints Summary confirming Agent 001 (`AD-DC-01`) and Agent 004 (`COMPROMISED-01`) are active.*
+
+---
+
+### Step 2: Adversary Sniffer & Infrastructure Staging
+On `EXT-ATTACKER-SIM` (`10.10.40.10`), packet sniffing was initiated on interface `eth0` filtering for HTTP port 80 traffic to capture real-time credential submission:
+
+```bash
+sudo tcpdump -i eth0 port 80 -A -s 0 -l | grep -E "POST|email|password"
+```
+
+![Attacker Sniffer Staging](screenshots/AGC-003-2.png)
+*Figure 2: `tcpdump` active on interface `eth0` listening for incoming HTTP credential payloads.*
+
+---
+
+### Step 3: Spearphishing Delivery & Pretext Analysis
+The phishing lure `agc003-email.eml` was staged and inspected on `COMPROMISED-HOST-01`. The email headers and lure body demonstrated calculated social engineering:
+
+```text
 From: "IT Helpdesk" <helpdesk@ashfordgrove.local>
 To: michael.chen@ashfordgrove.local
 Subject: Action Required: Verify Your Account to Access Shared Document
@@ -61,80 +113,145 @@ Best regards,
 Ashford Grove IT Helpdesk
 ```
 
-**Key difference from AGC-001/002:** The victim clicks the link and then submits real AD credentials (`michael.chen@ashfordgrove.local` / password) into the fake form. The attacker's server captures them and confirms receipt.
+![Phishing Email Lure](screenshots/AGC-003-3.png)
+*Figure 3: Inspection of `agc003-email.eml` highlighting sender impersonation, invoice lure, and the external URL.*
 
-**Steps executed (all timestamps UTC):**
+---
 
-| Step | Time (UTC) | Action | Host | Detail |
-|---|---|---|---|---|
-| 1 | 2026-09-15 17:26:19 | Victim clicks phishing link | COMPROMISED-HOST-01 | `Invoke-WebRequest -Uri 'http://10.10.40.10/portal-login'` — HTTP 200, "Acme Corp - Secure Document Portal" |
-| 2 | 2026-09-15 17:26:19 | Form analysis | COMPROMISED-HOST-01 | Credential form detected: `name="username"`, `name="password"`, `action="/login"` |
-| 3 | 2026-09-15 17:26:19 | Victim submits AD credentials | COMPROMISED-HOST-01 | `POST http://10.10.40.10/login` with `username=michael.chen@ashfordgrove.local` |
-| 4 | 2026-09-15 17:26:19 | Server confirms capture | EXT-ATTACKER-SIM | HTTP 200 — "Sign-in received. Redirecting..." |
+### Step 4: Victim Interaction & Credential Submission
+The victim launched Microsoft Edge and browsed to `http://10.10.40.10/portal-login`. The deceptive Single Sign-On page rendered, requesting the user's work email and password. Victim `michael.chen` entered his genuine Active Directory credentials (`michael.chen@ashfordgrove.local` / `Soclab24`).
 
-**Cleanup:** No persistent changes. HTTP requests were stateless. No files dropped.
+![Credential Entry Form](screenshots/AGC-003-4.png)
+*Figure 4: Victim filling in Active Directory credentials on the fake Acme Corp portal.*
 
-## SOC Perspective
+---
 
-### Detection
+### Step 5: Adversary Live Packet Interception
+Upon clicking **Sign in**, the browser issued an HTTP `POST /login`. The live `tcpdump` listener on `EXT-ATTACKER-SIM` immediately captured the cleartext credential payload on the wire:
 
-**Automated alerts:** No phishing-specific or credential-harvesting alert fired. Wazuh logged only the standard Windows logon events from the guestcontrol session:
+```text
+username=michael.chen%40ashfordgrove.local&password=Soclab24
+```
 
-| Timestamp (UTC) | Rule ID | Level | Description |
-|---|---|---|---|
-| 2026-09-15 17:26:17 | 60118 | 3 | Windows Workstation Logon Success |
-| 2026-09-15 17:26:17 | 67028 | 3 | Special privileges assigned to new logon |
+![Live Packet Capture](screenshots/AGC-003-5.png)
+*Figure 5: Live `tcpdump` capture on `EXT-ATTACKER-SIM` displaying the intercepted plaintext credentials.*
 
-**Sysmon telemetry (COMPROMISED-HOST-01):**
+---
 
-| Timestamp (UTC) | EID | Event | Detail |
-|---|---|---|---|
-| 2026-09-15 17:26:18 | 1 | Process Create | `powershell.exe -ExecutionPolicy Bypass -File C:\Temp\agc003-sim.ps1`, parent: `VBoxService.exe` |
-| 2026-09-15 17:26:19 | 11 | File Create | Temp files from PowerShell HTTP request execution |
-| (prior run 17:00:32) | 3 | Network Connection | `powershell.exe` → `10.10.40.10:80` TCP from `10.10.10.103:53211` (same infrastructure as AGC-002) |
+### Step 6: Adversary Credential Storage & Sink Forensics
+Auditing the persistent credential repository and sink service on `EXT-ATTACKER-SIM` corroborated the compromise:
 
-**Detection gap — Critical:** Nothing detects a credential submission to an external host. The POST with `username` and `password` fields travels as plaintext HTTP to an IP outside the trusted zones. A Zeek `http.log` rule that watches POSTs to non-corporate IPs for form fields named `user*`/`pass*`/`login*`/`credential*` would catch it. Sysmon sees the connection but not the POST body, so Security Onion is the right layer for this one.
+```bash
+cat /opt/attacker/logs/captured-creds.log
+sudo systemctl status attacker-http.service
+```
 
-### Investigation
+The log confirmed receipt at `2026-10-03T14:08:36Z` from source host `10.10.10.103` on target path `/login`, while `attacker-http.service` remained in an active running state.
 
-**Step 1 — Email analysis:**
-The `.eml` sender is `helpdesk@ashfordgrove.local` — the organization's real domain, unlike the spoofed display name in AGC-001 or the homoglyph in AGC-002. In a real incident that would point to a compromised internal mailbox. The lure ("shared document, verify your identity") gives the victim both urgency and a plausible reason to type a password.
+![Attacker Credential Log](screenshots/AGC-003-6.png)
+*Figure 6: Credential log confirmation on `EXT-ATTACKER-SIM` alongside service status validation.*
 
-**Step 2 — Link destination analysis:**
-The link `http://10.10.40.10/portal-login` points to EXT-SIM-NET (10.10.40.0/24), outside every trusted zone. The landing page is the same "Acme Corp - Secure Document Portal" seen in AGC-001 and AGC-002. The form collects `username` (email) and `password` and POSTs to `/login`.
+---
 
-**Step 3 — Credential capture confirmation:**
-The POST to `http://10.10.40.10/login` with `username=michael.chen@ashfordgrove.local` returned HTTP 200 and the body "Sign-in received. Redirecting..." — the attacker's server has the credentials. That is the escalation from AGC-001/002: the attacker now holds a valid AD credential pair for `michael.chen`.
+## 4. SOC Investigation & Multi-Source Telemetry
 
-**Step 4 — Cross-reference with AGC-001/002:**
-All three scenarios target `michael.chen`, link to `10.10.40.10/portal-login`, and land on the same credential page. AGC-001 used display-name spoofing, AGC-002 a homoglyph domain, and AGC-003 gets the credential. Read together they are one escalating campaign: first test whether the victim clicks, then harvest.
+### A. Network Forensic Analysis (Security Onion / Zeek HTTP)
+In Security Onion Hunt (`https://10.10.30.20`), querying `source.ip: 10.10.10.103 and destination.ip: 10.10.40.10 and http.method: "POST"` isolated the exact malicious web transaction in `zeek.http`:
 
-**Dead end:** Checked Wazuh for any rule correlating HTTP POST activity with credential-like field names — none exists. Sysmon EID 3 captures the connection but not the HTTP payload.
+![Security Onion Zeek POST](screenshots/AGC-003-7.png)
+*Figure 7: Zeek HTTP log isolating the `POST /login` event, source `10.10.10.103`, and referrer `http://10.10.40.10/portal-login`.*
 
-### Report
+* **Timestamp:** `2026-10-03 14:08:37.679Z`
+* **Client IP & Port:** `10.10.10.103:59345`
+* **Destination IP & Port:** `10.10.40.10:80`
+* **HTTP Method:** `POST`
+* **Referrer:** `http://10.10.40.10/portal-login`
+* **Status / MIME:** Request `text/plain` | Response `text/html`
 
-**Verdict: True Positive** — Confirmed credential-harvesting phishing attack. Employee `michael.chen` submitted AD credentials into an attacker-controlled fake login portal.
+---
 
-**Confidence: Critical** — Five independent indicators confirm not just malicious intent but actual compromise:
-1. Phishing email with urgency lure ("verify your account") and link to external IP
-2. Landing page is a credential harvesting form on attacker infrastructure (10.10.40.10)
-3. Form fields named `username` and `password`, built to capture AD credentials
-4. Victim submitted valid AD credentials via HTTP POST
-5. Attacker server confirmed receipt ("Sign-in received. Redirecting...")
+### B. Perimeter Firewall Log Verification (OPNsense)
+Inspection of `Firewall → Log Files → Live View` on `10.10.10.1` isolated the outbound permitted flow on interface `LAN` (`em1`):
 
-**Response recommendation:**
-1. **Immediate:** Reset `michael.chen`'s AD password and revoke all active sessions/tokens. Treat the account as compromised.
-2. **Immediate:** Block 10.10.40.10 at OPNsense-FW if not already blocked from AGC-001/002.
-3. **Detection engineering:** Create a Zeek/Security Onion rule that flags HTTP POST requests to non-corporate destination IPs where the POST body contains form fields matching patterns: `user*`, `pass*`, `login*`, `credential*`, `email*`. This catches credential harvesting regardless of the domain/IP used.
-4. **Detection engineering:** Wazuh custom rule correlating Sysmon EID 3 (outbound connection to non-internal IP on port 80/443) immediately following EID 1 (process creation from email client or browser) — heuristic for phishing-link-then-exfil chain.
-5. **Post-compromise hunt:** Search AD logs for any authentication events using `michael.chen`'s credentials from unusual source IPs (especially 10.10.40.0/24 or any external range) in the period between credential capture and password reset.
+![OPNsense Firewall Pass Log](screenshots/AGC-003-8.png)
+*Figure 8: OPNsense detailed rule info modal confirming permitted outbound traffic from `10.10.10.103` to `10.10.40.10:80`.*
 
-### MITRE Mapping
+* **Action:** `[pass]`
+* **Direction / Interface:** `[in]` / `LAN` (`em1`)
+* **Source Address:** `10.10.10.103`
+* **Destination Address / Port:** `10.10.40.10:80`
+* **Rule Label:** `P14-RuleA: COMPROMISED-01 -> EXT-ATTACKER-SIM tcp/80 (phishing / C2 HTTP)`
 
-| Tactic | Technique ID | Technique Name | Evidence | Confidence |
-|---|---|---|---|---|
-| Initial Access (TA0001) | T1566.002 | Phishing: Spearphishing Link | Phishing email with link to `http://10.10.40.10/portal-login`; HTTP 200 credential-harvesting form; POST to `/login` with AD credentials; server confirmed capture "Sign-in received" | Critical |
+---
 
-## Evidence
+### C. Endpoint SIEM Telemetry & Detection Gap Triage (Wazuh)
+In Wazuh Discover, auditing Agent `004` (`COMPROMISED-01`) around `14:08` UTC revealed process execution telemetry:
 
-Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
+![Wazuh Discover Event Top](screenshots/AGC-003-9.png)
+*Figure 9: Wazuh Discover showing endpoint execution event at `14:08:56.939` UTC on `COMPROMISED-01`.*
+
+![Wazuh Discover Event Details](screenshots/AGC-003-10.png)
+*Figure 10: Wazuh rule breakdown for Rule `92052` (MITRE `T1059.003`) illustrating the need for specific credential-submission correlation.*
+
+#### Critical Detection Gap Analysis
+* **The Blind Spot:** Standard endpoint monitoring configurations (including SwiftOnSecurity Sysmon) filter out mundane browser activity to conserve disk and network throughput. Furthermore, default SIEM rules lack visibility into unencrypted form submissions crossing external boundaries.
+* **Engineering Remedy:** A custom correlation rule should be established on the SIEM / NIDS layer (Zeek `http.log`) alerting whenever an outbound HTTP POST to an unclassified destination IP contains form fields matching `password`, `user`, `login`, or `credential`.
+
+---
+
+## 5. MITRE ATT&CK Mapping & Risk Matrix
+
+| Tactic | Technique ID | Technique Name | Evidence Artifact | Risk / Severity |
+|:---|:---|:---|:---|:---|
+| **Initial Access (TA0001)** | `T1566.002` | Phishing: Spearphishing Link | Lure email linking to `http://10.10.40.10/portal-login` | **CRITICAL** |
+| **Credential Access (TA0006)** | `T1056.003` | Input Capture: Web Portal Harvesting | Cleartext AD credentials submitted to `/login` | **CRITICAL** |
+| **Command & Control (TA0011)** | `T1071.001` | Web Protocols (HTTP) | Outbound HTTP traffic permitted on port 80 (`P14-RuleA`) | **MEDIUM** |
+| **Reconnaissance (TA0043)** | `T1589.001` | Gather Victim Identity: Credentials | Valid domain user credentials compromised | **HIGH** |
+
+---
+
+## 6. Incident Response & Containment Plan (IR Playbook)
+
+### Immediate Containment Actions (Executed)
+1. **Active Directory Account Isolation (`AD-DC-01`):**
+   * Immediately lock and force a password reset for `ASHFORDGROVE\michael.chen`.
+   * Invalidate all active Kerberos Ticket Granting Tickets (TGTs) and session tokens.
+   * Terminate active RDP and network logon sessions.
+2. **Perimeter Firewall Blacklisting (`OPNsense-FW`):**
+   * Enforce an immediate WAN/LAN drop rule targeting adversary IP `10.10.40.10:ANY`.
+3. **Mail Gateway & Endpoint Remediation:**
+   * Purge all instances of `agc003-email.eml` across Exchange / user inboxes.
+   * Conduct an endpoint sweep on `COMPROMISED-HOST-01` for any secondary payloads.
+
+---
+
+## 7. SOC L1 ➔ L2 Escalation Note
+
+```ini
+[TICKET HANDOVER: TIER 1 -> TIER 2]
+Ticket ID       : INC-AGC-003
+Severity / Pri  : CRITICAL (P1 - Confirmed Credential Theft)
+Triage Verdict  : True Positive (Active Credential Harvesting)
+Assigned Analyst: Ali (TOOSHY2) | Shift UTC: 2026-10-03 14:44
+Target Scope    : COMPROMISED-HOST-01 (10.10.10.103) \ michael.chen
+Adversary IoC   : 10.10.40.10:80 | Fake Acme Portal
+
+[INCIDENT SUMMARY]
+Adversary executed spearphishing campaign impersonating IT Helpdesk
+(helpdesk@ashfordgrove.local) targeting employee michael.chen with
+fake invoice document pretext. Victim browsed to 10.10.40.10/portal-login
+and submitted Active Directory domain credentials in plaintext HTTP.
+
+[TRIAGE EVIDENCE]
+• Wire Sniffing    : tcpdump intercepted cleartext username & password.
+• Attacker Storage : captured-creds.log recorded harvest at 14:08:36Z.
+• Network Telemetry: Zeek http.log confirmed POST /login (HTTP 200).
+• Firewall Egress  : OPNsense logged permitted flow via rule P14-RuleA.
+• SIEM Telemetry   : Wazuh captured host execution around 14:08:56Z.
+
+[ACTION ITEMS FOR TIER 2]
+[X] Revoke all active Kerberos TGTs & reset password for michael.chen.
+[X] Block 10.10.40.10 on OPNsense WAN/LAN perimeter interfaces.
+[ ] Audit Active Directory logs for any anomalous logon events.
+[ ] Implement Zeek NIDS signature for plaintext credential POSTs.
+```

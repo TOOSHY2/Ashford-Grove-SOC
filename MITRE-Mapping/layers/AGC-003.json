@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-003: Victim clicks phishing link and submits AD credentials into fake login portal on attacker server. Credentials captured. Verdict: True Positive, Confidence: Critical.",
+    "description": "Manual Execution & Real Telemetry (Phase 2) by Ali (TOOSHY2). | AGC-003: Spearphishing lure impersonating IT Helpdesk (helpdesk@ashfordgrove.local) delivers credential-harvesting link (10.10.40.10/portal-login). Cleartext AD credentials captured on wire via tcpdump, confirmed in attacker persistent logs, validated in Zeek http.log (POST /login), permitted via OPNsense LAN pass rule, and correlated in Wazuh SIEM. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",
@@ -29,7 +29,18 @@
             "techniqueID": "T1566.002",
             "tactic": "initial-access",
             "color": "#8ec843ff",
-            "comment": "AGC-003: Credential-harvesting phishing. Email lure from helpdesk@ashfordgrove.local with link to http://10.10.40.10/portal-login. Victim submitted AD credentials (michael.chen@ashfordgrove.local) via POST to /login. Server confirmed capture: 'Sign-in received. Redirecting...' Sysmon EID 1 process create, EID 3 network connection to 10.10.40.10:80. Verdict: True Positive, Confidence: Critical.",
+            "comment": "AGC-003: Spearphishing link via helpdesk@ashfordgrove.local. Target michael.chen browsed to http://10.10.40.10/portal-login and entered AD credentials. Cleartext capture confirmed via live tcpdump sniffer and captured-creds.log. Triangulated in Zeek (POST /login) and OPNsense (P14-RuleA). Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1056.003",
+            "tactic": "credential-access",
+            "color": "#8ec843ff",
+            "comment": "AGC-003: Web portal credential harvesting. Fake Acme Corp Single Sign-On portal captured corporate email and password via unencrypted HTTP POST. Verdict: True Positive, Confidence: Critical.",
             "enabled": true,
             "metadata": [],
             "links": [],
