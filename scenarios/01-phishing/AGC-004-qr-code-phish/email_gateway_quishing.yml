@@ -1,0 +1,30 @@
+# ==============================================================================
+# Ashford Grove SOC - Scenario AGC-004: Quishing Detection Rules
+# Investigating Analyst: Ali (TOOSHY2) | Detection Engineering Team
+# Format: Heuristic Email Gateway (SEG) Policy / Sigma Rule
+# ==============================================================================
+
+rule:
+  name: "Email Gateway: Potential Quishing via Embedded Image with Zero Links"
+  description: "Detects incoming external emails containing image attachments or inline QR codes with zero text hyperlinks in the body."
+  severity: "HIGH"
+  author: "Ali (TOOSHY2)"
+  date: "2026-10-04"
+  references:
+    - "https://attack.mitre.org/techniques/T1566/002/"
+    - "https://github.com/TOOSHY2/Ashford-Grove-SOC"
+  tags:
+    - attack.initial_access
+    - attack.t1566.002
+    - detection.quishing
+    - detection.zero_link_evasion
+  conditions:
+    and:
+      - email.sender.domain != "ashfordgrove.local" # Or spoofed internal origin
+      - email.attachments.mime_type in ["image/png", "image/jpeg", "image/webp"]
+      - email.body.hyperlink_count == 0
+      - email.subject regex: "(?i)(MFA|2FA|verification|authenticator|device|security audit)"
+  action:
+    - quarantine_message
+    - trigger_ocr_qr_decoding_pipeline
+    - alert_soc_tier1

@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-004: Phishing email delivers malicious URL via embedded QR code image, bypassing email gateway URL scanning. Verdict: True Positive, Confidence: Medium.",
+    "description": "Manual Execution & Real Telemetry (Phase 2) by Ali (TOOSHY2). | AGC-004: Quishing spearphishing email delivering zero-link MFA QR lure (mfa-verify-qr.png) targeting michael.chen. Adversary harvested cleartext credentials on fake portal (10.10.40.10/portal-login). Triangulated across mobile camera decoding, CyberChef forensic analysis, Zeek http.log (POST /login), OPNsense firewall pass (P14-RuleA), and Wazuh SIEM custom detection engineering rules (100004 & 100005). Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",
@@ -28,13 +28,35 @@
         {
             "techniqueID": "T1566.002",
             "tactic": "initial-access",
-            "color": "#ff6666ff",
-            "comment": "AGC-004: QR-code phishing. Email contains QR code image encoding http://10.10.40.10/portal-login - no extractable text URL. Bypasses email gateway URL scanning entirely. Simulated post-scan GET returned HTTP 200 credential harvester. Detection gap: no QR-decode capability at email layer. Correlation is timing-based only. Verdict: True Positive, Confidence: Medium.",
+            "color": "#8ec843ff",
+            "comment": "AGC-004: Quishing spearphishing delivery. Adversary sent an internal spoofed email (security@ashfordgrove.local) containing an embedded QR code image (mfa-verify-qr.png) with zero extractable text links, evading traditional email gateway URL scanners. QR parsed via CyberChef to http://10.10.40.10/portal-login. Verdict: True Positive, Confidence: Critical.",
             "enabled": true,
             "metadata": [],
             "links": [],
             "showSubtechniques": true,
-            "score": 50
+            "score": 100
+        },
+        {
+            "techniqueID": "T1056.003",
+            "tactic": "credential-access",
+            "color": "#8ec843ff",
+            "comment": "AGC-004: Web portal credential harvesting. Victim submitted Active Directory credentials (michael.chen@ashfordgrove.local / Soclab24) on fake Acme Corp Single Sign-On portal via unencrypted HTTP POST. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1071.001",
+            "tactic": "command-and-control",
+            "color": "#8ec843ff",
+            "comment": "AGC-004: Application Layer Protocol (Web Protocols). Outbound HTTP egress across perimeter firewall to 10.10.40.10:80 recorded in Zeek and OPNsense. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
         }
     ],
     "gradient": {
