@@ -118,3 +118,10 @@ The final destination `10.10.40.10/portal-login` matches AGC-001/002/003/004 —
 ## Evidence
 
 Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
+
+---
+
+## Artifacts & Detection Engineering Rules
+
+* **Phishing Lure Artifact:** [`agc005-email.eml`](agc005-email.eml) — Raw RFC 822 spearphishing email lure delivering URL shortener / redirect link (`http://10.10.40.10/go/abc123`) with financial spreadsheet pretext.
+* **Wazuh Detection Rules:** [`wazuh_redirect_rules.xml`](wazuh_redirect_rules.xml) — Custom SIEM detection rules (`100006` and `100007`) for `/var/ossec/etc/rules/local_rules.xml` alerting on URL shortener navigation paths and subsequent outbound credential harvest sessions.

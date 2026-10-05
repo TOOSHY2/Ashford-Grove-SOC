@@ -261,3 +261,10 @@ credentials to harvesting portal at 10.10.40.10/portal-login.
 [ ] Deploy perimeter drop rule for 10.10.40.10 on OPNsense.
 [ ] Sweep mail server for additional recipients of ashfordgr0ve lures.
 ```
+
+---
+
+## 8. Artifacts & Detection Engineering Rules
+
+* **Phishing Lure Artifact:** [`agc002-email.eml`](agc002-email.eml) — Raw RFC 822 email lure exploiting homoglyph/lookalike domain impersonation (`hr@ashfordgr0ve.local`).
+* **Wazuh Detection Rules:** [`wazuh_lookalike_rules.xml`](wazuh_lookalike_rules.xml) — Custom SIEM detection rules (`100022` and `100023`) for `/var/ossec/etc/rules/local_rules.xml` alerting on endpoint Sysmon DNS queries (Event ID 22) and unencrypted outbound credential submissions.

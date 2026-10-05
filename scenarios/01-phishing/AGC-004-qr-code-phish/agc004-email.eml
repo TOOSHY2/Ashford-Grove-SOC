@@ -1,0 +1,21 @@
+From: "IT Security Team" <security@ashfordgrove.local>
+To: michael.chen@ashfordgrove.local
+Subject: MFA Device Verification Required - Scan QR Code
+Date: Mon, 15 Sep 2026 14:30:00 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+
+Dear Michael,
+
+As part of our quarterly security audit, we need you to verify
+your MFA device registration. Please scan the QR code below
+with your authenticator app:
+
+[QR CODE IMAGE EMBEDDED - encodes: http://10.10.40.10/portal-login]
+
+Note: This QR code is valid for 48 hours. If you experience any
+issues, contact IT Security at ext. 4455.
+
+Thank you for helping keep Ashford Grove secure.
+
+IT Security Team

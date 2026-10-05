@@ -1,0 +1,32 @@
+<!-- ==============================================================================
+     Ashford Grove SOC - Scenario AGC-002: Lookalike Domain Phishing
+     Investigating Analyst: Ali (TOOSHY2) | Detection Engineering Team
+     Target: /var/ossec/etc/rules/local_rules.xml
+     ============================================================================== -->
+
+<group name="local,syslog,sshd,">
+
+  <!-- AGC-002: Detect Sysmon Event ID 22 (DNS Query) -->
+  <rule id="100022" level="7">
+    <if_sid>60000</if_sid>
+    <field name="win.system.eventID">^22$</field>
+    <description>Sysmon - Event 22: DNS query [$(win.eventdata.queryName)] Status: $(win.eventdata.queryStatus)</description>
+    <mitre>
+      <id>T1566.002</id>
+    </mitre>
+    <info type="link">https://github.com/TOOSHY2/Ashford-Grove-SOC</info>
+  </rule>
+
+  <!-- AGC-002: Detect Outbound Phishing Egress to Attacker IP -->
+  <rule id="100023" level="12">
+    <if_sid>60000</if_sid>
+    <field name="win.eventdata.destinationIp">^10\.10\.40\.10$</field>
+    <description>Ashford Grove SOC (AGC-002): Outbound connection to external phishing sink following lookalike lure</description>
+    <mitre>
+      <id>T1071.001</id>
+      <id>T1056.003</id>
+    </mitre>
+    <info type="link">https://github.com/TOOSHY2/Ashford-Grove-SOC</info>
+  </rule>
+
+</group>

@@ -1,0 +1,32 @@
+<!-- ==============================================================================
+     Ashford Grove SOC - Scenario AGC-003: Credential-Harvesting Link Click
+     Investigating Analyst: Ali (TOOSHY2) | Detection Engineering Team
+     Target: /var/ossec/etc/rules/local_rules.xml
+     ============================================================================== -->
+
+<group name="local,syslog,sshd,">
+
+  <!-- AGC-003: Detect Access to Credential Harvest Lure or Staged Invoice -->
+  <rule id="100003" level="10">
+    <if_sid>60000</if_sid>
+    <match>Q3-Invoice|portal-login|agc003-email</match>
+    <description>Ashford Grove SOC (AGC-003): Suspected credential harvest link accessed on endpoint</description>
+    <mitre>
+      <id>T1566.002</id>
+    </mitre>
+    <info type="link">https://github.com/TOOSHY2/Ashford-Grove-SOC</info>
+  </rule>
+
+  <!-- AGC-003: Correlate Outbound Cleartext HTTP Connection to Phishing Sink -->
+  <rule id="100030" level="12">
+    <if_sid>60000</if_sid>
+    <field name="win.eventdata.destinationIp">^10\.10\.40\.10$</field>
+    <description>Ashford Grove SOC (AGC-003): Outbound HTTP session to external credential harvester (10.10.40.10)</description>
+    <mitre>
+      <id>T1071.001</id>
+      <id>T1056.003</id>
+    </mitre>
+    <info type="link">https://github.com/TOOSHY2/Ashford-Grove-SOC</info>
+  </rule>
+
+</group>

@@ -268,8 +268,8 @@ Integrated directly into `/var/ossec/etc/rules/local_rules.xml` on `WAZUH-SIEM-0
 
 ---
 
-### B. Proactive Email Gateway Heuristic Rule (`email_gateway_quishing.yml`)
-Implemented as a Secure Email Gateway (SEG) transport policy / Sigma heuristic to intercept zero-link image-based lures in-transit:
+### B. Proactive Email Gateway Heuristic Recommendation
+Recommended Secure Email Gateway (SEG) transport policy / Sigma heuristic to intercept zero-link image-based lures in-transit:
 
 ```yaml
 # Heuristic Detection Rule: Quishing Evasion via Zero-Link QR Delivery
@@ -356,3 +356,10 @@ credentials in cleartext HTTP.
 [ ] Enforce gateway heuristic rule to quarantine QR mail.
 [ ] Audit mail server logs for other recipients of QR lure.
 ```
+
+---
+
+## 9. Artifacts & Detection Engineering Rules
+
+* **Phishing Lure Artifact:** [`agc004-email.eml`](agc004-email.eml) — Raw RFC 822 Quishing spearphishing email lure impersonating IT Security Team (`security@ashfordgrove.local`) with embedded zero-link QR code lure.
+* **Wazuh Detection Rules:** [`wazuh_quishing_rules.xml`](wazuh_quishing_rules.xml) — Custom SIEM detection rules (`100004` and `100005`) for `/var/ossec/etc/rules/local_rules.xml` alerting on endpoint QR code lure access and subsequent unencrypted outbound credential submissions.

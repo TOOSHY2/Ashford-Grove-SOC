@@ -1,0 +1,32 @@
+<!-- ==============================================================================
+     Ashford Grove SOC - Scenario AGC-001: Spoofed Display Name Phishing
+     Investigating Analyst: Ali (TOOSHY2) | Detection Engineering Team
+     Target: /var/ossec/etc/rules/local_rules.xml
+     ============================================================================== -->
+
+<group name="local,syslog,sshd,">
+
+  <!-- AGC-001: Detect Process Launch from Phishing Delivery Directory -->
+  <rule id="100010" level="8">
+    <if_sid>60000</if_sid>
+    <match>PhishingDelivery|ashford-grove-support|agc001-email</match>
+    <description>Ashford Grove SOC (AGC-001): Phishing lure access or execution from staging directory</description>
+    <mitre>
+      <id>T1566.002</id>
+    </mitre>
+    <info type="link">https://github.com/TOOSHY2/Ashford-Grove-SOC</info>
+  </rule>
+
+  <!-- AGC-001: Detect Outbound Connection to Attacker Infrastructure -->
+  <rule id="100011" level="12">
+    <if_sid>60000</if_sid>
+    <field name="win.eventdata.destinationIp">^10\.10\.40\.10$</field>
+    <description>Ashford Grove SOC (AGC-001): Outbound connection to attacker credential sink (10.10.40.10)</description>
+    <mitre>
+      <id>T1071.001</id>
+      <id>T1056.003</id>
+    </mitre>
+    <info type="link">https://github.com/TOOSHY2/Ashford-Grove-SOC</info>
+  </rule>
+
+</group>

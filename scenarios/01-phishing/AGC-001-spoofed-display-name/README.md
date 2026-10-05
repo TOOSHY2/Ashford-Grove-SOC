@@ -238,5 +238,9 @@ corporate domain credentials on external harvesting page.
 [ ] Query mail logs for other recipients of spoofed lure.
 ```
 
+---
 
+## 8. Artifacts & Detection Engineering Rules
 
+* **Phishing Lure Artifact:** [`agc001-email.eml`](agc001-email.eml) — Raw RFC 822 email lure featuring display-name spoofing (`"IT Support" <it-support@ashford-grove-support.local>`).
+* **Wazuh Detection Rules:** [`wazuh_spoofed_display_rules.xml`](wazuh_spoofed_display_rules.xml) — Custom SIEM detection rules (`100010` and `100011`) for `/var/ossec/etc/rules/local_rules.xml` alerting on phishing staging execution and unencrypted outbound credential egress.

@@ -255,3 +255,10 @@ and submitted Active Directory domain credentials in plaintext HTTP.
 [ ] Audit Active Directory logs for any anomalous logon events.
 [ ] Implement Zeek NIDS signature for plaintext credential POSTs.
 ```
+
+---
+
+## 8. Artifacts & Detection Engineering Rules
+
+* **Phishing Lure Artifact:** [`agc003-email.eml`](agc003-email.eml) — Raw RFC 822 spearphishing email lure impersonating internal IT Helpdesk (`helpdesk@ashfordgrove.local`) with fake shared invoice lure (`Q3-Invoice.pdf`).
+* **Wazuh Detection Rules:** [`wazuh_harvest_rules.xml`](wazuh_harvest_rules.xml) — Custom SIEM detection rules (`100003` and `100030`) for `/var/ossec/etc/rules/local_rules.xml` alerting on credential-harvesting link access and outbound cleartext HTTP session establishment.
