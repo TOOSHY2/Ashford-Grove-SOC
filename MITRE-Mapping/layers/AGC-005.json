@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-005: Shortener URL /go/abc123 302-redirects to credential harvester /portal-login. Verdict: True Positive, Confidence: High.",
+    "description": "Manual Execution & Real Telemetry (Phase 2) by Ali (TOOSHY2). | AGC-005: URL-shortener redirect chain. Phishing lure (agc005-email.eml) delivered benign-looking shortener link (http://10.10.40.10/go/abc123) executing HTTP 302 Found redirect to credential harvester (/portal-login). Triangulated across terminal hop-by-hop dissection (curl -i), Zeek http.log (GET 302 -> GET 200 -> POST), OPNsense firewall pass (P14-RuleA), and Wazuh SIEM generic detection rule (100006). Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",
@@ -28,13 +28,35 @@
         {
             "techniqueID": "T1566.002",
             "tactic": "initial-access",
-            "color": "#ffe766ff",
-            "comment": "AGC-005: URL shortener redirect chain. Phishing email contains /go/abc123 (benign-looking shortener URL). Server returns HTTP 302 Found with Location: /portal-login. Final destination is credential harvester (same campaign infrastructure as AGC-001-004). Chain reconstruction required to identify malicious endpoint. Verdict: True Positive, Confidence: High.",
+            "color": "#8ec843ff",
+            "comment": "AGC-005: URL shortener redirect chain delivery. Phishing lure delivered http://10.10.40.10/go/abc123 appearing benign to static reputation filters. Server issued HTTP 302 Found redirecting browser to /portal-login. Dissected via curl -i. Verdict: True Positive, Confidence: Critical.",
             "enabled": true,
             "metadata": [],
             "links": [],
             "showSubtechniques": true,
-            "score": 75
+            "score": 100
+        },
+        {
+            "techniqueID": "T1056.003",
+            "tactic": "credential-access",
+            "color": "#8ec843ff",
+            "comment": "AGC-005: Web portal credential harvesting. Victim submitted Active Directory credentials (michael.chen@ashfordgrove.local / Soclab24) on fake Acme Corp Single Sign-On portal via unencrypted HTTP POST to /login. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1071.001",
+            "tactic": "command-and-control",
+            "color": "#8ec843ff",
+            "comment": "AGC-005: Application Layer Protocol (Web Protocols). Outbound HTTP 302 redirect and credential submission egress across perimeter firewall to 10.10.40.10:80 recorded in Zeek and OPNsense. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
         }
     ],
     "gradient": {
