@@ -137,7 +137,7 @@ In Security Onion Hunt (`10.10.30.20`), querying `destination.ip: 10.10.40.10` i
 
 ---
 
-### C. Endpoint Telemetry & Detection Engineering (Wazuh & Sysmon)
+### C. Endpoint Telemetry & Ingestion Diagnostics (Wazuh & Sysmon)
 
 #### The Telemetry Gap:
 During initial triage in Wazuh Discover, events for Agent `004` showed standard Windows System events (Event ID `7040`), but **zero Sysmon process creation alerts (Event ID 1)** were present.
@@ -240,7 +240,6 @@ corporate domain credentials on external harvesting page.
 
 ---
 
-## 8. Artifacts & Detection Engineering Rules
+## 8. Artifacts & Evidence Files
 
 * **Phishing Lure Artifact:** [`agc001-email.eml`](agc001-email.eml) — Raw RFC 822 email lure featuring display-name spoofing (`"IT Support" <it-support@ashford-grove-support.local>`).
-* **Wazuh Detection Rules:** [`wazuh_spoofed_display_rules.xml`](wazuh_spoofed_display_rules.xml) — Custom SIEM detection rules (`100010` and `100011`) for `/var/ossec/etc/rules/local_rules.xml` alerting on phishing staging execution and unencrypted outbound credential egress.

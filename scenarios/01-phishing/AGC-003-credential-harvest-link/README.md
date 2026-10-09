@@ -258,7 +258,6 @@ and submitted Active Directory domain credentials in plaintext HTTP.
 
 ---
 
-## 8. Artifacts & Detection Engineering Rules
+## 8. Artifacts & Evidence Files
 
 * **Phishing Lure Artifact:** [`agc003-email.eml`](agc003-email.eml) — Raw RFC 822 spearphishing email lure impersonating internal IT Helpdesk (`helpdesk@ashfordgrove.local`) with fake shared invoice lure (`Q3-Invoice.pdf`).
-* **Wazuh Detection Rules:** [`wazuh_harvest_rules.xml`](wazuh_harvest_rules.xml) — Custom SIEM detection rules (`100003` and `100030`) for `/var/ossec/etc/rules/local_rules.xml` alerting on credential-harvesting link access and outbound cleartext HTTP session establishment.

@@ -200,18 +200,18 @@ By default, native SIEM alerting triggers on known signatures or process anomali
 
 ---
 
-### Step 10: Detection Engineering: Generic SIEM Rule Deployment
-To solve this organizational detection blind spot, analyst Ali authored and deployed a generic detection rule within Wazuh SIEM (`local_rules.xml`). Rather than relying solely on scenario-specific indicators, the rule implements behavioral pattern matching across common URL-shortening domains and redirection path conventions:
+### Step 10: SIEM Detection Blind Spot & Rule Tuning Analysis
+To analyze this organizational detection blind spot, analyst Ali investigated how generic pattern matching can be applied within Wazuh SIEM (`local_rules.xml`). Rather than relying solely on scenario-specific indicators, the evaluated rule models behavioral pattern matching across common URL-shortening domains and redirection path conventions:
 
 ![Wazuh Custom Rule Deployment](screenshots/AGC-005-11.png)
 *Figure 11: Wazuh Dashboard `local_rules.xml` editor confirming generic detection rule `100006` saved and activated after manager restart.*
 
 ---
 
-## 4. Detection Engineering: Generic SIEM Rule
+## 4. SIEM Detection Blind Spot & Mitigation Rule Analysis
 
-### Live Wazuh SIEM XML Rule (`local_rules.xml`)
-Integrated directly into `/var/ossec/etc/rules/local_rules.xml` on `WAZUH-SIEM-01` (`10.10.30.10`):
+### Live Wazuh SIEM XML Rule Evaluation (`local_rules.xml`)
+Demonstrated in `/var/ossec/etc/rules/local_rules.xml` on `WAZUH-SIEM-01` (`10.10.30.10`):
 
 ```xml
 <!-- ==============================================================================
@@ -311,7 +311,6 @@ and submitted domain credentials in cleartext HTTP.
 
 ---
 
-## 8. Artifacts & Detection Engineering Rules
+## 8. Artifacts & Evidence Files
 
 * **Phishing Lure Artifact:** [`agc005-email.eml`](agc005-email.eml) — Raw RFC 822 spearphishing lure delivering innocent-looking shortener tracking link `http://10.10.40.10/go/abc123`.
-* **Wazuh Detection Rule:** [`wazuh_redirect_rules.xml`](wazuh_redirect_rules.xml) — Generic SIEM detection rule (`100006`) deployed to `/var/ossec/etc/rules/local_rules.xml` alerting on external URL shorteners and HTTP redirection mechanisms.

@@ -221,17 +221,17 @@ Default endpoint agents and SIEM decoders do not perform Optical Character Recog
 
 ---
 
-## 5. Detection Engineering: SIEM & Email Gateway Rules
+## 5. SIEM Detection Blind Spot & Strategic Mitigation Policies
 
-To resolve this detection blind spot, analyst Ali engineered a defense-in-depth detection suite spanning both the host SIEM and the email perimeter.
+To address this critical detection blind spot, analyst Ali documented actionable defense-in-depth mitigation policies spanning host SIEM correlation and the email perimeter.
 
-### A. Live Wazuh SIEM XML Rules (`local_rules.xml`)
-Integrated directly into `/var/ossec/etc/rules/local_rules.xml` on `WAZUH-SIEM-01` (`10.10.30.10`):
+### A. SIEM Host Correlation Rules (`local_rules.xml`)
+Demonstrated in `/var/ossec/etc/rules/local_rules.xml` on `WAZUH-SIEM-01` (`10.10.30.10`) to correlate endpoint quishing artifact access and outbound egress:
 
 ```xml
 <!-- ==============================================================================
-     Ashford Grove SOC - Scenario AGC-004: Quishing Detection Rules
-     Investigating Analyst: Ali (TOOSHY2) | Detection Engineering Team
+     Ashford Grove SOC - Scenario AGC-004: Quishing Correlation Rules
+     Investigating Analyst: Ali (TOOSHY2) | Ashford Grove SOC
      Target: /var/ossec/etc/rules/local_rules.xml
      ============================================================================== -->
 
@@ -359,7 +359,6 @@ credentials in cleartext HTTP.
 
 ---
 
-## 9. Artifacts & Detection Engineering Rules
+## 9. Artifacts & Evidence Files
 
 * **Phishing Lure Artifact:** [`agc004-email.eml`](agc004-email.eml) — Raw RFC 822 Quishing spearphishing email lure impersonating IT Security Team (`security@ashfordgrove.local`) with embedded zero-link QR code lure.
-* **Wazuh Detection Rules:** [`wazuh_quishing_rules.xml`](wazuh_quishing_rules.xml) — Custom SIEM detection rules (`100004` and `100005`) for `/var/ossec/etc/rules/local_rules.xml` alerting on endpoint QR code lure access and subsequent unencrypted outbound credential submissions.

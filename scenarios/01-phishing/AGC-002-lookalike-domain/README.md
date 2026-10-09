@@ -147,11 +147,11 @@ Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 50 | Whe
 
 ---
 
-### B. Detection Engineering: Wazuh Custom Rule Implementation
-Default SIEM rulesets classify standard DNS queries at `Level 0` to prevent alert fatigue. To bridge this detection gap and alert on DNS queries originating from endpoints, custom rule `100022` was authored in `local_rules.xml` on `WAZUH-SIEM-01` via the web console:
+### B. SIEM Detection Gap & Rule Tuning Analysis
+Default SIEM rulesets classify standard DNS queries at `Level 0` to prevent alert fatigue. In an enterprise SOC, understanding this blind spot is critical: while local Sysmon captures Event ID 22 for `ashfordgr0ve.local` returning NXDOMAIN (Win32 error `9003`), SIEM dashboards remain silent without explicit rule escalation for suspicious typosquatted domain lookups. Custom rule `100022` was evaluated in `local_rules.xml` on `WAZUH-SIEM-01` to demonstrate how SIEM alert thresholds can be elevated for DNS telemetry:
 
 ```xml
-<!-- AGC-002: Detect Sysmon Event ID 22 (DNS Query) -->
+<!-- AGC-002: Elevate Alert Level for Sysmon Event ID 22 (DNS Query) -->
 <rule id="100022" level="7">
   <if_sid>60000</if_sid>
   <field name="win.system.eventID">^22$</field>
@@ -163,12 +163,12 @@ Default SIEM rulesets classify standard DNS queries at `Level 0` to prevent aler
 ```
 
 ![Wazuh Default Rules](screenshots/AGC-002-8.png)
-*Figure 8: Baseline inspection of `local_rules.xml` prior to detection engineering.*
+*Figure 8: Baseline inspection of `local_rules.xml` prior to rule escalation.*
 
 The rule was saved and hot-reloaded across the manager cluster without service interruption.
 
 ![Wazuh Custom Rule Applied](screenshots/AGC-002-9.png)
-*Figure 9: Custom rule `100022` saved and cluster reloaded successfully.*
+*Figure 9: Rule `100022` saved and cluster reloaded successfully.*
 
 ---
 
@@ -264,7 +264,6 @@ credentials to harvesting portal at 10.10.40.10/portal-login.
 
 ---
 
-## 8. Artifacts & Detection Engineering Rules
+## 8. Artifacts & Evidence Files
 
 * **Phishing Lure Artifact:** [`agc002-email.eml`](agc002-email.eml) — Raw RFC 822 email lure exploiting homoglyph/lookalike domain impersonation (`hr@ashfordgr0ve.local`).
-* **Wazuh Detection Rules:** [`wazuh_lookalike_rules.xml`](wazuh_lookalike_rules.xml) — Custom SIEM detection rules (`100022` and `100023`) for `/var/ossec/etc/rules/local_rules.xml` alerting on endpoint Sysmon DNS queries (Event ID 22) and unencrypted outbound credential submissions.
