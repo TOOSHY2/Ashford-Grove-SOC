@@ -23,6 +23,7 @@
 | **Adversary Infrastructure** | `EXT-ATTACKER-SIM` (`10.10.40.10:80` — Spoofed "Acme Corp" SSO Portal) |
 | **Detection Status** | **True Positive (Confirmed Enterprise Credential Compromise & Telemetry Triangulation)** |
 | **Triage Confidence** | **Critical** (Correlated across Sysmon EID 11, Zeek HTTP, OPNsense Live View, Attacker Sink Logs, and Wazuh SIEM) |
+| **MITRE Navigator Layer** | [`AGC-006.json`](../../../MITRE-Mapping/layers/AGC-006.json) |
 | **Kill-Chain Stage** | Initial Access, Defense Evasion, and Credential Access (Scenario 6 of 100) |
 
 ### Incident Summary
@@ -276,6 +277,8 @@ While Wazuh successfully flagged the dropping of suspicious files in temporary a
 | **Command & Control (TA0011)** | `T1071.001` | Web Protocols (HTTP) | Outbound cleartext HTTP flows | **MEDIUM** |
 | **Initial Access (TA0001)** | `T1078` | Valid Accounts | Compromised credentials for `michael.chen` | **HIGH** |
 
+> **ATT&CK Navigator Visualization:** Exported layer available at [`AGC-006.json`](../../../MITRE-Mapping/layers/AGC-006.json). Import into [ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) for visual coverage assessment.
+
 ---
 
 ## 6. Incident Response & Containment Plan (IR Playbook)
@@ -338,3 +341,4 @@ User submitted corporate Active Directory credentials.
 
 * **Phishing Lure Artifact:** [`agc006-email.eml`](agc006-email.eml) — Raw RFC 822 spearphishing email lure delivering zero body hyperlinks.
 * **Malicious HTML Attachment:** [`Invoice-2026-Q3.html`](Invoice-2026-Q3.html) — Weaponized HTML attachment containing client-side zero-delay meta-refresh redirection payload.
+* **MITRE ATT&CK Navigator Layer:** [`AGC-006.json`](../../../MITRE-Mapping/layers/AGC-006.json) — Scenario-specific JSON mapping layer covering all 5 confirmed ATT&CK techniques with Critical confidence.

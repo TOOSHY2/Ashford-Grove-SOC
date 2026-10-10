@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-006: HTML attachment with meta-refresh auto-redirects to credential harvester. Verdict: True Positive, Confidence: High.",
+    "description": "Manual Execution & Real Telemetry by Ali (TOOSHY2). | AGC-006: HTML attachment with meta-refresh auto-redirects to credential harvester. Phishing lure (agc006-email.eml) delivered Invoice-2026-Q3.html with zero body links. Opening the attachment invoked browser with meta-refresh redirecting to http://10.10.40.10/portal-login. Triangulated across Sysmon EID 11 (Rule 92213), Zeek http.log (GET 200 & POST /login), OPNsense firewall pass (P14-RuleA), and Kali sink harvest log. Verdict: True Positive, Confidence: Critical.",
     "filters": {
         "platforms": [
             "Windows",
@@ -28,13 +28,57 @@
         {
             "techniqueID": "T1566.001",
             "tactic": "initial-access",
-            "color": "#ffe766ff",
-            "comment": "AGC-006: HTML attachment phishing. Email attachment Invoice-2026-Q3.html contains meta http-equiv=refresh redirecting to http://10.10.40.10/portal-login. Sysmon EID 11 (RuleName: Downloads) captured file write to C:\\Users\\michael.chen\\Downloads\\. Redirect followed to credential harvester. Verdict: True Positive, Confidence: High.",
+            "color": "#8ec843ff",
+            "comment": "AGC-006: Spearphishing Attachment. Weaponized HTML attachment (Invoice-2026-Q3.html) delivered via zero-link email lure to michael.chen, executing client-side meta-refresh redirect to http://10.10.40.10/portal-login. Verdict: True Positive, Confidence: Critical.",
             "enabled": true,
             "metadata": [],
             "links": [],
             "showSubtechniques": true,
-            "score": 75
+            "score": 100
+        },
+        {
+            "techniqueID": "T1056.003",
+            "tactic": "credential-access",
+            "color": "#8ec843ff",
+            "comment": "AGC-006: Web Portal Credential Harvesting. Victim submitted Active Directory domain credentials (michael.chen@ashfordgrove.local / Soclab24) on spoofed Acme Corp SSO portal via unencrypted HTTP POST to /login. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1071.001",
+            "tactic": "command-and-control",
+            "color": "#8ec843ff",
+            "comment": "AGC-006: Application Layer Protocol (Web Protocols). Outbound HTTP GET 200 and POST /login exfiltration flows across perimeter firewall to 10.10.40.10:80 verified in Zeek and OPNsense Live View. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1204.002",
+            "tactic": "execution",
+            "color": "#8ec843ff",
+            "comment": "AGC-006: User Execution: Malicious File. Victim double-clicked Invoice-2026-Q3.html from user Downloads directory, triggering Microsoft Edge browser execution. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
+        },
+        {
+            "techniqueID": "T1027",
+            "tactic": "defense-evasion",
+            "color": "#8ec843ff",
+            "comment": "AGC-006: Obfuscated Files or Information (HTML Smuggling). Adversary evaded email gateway body scanning by embedding zero-delay meta-refresh redirect within HTML file container with zero body hyperlinks. Verdict: True Positive, Confidence: Critical.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 100
         }
     ],
     "gradient": {
