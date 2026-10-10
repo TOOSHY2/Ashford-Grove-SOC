@@ -78,8 +78,16 @@ During forensic analysis, analyst Ali extracted the QR artifact, executed deep d
 
 ## 3. Hands-On Execution & Simulation
 
-### Step 1: Pre-Flight Baseline & Agent Verification
-Before launching the attack, operational telemetry and agent heartbeats were verified via the Wazuh Dashboard at `https://10.10.30.10`. Both `AD-DC-01` (Agent `001`) and `COMPROMISED-01` (Agent `004`) were validated in an active reporting status.
+### Step 1: Pre-Flight Baseline & Operational Readiness
+Prior to attack simulation, sensor health, endpoint agent telemetry, and forensic analysis pipelines were verified:
+
+| Monitoring Layer | System Node | IP Address | Status | Verification Metric |
+|:---|:---|:---|:---|:---|
+| **Endpoint SIEM / EDR** | `COMPROMISED-01` (004) | 10.10.10.103 | **Active (100%)** | Wazuh Endpoints Summary Dashboard |
+| **Domain Controller** | `AD-DC-01` (001) | 10.10.10.10 | **Active (100%)** | Wazuh Endpoints Summary Dashboard |
+| **Network Sensor (NSM)** | `SECURITY-ONION-01` | 10.10.30.20 | **Healthy** | Zeek HTTP & CyberChef QR Decoding Pipeline |
+| **Perimeter Firewall** | `OPNsense-FW` | 10.10.10.1 | **Operational** | Default-Deny Active / Rule `P14-RuleA` Logging |
+| **Adversary HTTP Sink** | `EXT-ATTACKER-SIM` | 10.10.40.10 | **Listening** | TCP Port 80 (`attacker-http.service`) |
 
 ![Wazuh Agent Baseline](screenshots/AGC-004-1.png)
 *Figure 1: Wazuh Endpoints Summary confirming Agent 001 (`AD-DC-01`) and Agent 004 (`COMPROMISED-01`) are active.*

@@ -83,8 +83,16 @@ During investigation, analyst Ali performed hop-by-hop HTTP dissection via comma
 
 ## 3. Hands-On Execution & Forensic Evidence
 
-### Step 1: Pre-Flight Baseline & Agent Verification
-Prior to simulating the attack, analyst Ali verified that the Wazuh SIEM monitoring pipeline was fully operational. Accessing the Wazuh Dashboard at `https://10.10.30.10`, both key enterprise assets—`AD-DC-01` (Agent `001`) and `COMPROMISED-01` (Agent `004`)—were confirmed in an active reporting state.
+### Step 1: Pre-Flight Baseline & Operational Readiness
+Prior to attack simulation, sensor health, endpoint agent telemetry, and network redirect inspection pipelines were verified:
+
+| Monitoring Layer | System Node | IP Address | Status | Verification Metric |
+|:---|:---|:---|:---|:---|
+| **Endpoint SIEM / EDR** | `COMPROMISED-01` (004) | 10.10.10.103 | **Active (100%)** | Wazuh Endpoints Summary Dashboard |
+| **Domain Controller** | `AD-DC-01` (001) | 10.10.10.10 | **Active (100%)** | Wazuh Endpoints Summary Dashboard |
+| **Network Sensor (NSM)** | `SECURITY-ONION-01` | 10.10.30.20 | **Healthy** | Zeek HTTP Sniffing (`zeek.http` 302/200 Tracking) |
+| **Perimeter Firewall** | `OPNsense-FW` | 10.10.10.1 | **Operational** | Default-Deny Active / Rule `P14-RuleA` Logging |
+| **Adversary Redirect Sink** | `EXT-ATTACKER-SIM` | 10.10.40.10 | **Listening** | TCP Port 80 (`attacker-http.service` 302 Redirector) |
 
 ![Wazuh Agent Baseline](screenshots/AGC-005-1.png)
 *Figure 1: Wazuh Endpoints Summary confirming Agent 001 (`AD-DC-01`, `10.10.10.10`) and Agent 004 (`COMPROMISED-01`, `10.10.10.103`) in 100% active operational status.*

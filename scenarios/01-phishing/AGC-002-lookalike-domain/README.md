@@ -66,8 +66,16 @@ The lure impersonated the **"HR Department"** regarding mandatory employee benef
 
 ## 3. Hands-On Execution & Simulation
 
-### Step 1: Pre-Flight Baseline & Agent Verification
-Before triggering the scenario, agent health and monitoring telemetry were verified via the Wazuh Dashboard (`10.10.30.10`). Both the Domain Controller (`AD-DC-01`, Agent `001`) and victim endpoint (`COMPROMISED-01`, Agent `004`) were validated in an active reporting state.
+### Step 1: Pre-Flight Baseline & Operational Readiness
+Prior to simulating the homoglyph attack, sensor health and resolution monitoring were validated across the lab architecture:
+
+| Monitoring Layer | System Node | IP Address | Status | Verification Metric |
+|:---|:---|:---|:---|:---|
+| **Endpoint SIEM / EDR** | `COMPROMISED-01` (004) | 10.10.10.103 | **Active (100%)** | Wazuh Endpoints Summary Dashboard |
+| **Domain Controller & DNS** | `AD-DC-01` (001) | 10.10.10.10 | **Active (100%)** | Authoritative DNS active for ashfordgrove.local |
+| **Network Sensor (NSM)** | `SECURITY-ONION-01` | 10.10.30.20 | **Healthy** | Zeek DNS and HTTP analyzers operational |
+| **Perimeter Firewall** | `OPNsense-FW` | 10.10.10.1 | **Operational** | Default-Deny active / Rule `P14-RuleA` logging |
+| **Adversary HTTP Sink** | `EXT-ATTACKER-SIM` | 10.10.40.10 | **Listening** | TCP Port 80 (`attacker-http.service`) |
 
 ![Wazuh Agent Baseline](screenshots/AGC-002-1.png)
 *Figure 1: Wazuh Endpoints Summary confirming Agent 001 (`AD-DC-01`) and Agent 004 (`COMPROMISED-01`) are active.*

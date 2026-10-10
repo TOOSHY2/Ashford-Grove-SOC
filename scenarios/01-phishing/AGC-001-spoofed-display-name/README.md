@@ -61,8 +61,16 @@ The email delivered a credential-harvesting link (`http://10.10.40.10/portal-log
 
 ## 3. Hands-On Execution & Simulation
 
-### Step 1: Pre-Flight Baseline & Agent Verification
-Before triggering the attack, agent connectivity and monitoring health were validated via the Wazuh Dashboard (`10.10.30.10`). Both the Domain Controller (`AD-DC-01`, Agent `001`) and the victim workstation (`COMPROMISED-01`, Agent `004`) were confirmed active and reporting.
+### Step 1: Pre-Flight Baseline & Operational Readiness
+Prior to attack simulation, sensor health and telemetry pipelines were verified across the enterprise monitoring fabric:
+
+| Monitoring Layer | System Node | IP Address | Status | Verification Metric |
+|:---|:---|:---|:---|:---|
+| **Endpoint SIEM / EDR** | `COMPROMISED-01` (004) | 10.10.10.103 | **Active (100%)** | Wazuh Endpoints Summary Dashboard |
+| **Domain Controller** | `AD-DC-01` (001) | 10.10.10.10 | **Active (100%)** | Wazuh Endpoints Summary Dashboard |
+| **Network Sensor (NSM)** | `SECURITY-ONION-01` | 10.10.30.20 | **Healthy** | Zeek HTTP logging active on span interface |
+| **Perimeter Firewall** | `OPNsense-FW` | 10.10.10.1 | **Operational** | Default-Deny active / Live logging enabled |
+| **Adversary HTTP Sink** | `EXT-ATTACKER-SIM` | 10.10.40.10 | **Listening** | TCP Port 80 (`attacker-http.service`) |
 
 ![Wazuh Agent Baseline](screenshots/AGC-001-1.png)
 *Figure 1: Baseline verification on Wazuh Dashboard confirming Agent 004 (`COMPROMISED-01`) is active.*

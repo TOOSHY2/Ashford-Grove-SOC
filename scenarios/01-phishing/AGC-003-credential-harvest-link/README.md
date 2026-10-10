@@ -68,8 +68,16 @@ The lure directed the victim to an external credential harvesting portal hosted 
 
 ## 3. Hands-On Execution & Simulation
 
-### Step 1: Pre-Flight Baseline & Agent Verification
-Prior to attack initiation, the operational baseline was verified via the Wazuh Dashboard at `https://10.10.30.10`. Both the Domain Controller (`AD-DC-01`, Agent `001`) and the target endpoint (`COMPROMISED-01`, Agent `004`) were validated in an active reporting status.
+### Step 1: Pre-Flight Baseline & Operational Readiness
+Prior to attack initiation, the operational baseline and packet-sniffing fabric were validated across all tiers:
+
+| Monitoring Layer | System Node | IP Address | Status | Verification Metric |
+|:---|:---|:---|:---|:---|
+| **Endpoint SIEM / EDR** | `COMPROMISED-01` (004) | 10.10.10.103 | **Active (100%)** | Wazuh Endpoints Summary Dashboard |
+| **Domain Controller** | `AD-DC-01` (001) | 10.10.10.10 | **Active (100%)** | Wazuh Endpoints Summary Dashboard |
+| **Network Sensor (NSM)** | `SECURITY-ONION-01` | 10.10.30.20 | **Healthy** | Zeek HTTP post-dissection & live stream |
+| **Perimeter Firewall** | `OPNsense-FW` | 10.10.10.1 | **Operational** | Default-Deny active / Rule `P14-RuleA` logging |
+| **Adversary Sniffer & Sink** | `EXT-ATTACKER-SIM` | 10.10.40.10 | **Listening** | Port 80 HTTP sink & `tcpdump eth0` sniffer |
 
 ![Wazuh Agent Baseline](screenshots/AGC-003-1.png)
 *Figure 1: Wazuh Endpoints Summary confirming Agent 001 (`AD-DC-01`) and Agent 004 (`COMPROMISED-01`) are active.*
