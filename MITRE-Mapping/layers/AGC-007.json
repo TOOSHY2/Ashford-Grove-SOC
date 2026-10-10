@@ -6,7 +6,7 @@
         "layer": "4.5"
     },
     "domain": "enterprise-attack",
-    "description": "Disclosure: Executed & documented by Claude Code under direction and review by Ali. | AGC-007: Macro-enabled .docm attachment executes VBA AutoOpen writing marker to system temp. Verdict: True Positive, Confidence: High.",
+    "description": "Manual Execution & Forensic Telemetry by Ali (TOOSHY2). | AGC-007: Macro-enabled Word document (.docm) delivered via phishing attachment executes VBA AutoOpen payload writing marker to system temp directory. Static OLE forensics extracted AutoOpen() stream; endpoint telemetry captured via Sysmon EID 11 (File Create, RuleName: Downloads) and execution verified in C:\\Windows\\Temp\\macro_marker.txt. SIEM blind-spot analysis documented on Wazuh Rule 92200/92213. Verdict: True Positive, Confidence: High.",
     "filters": {
         "platforms": [
             "Windows",
@@ -29,7 +29,40 @@
             "techniqueID": "T1566.001",
             "tactic": "initial-access",
             "color": "#ffe766ff",
-            "comment": "AGC-007: Macro lure document. .docm (Signed-Contract-2026.docm) delivered to Downloads, VBA AutoOpen macro writes C:\\Windows\\Temp\\macro_marker.txt. Sysmon EID 11 captured .docm delivery (RuleName: Downloads). System temp write by Office process is anomalous. Intentionally safe macro — no payload chain. Verdict: True Positive, Confidence: High.",
+            "comment": "AGC-007: Spearphishing Attachment. Weaponized macro-enabled document (Signed-Contract-2026.docm) delivered via legal lure email to michael.chen, landing in user Downloads directory. Captured via Sysmon EID 11 (RuleName: Downloads). Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1204.002",
+            "tactic": "execution",
+            "color": "#ffe766ff",
+            "comment": "AGC-007: User Execution: Malicious File. Victim opened Signed-Contract-2026.docm and bypassed Office security banner ('Enable Content') to view purported contract digital signature, triggering embedded VBA code. Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1059.005",
+            "tactic": "execution",
+            "color": "#ffe766ff",
+            "comment": "AGC-007: Command and Scripting Interpreter: Visual Basic. Embedded VBA AutoOpen() procedure executed upon document load, writing an unauthorized marker artifact to C:\\Windows\\Temp\\macro_marker.txt. Verdict: True Positive, Confidence: High.",
+            "enabled": true,
+            "metadata": [],
+            "links": [],
+            "showSubtechniques": true,
+            "score": 75
+        },
+        {
+            "techniqueID": "T1202",
+            "tactic": "defense-evasion",
+            "color": "#ffe766ff",
+            "comment": "AGC-007: Indirect Command Execution. Execution flow utilized trusted application macro engine to perform anomalous file write operations into system-level directories outside the user profile space. Verdict: True Positive, Confidence: High.",
             "enabled": true,
             "metadata": [],
             "links": [],

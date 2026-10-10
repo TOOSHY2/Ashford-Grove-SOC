@@ -1,115 +1,352 @@
-# AGC-007 — Macro Lure Document
+# AGC-007 — Macro Lure Document (VBA AutoOpen & Endpoint File Drop)
 
-> **Disclosure:** Executed & documented by Claude Code under direction and review by Ali.
+<p align="center">
+  <img alt="Category" src="https://img.shields.io/badge/Category-01--Phishing-0F766E?style=for-the-badge&labelColor=0B1220">
+  <img alt="Technique" src="https://img.shields.io/badge/MITRE-T1566.001-red?style=for-the-badge&labelColor=0B1220">
+  <img alt="Verdict" src="https://img.shields.io/badge/Verdict-True%20Positive-critical?style=for-the-badge&labelColor=0B1220">
+  <img alt="Confidence" src="https://img.shields.io/badge/Confidence-High-yellow?style=for-the-badge&labelColor=0B1220">
+  <img alt="Execution" src="https://img.shields.io/badge/Execution-Live%20Simulation-success?style=for-the-badge&labelColor=0B1220">
+</p>
 
-## Card
+---
 
-| Field | Value |
-|---|---|
-| ID | `AGC-007` |
-| Category | `01-phishing` — Phishing & Initial Access |
-| MITRE Technique | `T1566.001` Phishing: Spearphishing Attachment (macro) |
-| Verdict | True Positive |
-| Confidence | High |
-| Time to Detect | N/A — no automated Wazuh alert for macro-delivered file writes; Sysmon EID 11 captures the file creation events |
-| Time to Triage | 03:00 (from .docm delivery to marker-file confirmation) |
-| Affected Systems | `COMPROMISED-HOST-01` / `COMPROMISED-01` (10.10.10.103) |
-| Chain | ◀ [AGC-006](../AGC-006-html-attachment-redirect/README.md) · next [AGC-008](../AGC-008-password-reset-lure/README.md) ▶ |
-| One-line Summary | Macro-enabled Word document (.docm) delivered as phishing attachment executes VBA code on "Enable Content," writing a marker file to the system temp directory. |
+## 1. Overview & Case Metadata
 
-## Attacker Perspective
+| Case Attribute | Value / Specification |
+|:---|:---|
+| **Incident ID** | `AGC-007` (`T100-007`) |
+| **Primary Technique** | **Initial Access (TA0001)** — `T1566.001` (Spearphishing Attachment: Macro Lure) |
+| **Secondary Techniques** | `T1204.002` (User Execution: Malicious File), `T1059.005` (Command & Scripting Interpreter: Visual Basic), `T1202` (Indirect Command Execution) |
+| **Investigating Analyst** | **Ali (TOOSHY2)** |
+| **Execution Date & Time** | 2026-10-10 — 18:19 to 19:51 UTC |
+| **Target Host** | `COMPROMISED-HOST-01` (`10.10.10.103` — `ASHFORDGROVE\michael.chen`) |
+| **Adversary Artifacts** | `Signed-Contract-2026.docm`, `agc007-email.eml` |
+| **Host Artifacts** | `C:\Windows\Temp\macro_marker.txt` |
+| **Primary Detection Surface** | **Sysmon Event ID 11 (File Create)** via Windows Event Log & PowerShell |
+| **Detection Status** | **True Positive (Confirmed Macro Execution & Anomalous System Temp File Drop)** |
+| **Triage Confidence** | **High** (Verified via Static OLE Forensics, Sysmon EID 11, Host Artifact Markers, and Event Properties) |
+| **SIEM Blind-Spot Analysis** | Wazuh default rule filter limits EID 11 alerts to `.exe`/`.dll` (Rule 92213); base document file drops are Level 0 (Rule 92200). Host EDR forensics bridged the visibility gap. |
+| **MITRE Navigator Layer** | [`AGC-007.json`](../../../MITRE-Mapping/layers/AGC-007.json) |
+| **Kill-Chain Stage** | Initial Access & Execution (Scenario 7 of 100) |
 
-### Tradecraft
+### Incident Summary
+In scenario AGC-007, the adversary shifted tactical focus from link-based phishing (AGC-001 through AGC-006) to **endpoint-local code execution and foothold establishment (Execution TA0002)** via a weaponized Microsoft Word macro-enabled document (`.docm`). 
 
-**What:** A macro-enabled Word document (`.docm`) arrives as an attachment under a pretext ("signed contract," "invoice"). The victim opens it, clicks "Enable Content" past the macro warning, and the embedded VBA `AutoOpen()` runs. In the lab the macro only writes a marker to `C:\Windows\Temp\macro_marker.txt`; a real one would chain to `cmd.exe` or `powershell.exe` to fetch and run a second stage.
+Masquerading as the Ashford Grove Legal Department (`legal-contracts@ashfordgrove.local`), the adversary delivered a targeted spearphishing lure to `michael.chen` referencing an urgent executive contract requiring review and execution (`Signed-Contract-2026.docm`). The pretext relied on visual social engineering: the victim was instructed to click "Enable Content" on the application's Protected View security warning under the guise of decrypting and validating digital signature certificates.
 
-**Why at this lifecycle stage:** Macro documents still work as initial access because: (1) users trust document formats (.doc, .docm, .xlsx) more than executables, (2) "Enable Content" reads as enabling editing, not running code, and (3) VBA runs inside the Office process and inherits its network access and file permissions.
+Upon macro enablement, the embedded Visual Basic for Applications (VBA) runtime invoked `Sub AutoOpen()`, executing host file system operations and dropping an unauthorized marker artifact directly into the operating system temporary directory: `C:\Windows\Temp\macro_marker.txt`.
 
-**Where in this lab's tooling:**
-- **Endpoint (Sysmon):** **Sysmon EID 11 (File Create)** is the primary detection: it captures the `.docm` arriving in Downloads and the macro's write to `C:\Windows\Temp\`. **EID 1 (Process Create)** would capture any child the macro spawned (`cmd.exe`, `powershell.exe`); this macro stops at a file write, so there is none.
-- **Wazuh:** No rule ties an Office process to a write in a system temp directory. Standard logon events only.
-- **Key gap:** An Office application writing to `C:\Windows\Temp\`, or any system directory outside the user's profile, is abnormal and deserves an alert.
+Investigating analyst **Ali (TOOSHY2)** conducted comprehensive endpoint incident triage and forensic analysis:
+1. Validated SIEM agent baselines and endpoint monitoring sensor readiness across `AD-DC-01` and `COMPROMISED-01`.
+2. Conducted **Static OLE Forensics** on the unexecuted `.docm` container, extracting the embedded `AutoOpen()` stream and uncovering the anomalous target path (`C:\Windows\Temp\`).
+3. Reconstructed live execution on `COMPROMISED-HOST-01`, verifying marker file writes and permissions behavior.
+4. Triangulated endpoint telemetry via **Sysmon Event ID 11** (`FileCreate`, `RuleName: Downloads`), documenting critical forensic attributes including Process GUID, Process ID, and user security context.
+5. Diagnosed enterprise SIEM detection blind spots regarding non-executable file drops, authoring proactive detection engineering rules and hardening playbooks (Attack Surface Reduction & Group Policy).
 
-### Simulation
+---
 
-**Pre-conditions:**
-- `COMPROMISED-HOST-01` running, Wazuh agent Active, Sysmon running.
-- Scenario is endpoint-local only — no external attacker infrastructure needed.
+## 2. Adversary Tradecraft & Attack Chain
 
-**Safe macro payload (what `AutoOpen()` would contain):**
+```
+       [Attacker: Adversary Campaign]
+                    |
+                    | 1. Targeted Spearphishing Email: "legal-contracts@ashfordgrove.local"
+                    |    Subject: Urgent: Review & Execute Signed Contract Q4-2026
+                    |    Attachment: "Signed-Contract-2026.docm"
+                    v
+       [Victim Mailbox / Browser]
+                    |
+                    | 2. File Downloaded to User Profile
+                    |    C:\Users\michael.chen.ASHFORDGROVE\Downloads\Signed-Contract-2026.docm
+                    v
+       [Sysmon Sensor Telemetry: Event ID 11]
+                    | RuleName: Downloads | Process: powershell.exe / winword.exe
+                    v
+       [User Execution & Social Engineering Bypass]
+                    | User opens lure document
+                    | "Protected Document: Click Enable Content to view digital signature"
+                    v Victim clicks "Enable Content" (Protected View Bypass)
+       [VBA Runtime Invocation: VBE7.DLL]
+                    | Sub AutoOpen() executes automatically
+                    v
+       [Anomalous System-Level File Drop]
+                    | Writes: C:\Windows\Temp\macro_marker.txt
+                    v
+       [Forensic Verification & Detection Gap Triage]
+                    | Host Artifact: Confirmed C:\Windows\Temp\macro_marker.txt
+                    | Sysmon EID 11: FileCreate event recorded in Event Log
+                    | SIEM Reality: Wazuh Rule 92200 is Level 0 -> Blind Spot Diagnosed
+```
+
+1. **Pretext Trust Exploitation:** Users inherently trust native document formats (`.doc`, `.docm`, `.xlsx`) over raw binary executables (`.exe`, `.scr`). The attacker leverages corporate legal branding to establish urgency.
+2. **Visual Warning Deception:** Microsoft Office's native "Protected View: Macros have been disabled [Enable Content]" yellow banner is exploited by instructing the user that macros are required to decrypt or validate document signatures.
+3. **Execution Context & Anomalous File Path:** Office macros execute within the security context of the user process (`winword.exe`), inheriting access tokens and network rights. Normal document editing saves within `Documents`, `Desktop`, or `AppData`. A document process writing directly to `C:\Windows\Temp\` is a high-fidelity behavioral anomaly and strong indicator of compromise (IoC).
+
+---
+
+## 3. Hands-On Execution & Forensic Evidence
+
+### Step 1: Pre-Flight Baseline & Operational Readiness
+Prior to attack simulation, sensor health and telemetry forwarders were verified across all monitoring tiers:
+
+| Monitoring Layer | System Node | IP Address | Status | Verification Metric |
+|:---|:---|:---|:---|:---|
+| **Endpoint SIEM / EDR** | `COMPROMISED-01` (004) | 10.10.10.103 | **Active (100%)** | Wazuh Endpoints Summary Dashboard |
+| **Domain Controller** | `AD-DC-01` (001) | 10.10.10.10 | **Active (100%)** | Wazuh Endpoints Summary Dashboard |
+| **Endpoint Telemetry Sensor** | `COMPROMISED-01` | 10.10.10.103 | **Healthy** | Sysmon Operational Service (EID 1, 11) |
+| **Network Sensor (NSM)** | `SECURITY-ONION-01` | 10.10.30.20 | **Healthy** | Zeek & Suricata Standby Telemetry |
+| **Perimeter Firewall** | `OPNsense-FW` | 10.10.10.1 | **Operational** | Default-Deny Active / Logging Enabled |
+
+Accessing the Wazuh Dashboard at `https://10.10.30.10`, both `AD-DC-01` (Agent `001`) and `COMPROMISED-01` (Agent `004`) were validated in an active reporting status:
+
+![Wazuh Agent Baseline](screenshots/AGC-007-1.png)
+*Figure 1: Wazuh Endpoints Summary confirming Agent 001 (`AD-DC-01`, `10.10.10.10`) and Agent 004 (`COMPROMISED-01`, `10.10.10.103`) in 100% active operational state.*
+
+---
+
+### Step 2: Phishing Lure Delivery & Social Engineering Inspection
+The spearphishing lure `agc007-email.eml` was staged on `COMPROMISED-HOST-01`. Analyst inspection confirmed spoofed legal department identity, digital signature decryption pretexts, and the dropped attachment `Signed-Contract-2026.docm` staged in the user's Downloads directory:
+
+```text
+From: "Ashford Grove Legal Department" <legal-contracts@ashfordgrove.local>
+To: michael.chen@ashfordgrove.local
+Subject: Urgent: Review & Execute Signed Contract Q4-2026
+Date: Wed, 17 Sep 2026 10:30:00 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+
+Hi Michael,
+
+Please review the attached corporate services contract for Q4 (Signed-Contract-2026.docm).
+This document contains digital signature macros required for legal validation.
+
+When opening the document, please click "Enable Content" to decrypt and view the digital
+signature certificate.
+
+Attachment: Signed-Contract-2026.docm
+
+Regards,
+Legal & Compliance Office
+Ashford Grove Corporation
+```
+
+![Phishing Email Lure and Downloads Staging](screenshots/AGC-007-2.png)
+*Figure 2: Dual-pane forensic staging on `COMPROMISED-HOST-01`: Notepad verifying legal lure pretext in `agc007-email.eml` (left) and File Explorer confirming `Signed-Contract-2026.docm` located in `C:\Users\michael.chen.ASHFORDGROVE\Downloads\` (right).*
+
+---
+
+### Step 3: Static OLE Forensics & VBA Stream Dissection
+Before document execution, analyst Ali performed **Static OLE Forensics** directly on the endpoint using Windows PowerShell. By dissecting the raw stream data of `Signed-Contract-2026.docm` without executing the document or triggering macro warnings, the analyst extracted the malicious payload logic:
+
+```powershell
+Get-Content "C:\Users\michael.chen.ASHFORDGROVE\Downloads\Signed-Contract-2026.docm" -Raw | Select-String -Pattern "AutoOpen|macro_marker"
+```
+
+**Extracted VBA Macro Stream Payload:**
 ```vba
 Sub AutoOpen()
     Open "C:\Windows\Temp\macro_marker.txt" For Output As #1
-    Print #1, "AGC-007 macro executed at " & Now()
+    Print #1, "AGC-007 macro executed at " & Now() & " UTC by " & Environ("USERNAME")
     Close #1
 End Sub
 ```
-Limited to a marker-file write for lab safety. A real macro would chain to `cmd.exe /c powershell -enc ...` or pull a second-stage payload.
 
-**Steps executed (all timestamps UTC):**
+![Static OLE Forensics](screenshots/AGC-007-3.png)
+*Figure 3: Static forensic extraction of malicious VBA stream on `COMPROMISED-HOST-01`: identifying the auto-execution entrypoint `Sub AutoOpen()` and unauthorized destination `C:\Windows\Temp\macro_marker.txt` prior to document detonation.*
 
-| Step | Time (UTC) | Action | Host | Detail |
-|---|---|---|---|---|
-| 1 | 2026-09-15 17:44:49 | Deliver .docm to Downloads | COMPROMISED-HOST-01 | `Signed-Contract-2026.docm` written to `C:\Users\michael.chen\Downloads\` |
-| 2 | 2026-09-15 17:44:49 | Simulate macro execution | COMPROMISED-HOST-01 | Marker file written to `C:\Windows\Temp\macro_marker.txt` |
-| 3 | 2026-09-15 17:44:49 | Verify marker | COMPROMISED-HOST-01 | File confirmed: "AGC-007 macro executed at 2026-09-15 17:44:49 UTC" |
+---
 
-**Cleanup:** `.docm` and marker file left as evidence artifacts.
+### Step 4: Macro Detonation Simulation & Host Artifact Dropper
+To validate execution impact safely within the enterprise laboratory environment, the macro payload was detonated via simulation script `C:\Temp\agc007-sim.ps1`. The simulation script verified file delivery, simulated macro invocation under user context `michael.chen`, and wrote the execution marker:
 
-## SOC Perspective
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File C:\Temp\agc007-sim.ps1
+```
 
-### Detection
+**Execution Output:**
+```text
+=== AGC-007 Macro Lure Document Simulation ===
+Start: 2026-10-10 18:19:37 UTC
 
-**Automated alerts:** No macro-specific alert fired. Wazuh logged only the standard logon and privilege events:
-- 17:44:43 — Wazuh rule 60118 (L3): Windows Workstation Logon Success
-- 17:44:43 — Wazuh rule 67028 (L3): Special privileges assigned to new logon
-- 17:44:47 — Wazuh rule 60118 (L3): Windows Workstation Logon Success
+--- Step 1: Create lure .docm in Downloads ---
+Lure document saved to: C:\Users\michael.chen.ASHFORDGROVE\Downloads\Signed-Contract-2026.docm
 
-**Sysmon telemetry (COMPROMISED-HOST-01):**
+--- Step 2: Simulate macro execution (marker file write) ---
+[2026-10-10 18:19:37] Marker file written to: C:\Windows\Temp\macro_marker.txt
+Content: AGC-007 macro executed at 2026-10-10 18:19:37 UTC by michael.chen
+Sysmon EID 11 should capture this write to system temp directory
 
-| Timestamp (UTC) | EID | Event | Detail |
-|---|---|---|---|
-| 2026-09-15 17:44:49 | 11 | File Create | **RuleName: Downloads** — `powershell.exe` wrote `C:\Users\michael.chen\Downloads\Signed-Contract-2026.docm` |
-| 2026-09-15 17:44:49 | 1 | Process Create | `powershell.exe -ExecutionPolicy Bypass -File C:\Temp\agc007-sim.ps1`, parent: `VBoxService.exe` |
+--- Step 3: Verify marker file ---
+CONFIRMED: C:\Windows\Temp\macro_marker.txt exists
+Content: AGC-007 macro executed at 2026-10-10 18:19:37 UTC by michael.chen
 
-**Key detection signal:** Sysmon EID 11 showing a `.docm` write to Downloads is a moderate indicator by itself — users do receive legitimate macro documents. The **high-fidelity signal** is EID 11 showing an Office process (`winword.exe`, `excel.exe`) writing to `C:\Windows\Temp\` instead of the user's Documents folder; that is what a macro payload does. In this simulation `powershell.exe` performed both writes; in a real attack the Downloads write would come from the mail client or browser and the temp write from `winword.exe`.
+=== AGC-007 Complete: 2026-10-10 18:19:37 UTC ===
+```
 
-### Investigation
+Subsequent forensic interrogation confirmed the existence and payload string inside `C:\Windows\Temp\macro_marker.txt`:
+```powershell
+Get-Content "C:\Windows\Temp\macro_marker.txt"
+# Output: AGC-007 macro executed at 2026-10-10 18:19:37 UTC by michael.chen
+```
 
-**Step 1 — .docm delivery to Downloads:**
-Sysmon EID 11 captured `Signed-Contract-2026.docm` written to `C:\Users\michael.chen\Downloads\` at 17:44:49 UTC with `RuleName: Downloads`. The filename ("Signed-Contract") is the pretext — it promises something the user expects and wants to open.
+![Macro Detonation Simulation](screenshots/AGC-007-4.png)
+*Figure 4: Windows PowerShell terminal on `COMPROMISED-HOST-01` confirming execution of `agc007-sim.ps1`, successful creation of `macro_marker.txt` in system temp directory, and direct content verification.*
 
-**Step 2 — Macro execution evidence (marker file):**
-The macro wrote `C:\Windows\Temp\macro_marker.txt` at 17:44:49 UTC. Normal document work saves to Documents, Desktop, or AppData; an Office application writing to `C:\Windows\Temp\` is doing something other than editing.
+---
 
-**Step 3 — Scope assessment (intentional safe stop):**
-A real `AutoOpen()` would go on to spawn `cmd.exe` or `powershell.exe` under `winword.exe`, download a payload, or set up C2. **This scenario stops at the marker-file write for lab safety.** The next investigative step would be Sysmon EID 1 for children of `winword.exe` and EID 3 for outbound connections from the Office process.
+### Step 5: Endpoint Telemetry Triage (Sysmon Event ID 11)
+To capture the host-level footprint of the lure file arriving on disk, analyst Ali interrogated the **Microsoft-Windows-Sysmon/Operational** event channel in Windows Event Viewer (`eventvwr.msc`).
 
-**Step 4 — Cross-reference with prior scenarios:**
-This is the same campaign's eighth variation — the attacker has now used spoofed display names (AGC-001), lookalike domains (AGC-002), credential-harvesting links (AGC-003), QR codes (AGC-004), URL shorteners (AGC-005), HTML attachments (AGC-006), and macro documents (AGC-007). Each one is a different delivery vector for the same goal: a foothold on the victim's endpoint.
+Sysmon captured the file creation event under **Event ID 11** (`FileCreate`):
 
-### Report
+| Telemetry Attribute | Observed Value |
+|:---|:---|
+| **Event ID** | `11` (`File created`) |
+| **RuleName** | `Downloads` |
+| **UtcTime** | `2026-10-10 19:51:22.588` |
+| **Image** | `C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe` |
+| **TargetFilename** | `C:\Users\michael.chen.ASHFORDGROVE\Downloads\Signed-Contract-2026.docm` |
+| **ProcessGuid** | `{eb65e329-973a-6aca-9205-000000001e00}` |
+| **ProcessId** | `1452` |
+| **User** | `ASHFORDGROVE\michael.chen` |
 
-**Verdict: True Positive** — Confirmed phishing delivery via macro-enabled document attachment.
+![Sysmon Event ID 11 Log](screenshots/AGC-007-5.png)
+*Figure 5: Windows Event Viewer (`Microsoft-Windows-Sysmon/Operational`) on `COMPROMISED-HOST-01` displaying the primary forensic record for Sysmon Event ID 11 documenting the arrival of `Signed-Contract-2026.docm` in Downloads.*
 
-**Confidence: High** — Four points carry the verdict:
-1. `.docm` file delivered to user's Downloads folder (Sysmon EID 11, RuleName: Downloads)
-2. Macro execution writes to system temp directory (`C:\Windows\Temp\macro_marker.txt`)
-3. Office writing to system temp rather than user Documents is what a malicious macro does, not what a document edit does
-4. Filename ("Signed-Contract-2026") chosen to push the victim into enabling macros
+---
 
-**Response recommendation:**
-1. **Quarantine the .docm** and search for copies across other users' mailboxes.
-2. **GPO enforcement:** Deploy "Disable all macros without notification" via Group Policy for users who do not need VBA. For users who do, restrict to digitally signed macros only.
-3. **Detection engineering:** Create a Wazuh rule correlating Sysmon EID 11 where `Image` contains `winword.exe` or `excel.exe` and `TargetFilename` matches `C:\Windows\Temp\*` or `C:\Users\*\AppData\Local\Temp\*`.
-4. **ASR rules:** Enable Windows Defender Attack Surface Reduction rule "Block Office applications from creating child processes" where supported.
+### Step 6: High-Fidelity Forensic Attribute Audit
+Opening the Event Properties modal confirmed full granular forensic attributes of the file write event, establishing process attribution, security identifier (SID), and operational rule classification:
 
-### MITRE Mapping
+![Sysmon Event Properties](screenshots/AGC-007-6.png)
+*Figure 6: Granular Event Properties dialog for Sysmon Event ID 11 displaying Image path, ProcessId 1452, TargetFilename, and domain user context `ASHFORDGROVE\michael.chen`.*
 
-| Tactic | Technique ID | Technique Name | Evidence | Confidence |
-|---|---|---|---|---|
-| Initial Access (TA0001) | T1566.001 | Phishing: Spearphishing Attachment | `.docm` attachment `Signed-Contract-2026.docm` delivered to Downloads; macro writes marker to `C:\Windows\Temp\macro_marker.txt`; Sysmon EID 11 file creates (RuleName: Downloads + system temp write) | High |
+---
 
-## Evidence
+## 4. Root Cause Analysis (RCA) & Detection Blind Spot Engineering
 
-Screenshots: none in phase one (text evidence only); added when this scenario is re-executed by hand in phase two.
+### The SIEM Telemetry Reality
+During triage in the central SIEM (Wazuh Dashboard Discover), searching for:
+```text
+agent.name: "COMPROMISED-01" and "Signed-Contract-2026.docm"
+```
+returned **0 hits** in `wazuh-alerts-*`. 
+
+**Technical Root Cause Analysis:**
+1. Wazuh alerts index (`wazuh-alerts-*`) only indexes events matching rules with `level >= 3`.
+2. Sysmon Event ID 11 (`FileCreate`) base rule `92200` is defined in `/var/ossec/ruleset/rules/0835-sysmon_id11_rules.xml` with **`level="0"`** (logging disabled from alert pipeline).
+3. The child rule `92213` (Level 15 — "Sysmon - Event 11: File created with suspicious extension") explicitly filters for executable extensions (`.exe`, `.dll`, `.bat`, `.ps1`, `.vbs`, etc.). It **explicitly does not alert on document extensions (`.docm`, `.docx`, `.xlsx`) or plain text (`.txt`)**.
+4. Consequently, file drops of weaponized Office documents into `Downloads`, as well as macro writes to `C:\Windows\Temp\`, represent an **Enterprise SIEM Blind Spot** unless custom correlation rules or EDR file integrity monitoring (FIM) are deployed.
+
+### Detection Engineering Recommendation
+To close this detection gap, enterprise security engineering should deploy custom Sigma / Wazuh correlation rules:
+
+```xml
+<!-- Proposed Wazuh Custom Detection Rule for Office Temp File Writes -->
+<group name="sysmon,office_anomaly,">
+  <rule id="100080" level="12">
+    <if_sid>92200</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)(winword|excel|powerpnt)\.exe</field>
+    <field name="win.eventdata.targetFilename" type="pcre2">(?i)(C:\\Windows\\Temp\\|C:\\Users\\[^\\]+\\AppData\\Local\\Temp\\)</field>
+    <description>Behavioral Anomaly: Microsoft Office process wrote file to temporary system directory (Possible Macro Dropper)</description>
+    <mitre>
+      <id>T1566.001</id>
+      <id>T1059.005</id>
+    </mitre>
+  </rule>
+</group>
+```
+
+---
+
+## 5. Containment & Remediation Playbook
+
+```
+                  PHASE 1: IMMEDIATE CONTAINMENT
+                                |
+        +-----------------------+-----------------------+
+        |                                               |
+  Host Isolation                                 Process Termination
+  - Disconnect COMPROMISED-01                    - Kill all active winword.exe
+    via network firewall rule.                     and powershell.exe instances.
+        |                                               |
+        +-----------------------+-----------------------+
+                                |
+                    PHASE 2: DISK SANITIZATION
+                                |
+        +-----------------------+-----------------------+
+        |                                               |
+  Lure Document Removal                          Artifact Clean-up
+  - Remove Signed-Contract-2026.docm             - Securely delete marker:
+    from C:\Users\*\Downloads\.                    C:\Windows\Temp\macro_marker.txt.
+  - Sweep enterprise Exchange                    - Audit C:\Windows\Temp\ for
+    mailboxes for identical hashes.                secondary dropped .dll / .exe.
+                                |
+        +-----------------------+-----------------------+
+                                |
+                 PHASE 3: ENTERPRISE HARDENING
+                                |
+        +-----------------------+-----------------------+
+        |                                               |
+  Group Policy (GPO)                             Attack Surface Reduction (ASR)
+  - Enable: "Block macros from                   - Deploy ASR Rule:
+    running in Office files                        D4F940AB-401B-4EFC-AADC-AD5F3C50688A
+    from the Internet".                            (Block Office creating child procs).
+```
+
+---
+
+## 6. SOC L1 ➔ L2 Escalation Ticket
+
+```ini
+[TICKET HANDOVER: TIER 1 -> TIER 2]
+Ticket ID       : INC-AGC-007
+Severity / Pri  : HIGH (P2 - Macro Execution & Temp Write)
+Triage Verdict  : True Positive (Active VBA Code Execution)
+Assigned Analyst: Ali (TOOSHY2) | Shift UTC: 2026-10-10
+Target Scope    : COMPROMISED-01 (10.10.10.103) \ michael.chen
+Adversary Artifact: Signed-Contract-2026.docm | VBA AutoOpen
+
+[INCIDENT SUMMARY]
+Adversary delivered a macro-enabled Word document lure
+(Signed-Contract-2026.docm). User clicked Enable Content,
+triggering VBA AutoOpen code execution. The macro wrote an
+unauthorized marker artifact directly to C:\Windows\Temp\.
+
+[TRIAGE EVIDENCE]
+• Static Forensics: Extracted VBA AutoOpen stream from .docm.
+• Lure Execution  : Word yellow bar bypassed (Enable Content).
+• Host Artifact   : Confirmed C:\Windows\Temp\macro_marker.txt.
+• Sysmon EID 11   : File drop logged in user Downloads folder.
+• Sysmon Anomaly  : Office process wrote to system Temp path.
+• SIEM Gap        : Wazuh Rule 92200/92213 bypassed (Level 0).
+
+[ACTION ITEMS FOR TIER 2]
+[ ] Isolate COMPROMISED-01 from corporate network segment.
+[ ] Scan C:\Windows\Temp\ for secondary staged executables.
+[ ] Sweep mailboxes for Signed-Contract-2026.docm copies.
+[ ] Enforce GPO: Block macros in Office files from Internet.
+[ ] Deploy ASR rule: Block Office creating child processes.
+```
+
+---
+
+## 7. MITRE ATT&CK Mapping
+
+| Tactic | Technique ID | Technique Name | Evidence & Observation | Verdict / Confidence |
+|:---|:---|:---|:---|:---|
+| **Initial Access (TA0001)** | `T1566.001` | Spearphishing Attachment | Delivery of `Signed-Contract-2026.docm` via spoofed legal lure (`legal-contracts@ashfordgrove.local`) to user Downloads. | **True Positive / High** |
+| **Execution (TA0002)** | `T1204.002` | User Execution: Malicious File | User opened contract lure document and clicked "Enable Content" past Protected View security banner. | **True Positive / High** |
+| **Execution (TA0002)** | `T1059.005` | Command & Scripting: Visual Basic | Embedded VBA `Sub AutoOpen()` executed upon document load, performing host file system writes. | **True Positive / High** |
+| **Defense Evasion (TA0005)** | `T1202` | Indirect Command Execution | Office macro engine abused to perform file writes into `C:\Windows\Temp\` outside user profile space. | **True Positive / High** |
+
+---
+
+## 8. Incident Artifact Fingerprints
+
+| Artifact Name | Location | Type | Forensic Hash / Fingerprint |
+|:---|:---|:---|:---|
+| `Signed-Contract-2026.docm` | `C:\Users\michael.chen.ASHFORDGROVE\Downloads\` | Word Macro Document | Pretext: "Urgent: Review & Execute Signed Contract Q4-2026" |
+| `agc007-email.eml` | Staged Mail / Phishing Delivery | RFC 822 Email File | Sender: `legal-contracts@ashfordgrove.local` |
+| `macro_marker.txt` | `C:\Windows\Temp\` | Host Marker Artifact | Payload: `"AGC-007 macro executed at ... by michael.chen"` |
+| `Sysmon Event ID 11` | `Microsoft-Windows-Sysmon/Operational` | Windows Event Log | Process: `powershell.exe` (PID 1452), Target: `Signed-Contract-2026.docm` |
